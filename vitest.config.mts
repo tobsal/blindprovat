@@ -8,5 +8,7 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.{ts,tsx}"],
+    // Databastester körs separat med npm run test:db.
+    exclude: ["**/node_modules/**", "src/**/*.db.test.ts"],
   },
 });

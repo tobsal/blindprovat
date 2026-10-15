@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   description: "Arrangera blindprovningar av vin i grupp",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="sv"

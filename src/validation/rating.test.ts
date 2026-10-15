@@ -9,7 +9,7 @@ function messagesFor(input: unknown) {
 }
 
 describe("ratingInputSchema", () => {
-  it("godtar minsta möjliga betyg och fyller i standardvärden", () => {
+  it("godtar ett giltigt betyg och fyller i standardvärden", () => {
     expect(ratingInputSchema.parse(valid)).toEqual({
       score: 7,
       note: null,

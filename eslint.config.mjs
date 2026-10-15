@@ -14,7 +14,7 @@ const eslintConfig = defineConfig([
           devDependencies: [
             "**/*.test.{ts,tsx}",
             "e2e/**",
-            "*.config.{ts,mjs}",
+            "*.config.{ts,mts,mjs}",
             "scripts/**",
           ],
         },

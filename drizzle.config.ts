@@ -6,10 +6,15 @@ if (existsSync(".env.local")) {
   process.loadEnvFile(".env.local");
 }
 
+const url = process.env.DATABASE_URL;
+if (!url) {
+  throw new Error("DATABASE_URL saknas. Se .env.example.");
+}
+
 export default defineConfig({
   dialect: "postgresql",
   schema: "./src/repositories/schema.ts",
   out: "./drizzle",
   casing: "snake_case",
-  dbCredentials: { url: process.env.DATABASE_URL ?? "" },
+  dbCredentials: { url },
 });

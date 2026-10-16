@@ -1,0 +1,76 @@
+import { Suspense } from "react";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { connection } from "next/server";
+import { auth, signIn } from "@/auth";
+import { parseLoginError } from "@/validation/login-error";
+
+const errorMessages = {
+  AccessDenied: "Inloggningen nekades. Försök igen och godkänn inloggningen.",
+  other: "Det gick inte att logga in just nu. Försök igen om en stund.",
+};
+
+async function logIn() {
+  "use server";
+  await signIn("github", { redirectTo: "/admin" });
+}
+
+// Med cacheComponents får sessionen och query-parametrarna bara läsas
+// inom Suspense.
+async function LoginContent({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string | string[] }>;
+}) {
+  // auth() skapar slumpvärden (CSRF-token) som inte får förrenderas.
+  await connection();
+  if (await auth()) redirect("/admin");
+
+  const error = parseLoginError((await searchParams).error);
+
+  return (
+    <>
+      {error && (
+        <p role="alert" className="border-l-4 border-foreground pl-3">
+          <strong>Fel:</strong> {errorMessages[error]}
+        </p>
+      )}
+      <form action={logIn}>
+        <button
+          type="submit"
+          className="min-h-11 rounded bg-foreground px-4 text-background focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          Logga in med GitHub
+        </button>
+      </form>
+    </>
+  );
+}
+
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string | string[] }>;
+}) {
+  return (
+    <main className="mx-auto flex min-h-full w-full max-w-md flex-col justify-center gap-4 p-6">
+      <h1 className="text-2xl font-semibold">Logga in</h1>
+      <p>Logga in med ditt GitHub-konto för att skapa och leda provningar.</p>
+      <Suspense
+        fallback={
+          <p role="status" className="min-h-11">
+            Laddar …
+          </p>
+        }
+      >
+        <LoginContent searchParams={searchParams} />
+      </Suspense>
+      <Link
+        href="/"
+        className="inline-flex min-h-11 items-center underline focus-visible:outline-2 focus-visible:outline-offset-2"
+      >
+        Till startsidan
+      </Link>
+    </main>
+  );
+}

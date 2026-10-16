@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getMyTasting, type AdminTastingWithWines } from "@/api/admin-tastings";
@@ -12,15 +13,13 @@ function describeWine(wine: AdminWine): string {
     .join(", ");
 }
 
-export default async function TastingPage({
-  params,
-}: PageProps<"/admin/tastings/[id]">) {
+async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const tasting = await getMyTasting(id);
   if (!tasting) notFound();
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 p-6">
+    <>
       <h1 className="text-2xl font-semibold">{tasting.name}</h1>
       <p className="mt-2">Status: {tastingStatusLabels[tasting.status]}</p>
 
@@ -61,6 +60,24 @@ export default async function TastingPage({
           </p>
         )}
       </section>
+    </>
+  );
+}
+
+export default function TastingPage({
+  params,
+}: PageProps<"/admin/tastings/[id]">) {
+  return (
+    <main className="mx-auto w-full max-w-3xl flex-1 p-6">
+      <Suspense
+        fallback={
+          <p role="status" className="min-h-11">
+            Laddar provningen …
+          </p>
+        }
+      >
+        <TastingDetails params={params} />
+      </Suspense>
 
       <Link
         href="/admin"

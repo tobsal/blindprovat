@@ -49,6 +49,7 @@ npm run build           # produktionsbygge
 npm run lint            # ESLint
 npm run typecheck       # tsc --noEmit
 npm test                # Vitest (enhetstester)
+npm run test:db         # Vitest mot migrerad databas (*.db.test.ts, kräver DATABASE_URL)
 npm run test:e2e        # Playwright (kräver att appen kan startas)
 npm run db:generate     # generera migration från ändrat schema
 npm run db:migrate      # kör migrationer mot DATABASE_URL

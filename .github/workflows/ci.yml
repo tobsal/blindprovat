@@ -17,6 +17,23 @@ jobs:
     name: Typkontroll, lint och tester
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: blindprovat
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Engångsdatabas i CI-containern, ingen hemlighet.
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/blindprovat
     steps:
       - uses: actions/checkout@v4
 
@@ -35,3 +52,9 @@ jobs:
 
       - name: Enhetstester
         run: npm test
+
+      - name: Migrationer
+        run: npm run db:migrate
+
+      - name: Databastester
+        run: npm run test:db

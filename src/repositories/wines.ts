@@ -73,6 +73,7 @@ export async function setWineOpen(
       .returning();
     return { ok: true, wine };
   });
+}
 
 const blindColumns = {
   id: wines.id,

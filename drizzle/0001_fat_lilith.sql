@@ -1,0 +1,1 @@
+CREATE INDEX "ratings_participant_id_index" ON "ratings" USING btree ("participant_id");

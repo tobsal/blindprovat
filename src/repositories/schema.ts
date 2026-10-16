@@ -109,6 +109,7 @@ export const ratings = pgTable(
   },
   (table) => [
     unique().on(table.wineId, table.participantId),
+    index("ratings_participant_id_index").on(table.participantId),
     // Konstanterna skrivs in som literaler, en CHECK kan inte ha parametrar.
     check(
       "ratings_score_range",

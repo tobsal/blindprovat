@@ -29,6 +29,24 @@ test("admin skapar en provning och ser den i listan", async ({
   await expect(page.getByTestId("tasting-code")).toHaveText(/^[A-Z2-9]{10}$/);
   await expect(page.getByText("Status: Förbereds")).toBeVisible();
 
+  await page.getByLabel("Namn", { exact: true }).fill("Barolo");
+  await page.getByLabel("Producent (valfritt)").fill("Vietti");
+  await page.getByLabel("Årgång (valfritt)").fill("2019");
+  await page.getByRole("button", { name: "Lägg till vin" }).click();
+  await expect(page.getByRole("status")).toHaveText("Vin 1 är tillagt.");
+  await expect(page.getByRole("listitem")).toHaveText(
+    "Vin 1 – Barolo, Vietti, 2019",
+  );
+  await expect(page.getByLabel("Namn", { exact: true })).toBeFocused();
+  await expect(page.getByLabel("Namn", { exact: true })).toHaveValue("");
+
+  await page.getByLabel("Namn", { exact: true }).fill("Chianti");
+  await page.getByRole("button", { name: "Lägg till vin" }).click();
+  await expect(page.getByRole("listitem")).toHaveText([
+    "Vin 1 – Barolo, Vietti, 2019",
+    "Vin 2 – Chianti, Årgångslöst",
+  ]);
+
   await page.getByRole("link", { name: "Till dina provningar" }).click();
   await expect(page.getByRole("link", { name: /E2E-provning/ })).toBeVisible();
 });
@@ -43,6 +61,29 @@ test("tomt namn ger ett fel vid fältet", async ({ context, page }) => {
   await expect(nameField).toHaveAccessibleDescription(
     "Fel: Ange provningens namn",
   );
+});
+
+test("ogiltig årgång ger fel och behåller det som skrivits", async ({
+  context,
+  page,
+}) => {
+  await logInAsAdmin(context, owners.createOwnerId());
+  await page.goto("/admin/tastings/new");
+  await page.getByLabel("Namn på provningen").fill("Felprovning");
+  await page.getByRole("button", { name: "Skapa provning" }).click();
+
+  await page.getByLabel("Namn", { exact: true }).fill("Barolo");
+  await page.getByLabel("Årgång (valfritt)").fill("1899");
+  await page.getByRole("button", { name: "Lägg till vin" }).click();
+
+  const vintageField = page.getByLabel("Årgång (valfritt)");
+  await expect(vintageField).toBeFocused();
+  await expect(vintageField).toHaveAccessibleDescription(
+    "Lämna tomt om vinet är årgångslöst. Fel: Årgången måste vara mellan 1900 och i år",
+  );
+  await expect(vintageField).toHaveValue("1899");
+  await expect(page.getByLabel("Namn", { exact: true })).toHaveValue("Barolo");
+  await expect(page.getByText("Inga viner tillagda än.")).toBeVisible();
 });
 
 test("okänd eller ogiltig provning ger samma sida", async ({

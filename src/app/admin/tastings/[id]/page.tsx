@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getMyTasting, type AdminTastingWithWines } from "@/api/admin-tastings";
 import { tastingStatusLabels } from "../../tasting-status";
+import { AddWineForm } from "./add-wine-form";
 
 type AdminWine = AdminTastingWithWines["wines"][number];
 
@@ -51,6 +52,13 @@ export default async function TastingPage({
               </li>
             ))}
           </ol>
+        )}
+        {tasting.status === "draft" ? (
+          <AddWineForm tastingId={tasting.id} />
+        ) : (
+          <p className="mt-4">
+            Provningen har startat, så inga fler viner kan läggas till.
+          </p>
         )}
       </section>
 

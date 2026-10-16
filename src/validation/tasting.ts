@@ -13,3 +13,7 @@ export const tastingInputSchema = z.object({
 });
 
 export type TastingInput = z.infer<typeof tastingInputSchema>;
+
+// Id:t kommer från sökvägen. Ett ogiltigt id ska ge "hittades inte",
+// inte ett databasfel.
+export const tastingIdSchema = z.uuid();

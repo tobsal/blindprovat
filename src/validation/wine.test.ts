@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { wineInputSchema } from "./wine";
+import { wineFormSchema, wineInputSchema } from "./wine";
 
 const valid = { name: "Barolo" };
 
@@ -90,5 +90,45 @@ describe("wineInputSchema", () => {
         "Ange ett pris i hela kronor, mellan 0 och 100000",
       ]);
     });
+  });
+});
+
+describe("wineFormSchema", () => {
+  function formMessagesFor(input: unknown) {
+    const result = wineFormSchema.safeParse(input);
+    return result.success ? [] : result.error.issues.map((issue) => issue.message);
+  }
+
+  it("gör om tal i text till tal", () => {
+    const result = wineFormSchema.parse({
+      ...valid,
+      vintage: " 2019 ",
+      price: "450",
+    });
+    expect(result.vintage).toBe(2019);
+    expect(result.price).toBe(450);
+  });
+
+  it("gör tomma talfält och saknade fält till null", () => {
+    const result = wineFormSchema.parse({ ...valid, vintage: "", price: "  " });
+    expect(result.vintage).toBeNull();
+    expect(result.price).toBeNull();
+    expect(wineFormSchema.parse({ ...valid, vintage: null }).vintage).toBeNull();
+  });
+
+  it("ger samma felmeddelanden som för tal", () => {
+    expect(formMessagesFor({ ...valid, vintage: "nittonhundra" })).toEqual([
+      "Ange ett årtal eller lämna tomt",
+    ]);
+    expect(formMessagesFor({ ...valid, vintage: "1899" })).toEqual([
+      "Årgången måste vara mellan 1900 och i år",
+    ]);
+    expect(formMessagesFor({ ...valid, price: "12,50" })).toEqual([
+      "Ange ett pris i hela kronor, mellan 0 och 100000",
+    ]);
+  });
+
+  it("trimmar och kräver namn som vanligt", () => {
+    expect(formMessagesFor({ name: "  " })).toEqual(["Ange vinets namn"]);
   });
 });

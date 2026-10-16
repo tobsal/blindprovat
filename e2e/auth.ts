@@ -1,14 +1,9 @@
-import { randomUUID } from "node:crypto";
 import type { BrowserContext } from "@playwright/test";
 import { encode } from "next-auth/jwt";
 
 // Auth.js namnger sessionscookien så över http. Namnet är också salt för
 // krypteringen.
 const SESSION_COOKIE = "authjs.session-token";
-
-export function createE2eOwnerId(): string {
-  return `e2e-owner-${randomUUID()}`;
-}
 
 // Loggar in utan GitHub genom att lägga en krypterad session i webbläsaren,
 // samma sorts cookie som Auth.js själv sätter efter inloggningen.

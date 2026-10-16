@@ -31,26 +31,30 @@ export async function joinTasting(input: {
   code: string;
   displayName: string;
 }): Promise<JoinTastingResult> {
-  const [tasting] = await db
-    .select({ id: tastings.id, status: tastings.status })
-    .from(tastings)
-    .where(eq(tastings.code, input.code));
-  // En avslöjad provning ger samma svar som en som inte finns.
-  if (!tasting || tasting.status === "revealed") {
-    return { ok: false, error: "not_found" };
-  }
-
   const sessionToken = randomBytes(SESSION_TOKEN_BYTES).toString("base64url");
   try {
-    const [participant] = await db
-      .insert(participants)
-      .values({
-        tastingId: tasting.id,
-        displayName: input.displayName,
-        sessionTokenHash: hashSessionToken(sessionToken),
-      })
-      .returning(participantColumns);
-    return { ok: true, participant, sessionToken };
+    return await db.transaction(async (tx) => {
+      // Låser provningen så att den inte kan avslöjas mellan kontrollen och skrivningen.
+      const [tasting] = await tx
+        .select({ id: tastings.id, status: tastings.status })
+        .from(tastings)
+        .where(eq(tastings.code, input.code))
+        .for("update");
+      // En avslöjad provning ger samma svar som en som inte finns.
+      if (!tasting || tasting.status === "revealed") {
+        return { ok: false, error: "not_found" } as const;
+      }
+
+      const [participant] = await tx
+        .insert(participants)
+        .values({
+          tastingId: tasting.id,
+          displayName: input.displayName,
+          sessionTokenHash: hashSessionToken(sessionToken),
+        })
+        .returning(participantColumns);
+      return { ok: true, participant, sessionToken } as const;
+    });
   } catch (error) {
     if (isUniqueViolation(error, "participants_tasting_id_display_name_key")) {
       return { ok: false, error: "name_taken" };

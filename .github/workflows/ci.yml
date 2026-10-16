@@ -58,3 +58,13 @@ jobs:
 
       - name: Databastester
         run: npm run test:db
+
+      # Engångsnyckel som bara gäller i det här jobbet, ingen hemlighet.
+      - name: Sessionsnyckel för e2e
+        run: echo "AUTH_SECRET=$(openssl rand -base64 32)" >> "$GITHUB_ENV"
+
+      - name: Installera webbläsare för e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E-tester
+        run: npm run test:e2e

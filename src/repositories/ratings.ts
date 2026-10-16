@@ -37,7 +37,7 @@ export async function saveRating(
       .where(
         and(eq(wines.id, wineId), eq(wines.tastingId, participant.tastingId)),
       )
-      .for("update", { of: wines });
+      .for("update");
     if (!wine) return { ok: false, error: "not_found" };
     if (!wine.isOpen || !canRateWines(wine.status)) {
       return { ok: false, error: "invalid_state" };

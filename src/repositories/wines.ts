@@ -56,21 +56,23 @@ export async function setWineOpen(
   wineId: string,
   isOpen: boolean,
 ): Promise<SetWineOpenResult> {
-  const [found] = await db
-    .select({ status: tastings.status })
-    .from(wines)
-    .innerJoin(tastings, eq(wines.tastingId, tastings.id))
-    .where(and(eq(wines.id, wineId), eq(tastings.ownerId, ownerId)));
-  if (!found) return { ok: false, error: "not_found" };
-  if (found.status !== "live") return { ok: false, error: "invalid_state" };
+  return db.transaction(async (tx) => {
+    const [found] = await tx
+      .select({ status: tastings.status })
+      .from(wines)
+      .innerJoin(tastings, eq(wines.tastingId, tastings.id))
+      .where(and(eq(wines.id, wineId), eq(tastings.ownerId, ownerId)))
+      .for("update", { of: tastings });
+    if (!found) return { ok: false, error: "not_found" };
+    if (found.status !== "live") return { ok: false, error: "invalid_state" };
 
-  const [wine] = await db
-    .update(wines)
-    .set({ isOpen })
-    .where(eq(wines.id, wineId))
-    .returning();
-  return { ok: true, wine };
-}
+    const [wine] = await tx
+      .update(wines)
+      .set({ isOpen })
+      .where(eq(wines.id, wineId))
+      .returning();
+    return { ok: true, wine };
+  });
 
 const blindColumns = {
   id: wines.id,

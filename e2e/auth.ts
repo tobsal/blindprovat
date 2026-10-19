@@ -1,7 +1,7 @@
 import type { BrowserContext } from "@playwright/test";
 import { encode } from "next-auth/jwt";
 
-// Auth.js namnger sessionscookien så över http. Namnet är också salt för
+// Auth.js namnger sessionscookien så här över http. Namnet är också salt för
 // krypteringen.
 const SESSION_COOKIE = "authjs.session-token";
 

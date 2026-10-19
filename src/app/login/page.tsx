@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { connection } from "next/server";
-import { auth, signIn } from "@/auth";
+import { logIn } from "@/api/admin-auth-actions";
+import { getAdminSession } from "@/api/admin-session";
 import { FormError } from "@/app/_components/form-error";
 import { LoadingStatus } from "@/app/_components/loading-status";
 import { parseLoginError } from "@/validation/login-error";
@@ -12,11 +12,6 @@ const errorMessages = {
   other: "Det gick inte att logga in just nu. Försök igen om en stund.",
 };
 
-async function logIn() {
-  "use server";
-  await signIn("github", { redirectTo: "/admin" });
-}
-
 // Med cacheComponents får sessionen och query-parametrarna bara läsas
 // inom Suspense.
 async function LoginContent({
@@ -24,9 +19,7 @@ async function LoginContent({
 }: {
   searchParams: Promise<{ error?: string | string[] }>;
 }) {
-  // auth() skapar slumpvärden (CSRF-token) som inte får förrenderas.
-  await connection();
-  if (await auth()) redirect("/admin");
+  if (await getAdminSession()) redirect("/admin");
 
   const error = parseLoginError((await searchParams).error);
 

@@ -6,24 +6,25 @@ import {
   WINE_DETAIL_MAX,
   WINE_NAME_MAX,
 } from "@/domain/wine";
+import { optionalText } from "./optional-text";
 
 const priceMessage = `Ange ett pris i hela kronor, mellan ${PRICE_MIN} och ${PRICE_MAX}`;
 
-// Trimmar texten och gör tom text eller saknat värde till null.
+const nameRequiredMessage = "Ange vinets namn";
+const vintageMessage = "Ange ett årtal eller lämna tomt";
+
 function optionalDetail(label: string) {
-  return z
-    .string()
-    .trim()
-    .max(WINE_DETAIL_MAX, `${label} får vara högst ${WINE_DETAIL_MAX} tecken`)
-    .nullish()
-    .transform((value) => value || null);
+  return optionalText(
+    WINE_DETAIL_MAX,
+    `${label} får vara högst ${WINE_DETAIL_MAX} tecken`,
+  );
 }
 
 export const wineInputSchema = z.object({
   name: z
-    .string({ error: "Ange vinets namn" })
+    .string({ error: nameRequiredMessage })
     .trim()
-    .min(1, "Ange vinets namn")
+    .min(1, nameRequiredMessage)
     .max(WINE_NAME_MAX, `Namnet får vara högst ${WINE_NAME_MAX} tecken`),
   producer: optionalDetail("Producenten"),
   grape: optionalDetail("Druvan"),
@@ -31,8 +32,8 @@ export const wineInputSchema = z.object({
   country: optionalDetail("Landet"),
   // null betyder årgångslöst (NV).
   vintage: z
-    .number({ error: "Ange ett årtal eller lämna tomt" })
-    .int("Ange ett årtal eller lämna tomt")
+    .number({ error: vintageMessage })
+    .int(vintageMessage)
     .nullish()
     .transform((value) => value ?? null)
     .refine(

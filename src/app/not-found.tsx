@@ -10,7 +10,7 @@ export default function NotFound() {
       </p>
       <Link
         href="/"
-        className="inline-flex min-h-11 items-center self-start rounded border border-foreground px-4 focus-visible:outline-2 focus-visible:outline-offset-2"
+        className="btn-secondary self-start"
       >
         Till startsidan
       </Link>

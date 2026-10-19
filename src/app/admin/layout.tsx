@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { requireAdminOwnerId } from "@/api/admin-session";
+import { LoadingStatus } from "@/app/_components/loading-status";
 import { UserMenu } from "./user-menu";
 
 // Med cacheComponents får sessionen (cookies) bara läsas inom Suspense.
@@ -23,9 +24,7 @@ export default function AdminLayout({
       </header>
       <Suspense
         fallback={
-          <p role="status" className="p-6">
-            Laddar …
-          </p>
+          <LoadingStatus className="p-6" />
         }
       >
         <AdminGuard>{children}</AdminGuard>

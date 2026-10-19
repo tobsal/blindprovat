@@ -19,6 +19,25 @@
   }
 }
 
+/* En enda fokusmarkering för alla interaktiva element (WCAG 2.4.7 och 2.4.11). */
+:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+}
+
+/* Tryckytor är minst 44 px höga (min-h-11). */
+@utility btn-primary {
+  @apply inline-flex min-h-11 items-center justify-center rounded bg-foreground px-4 text-background;
+}
+
+@utility btn-secondary {
+  @apply inline-flex min-h-11 items-center justify-center rounded border border-foreground px-4;
+}
+
+@utility link-action {
+  @apply inline-flex min-h-11 items-center underline;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

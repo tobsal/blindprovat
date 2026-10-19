@@ -1,12 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { messagesFor } from "@/test-support/messages-for";
 import { wineFormSchema, wineInputSchema } from "./wine";
 
 const valid = { name: "Barolo" };
-
-function messagesFor(input: unknown) {
-  const result = wineInputSchema.safeParse(input);
-  return result.success ? [] : result.error.issues.map((issue) => issue.message);
-}
 
 describe("wineInputSchema", () => {
   it("godtar bara namn och sätter övriga fält till null", () => {
@@ -22,15 +18,15 @@ describe("wineInputSchema", () => {
   });
 
   it("kräver namn efter trimning", () => {
-    expect(messagesFor({ name: "   " })).toEqual(["Ange vinets namn"]);
-    expect(messagesFor({})).toEqual(["Ange vinets namn"]);
+    expect(messagesFor(wineInputSchema, { name: "   " })).toEqual(["Ange vinets namn"]);
+    expect(messagesFor(wineInputSchema, {})).toEqual(["Ange vinets namn"]);
   });
 
   it("godtar namn på 120 tecken men inte 121", () => {
     expect(
       wineInputSchema.safeParse({ name: "a".repeat(120) }).success,
     ).toBe(true);
-    expect(messagesFor({ name: "a".repeat(121) })).toEqual([
+    expect(messagesFor(wineInputSchema, { name: "a".repeat(121) })).toEqual([
       "Namnet får vara högst 120 tecken",
     ]);
   });
@@ -48,7 +44,7 @@ describe("wineInputSchema", () => {
   });
 
   it("avvisar valfria textfält över 100 tecken", () => {
-    expect(messagesFor({ ...valid, country: "a".repeat(101) })).toEqual([
+    expect(messagesFor(wineInputSchema, { ...valid, country: "a".repeat(101) })).toEqual([
       "Landet får vara högst 100 tecken",
     ]);
   });
@@ -65,16 +61,16 @@ describe("wineInputSchema", () => {
     });
 
     it.each([1899, thisYear + 1])("avvisar %i", (vintage) => {
-      expect(messagesFor({ ...valid, vintage })).toEqual([
+      expect(messagesFor(wineInputSchema, { ...valid, vintage })).toEqual([
         "Årgången måste vara mellan 1900 och i år",
       ]);
     });
 
     it("avvisar decimaltal och text", () => {
-      expect(messagesFor({ ...valid, vintage: 2019.5 })).toEqual([
+      expect(messagesFor(wineInputSchema, { ...valid, vintage: 2019.5 })).toEqual([
         "Ange ett årtal eller lämna tomt",
       ]);
-      expect(messagesFor({ ...valid, vintage: "2019" })).toEqual([
+      expect(messagesFor(wineInputSchema, { ...valid, vintage: "2019" })).toEqual([
         "Ange ett årtal eller lämna tomt",
       ]);
     });
@@ -86,7 +82,7 @@ describe("wineInputSchema", () => {
     });
 
     it.each([-1, 100_001, 99.5])("avvisar %s kr", (price) => {
-      expect(messagesFor({ ...valid, price })).toEqual([
+      expect(messagesFor(wineInputSchema, { ...valid, price })).toEqual([
         "Ange ett pris i hela kronor, mellan 0 och 100000",
       ]);
     });
@@ -94,11 +90,6 @@ describe("wineInputSchema", () => {
 });
 
 describe("wineFormSchema", () => {
-  function formMessagesFor(input: unknown) {
-    const result = wineFormSchema.safeParse(input);
-    return result.success ? [] : result.error.issues.map((issue) => issue.message);
-  }
-
   it("gör om tal i text till tal", () => {
     const result = wineFormSchema.parse({
       ...valid,
@@ -117,18 +108,18 @@ describe("wineFormSchema", () => {
   });
 
   it("ger samma felmeddelanden som för tal", () => {
-    expect(formMessagesFor({ ...valid, vintage: "nittonhundra" })).toEqual([
+    expect(messagesFor(wineFormSchema, { ...valid, vintage: "nittonhundra" })).toEqual([
       "Ange ett årtal eller lämna tomt",
     ]);
-    expect(formMessagesFor({ ...valid, vintage: "1899" })).toEqual([
+    expect(messagesFor(wineFormSchema, { ...valid, vintage: "1899" })).toEqual([
       "Årgången måste vara mellan 1900 och i år",
     ]);
-    expect(formMessagesFor({ ...valid, price: "12,50" })).toEqual([
+    expect(messagesFor(wineFormSchema, { ...valid, price: "12,50" })).toEqual([
       "Ange ett pris i hela kronor, mellan 0 och 100000",
     ]);
   });
 
   it("trimmar och kräver namn som vanligt", () => {
-    expect(formMessagesFor({ name: "  " })).toEqual(["Ange vinets namn"]);
+    expect(messagesFor(wineFormSchema, { name: "  " })).toEqual(["Ange vinets namn"]);
   });
 });

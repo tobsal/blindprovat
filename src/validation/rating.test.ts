@@ -1,12 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { messagesFor } from "@/test-support/messages-for";
 import { ratingInputSchema } from "./rating";
 
 const valid = { score: 7 };
-
-function messagesFor(input: unknown) {
-  const result = ratingInputSchema.safeParse(input);
-  return result.success ? [] : result.error.issues.map((issue) => issue.message);
-}
 
 describe("ratingInputSchema", () => {
   it("godtar ett giltigt betyg och fyller i standardvärden", () => {
@@ -23,14 +19,14 @@ describe("ratingInputSchema", () => {
   });
 
   it.each([0, 11, -1, 5.5, NaN])("avvisar poäng %s", (score) => {
-    expect(messagesFor({ score })).toEqual([
+    expect(messagesFor(ratingInputSchema, { score })).toEqual([
       "Välj ett betyg mellan 1 och 10",
     ]);
   });
 
   it("avvisar saknad eller icke-numerisk poäng", () => {
-    expect(messagesFor({})).toEqual(["Välj ett betyg mellan 1 och 10"]);
-    expect(messagesFor({ score: "7" })).toEqual([
+    expect(messagesFor(ratingInputSchema, {})).toEqual(["Välj ett betyg mellan 1 och 10"]);
+    expect(messagesFor(ratingInputSchema, { score: "7" })).toEqual([
       "Välj ett betyg mellan 1 och 10",
     ]);
   });
@@ -55,7 +51,7 @@ describe("ratingInputSchema", () => {
     expect(
       ratingInputSchema.safeParse({ ...valid, note: "a".repeat(500) }).success,
     ).toBe(true);
-    expect(messagesFor({ ...valid, note: "a".repeat(501) })).toEqual([
+    expect(messagesFor(ratingInputSchema, { ...valid, note: "a".repeat(501) })).toEqual([
       "Anteckningen får vara högst 500 tecken",
     ]);
   });
@@ -71,7 +67,7 @@ describe("ratingInputSchema", () => {
     expect(
       ratingInputSchema.safeParse({ ...valid, guess: "a".repeat(100) }).success,
     ).toBe(true);
-    expect(messagesFor({ ...valid, guess: "a".repeat(101) })).toEqual([
+    expect(messagesFor(ratingInputSchema, { ...valid, guess: "a".repeat(101) })).toEqual([
       "Gissningen får vara högst 100 tecken",
     ]);
   });
@@ -83,19 +79,19 @@ describe("ratingInputSchema", () => {
 
   it("avvisar sex taggar", () => {
     const tags = ["fruity", "spicy", "oaky", "acidic", "mineral", "floral"];
-    expect(messagesFor({ ...valid, tags })).toEqual([
+    expect(messagesFor(ratingInputSchema, { ...valid, tags })).toEqual([
       "Du kan välja högst 5 taggar",
     ]);
   });
 
   it("avvisar okänd tagg", () => {
-    expect(messagesFor({ ...valid, tags: ["buttery"] })).toEqual([
+    expect(messagesFor(ratingInputSchema, { ...valid, tags: ["buttery"] })).toEqual([
       "Välj bland taggarna i listan",
     ]);
   });
 
   it("avvisar dubbletter bland taggarna", () => {
-    expect(messagesFor({ ...valid, tags: ["fruity", "fruity"] })).toEqual([
+    expect(messagesFor(ratingInputSchema, { ...valid, tags: ["fruity", "fruity"] })).toEqual([
       "Varje tagg kan bara väljas en gång",
     ]);
   });

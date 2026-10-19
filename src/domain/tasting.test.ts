@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  canAddWines,
+  canJoinTasting,
+  canOpenWines,
   canRateWines,
+  canRevealWineDetails,
   formatTastingCode,
   nextTastingStatus,
   TASTING_CODE_ALPHABET,
@@ -18,11 +22,35 @@ describe("nextTastingStatus", () => {
   });
 });
 
-describe("canRateWines", () => {
+describe("statusregler", () => {
+  it("tillåter att lägga till viner bara medan provningen förbereds", () => {
+    expect(canAddWines("draft")).toBe(true);
+    expect(canAddWines("live")).toBe(false);
+    expect(canAddWines("revealed")).toBe(false);
+  });
+
+  it("tillåter att öppna och stänga viner bara medan provningen pågår", () => {
+    expect(canOpenWines("draft")).toBe(false);
+    expect(canOpenWines("live")).toBe(true);
+    expect(canOpenWines("revealed")).toBe(false);
+  });
+
   it("tillåter betyg bara medan provningen pågår", () => {
     expect(canRateWines("draft")).toBe(false);
     expect(canRateWines("live")).toBe(true);
     expect(canRateWines("revealed")).toBe(false);
+  });
+
+  it("tillåter att gå med tills provningen är avslöjad", () => {
+    expect(canJoinTasting("draft")).toBe(true);
+    expect(canJoinTasting("live")).toBe(true);
+    expect(canJoinTasting("revealed")).toBe(false);
+  });
+
+  it("visar vinets uppgifter för deltagare först när provningen är avslöjad", () => {
+    expect(canRevealWineDetails("draft")).toBe(false);
+    expect(canRevealWineDetails("live")).toBe(false);
+    expect(canRevealWineDetails("revealed")).toBe(true);
   });
 });
 

@@ -10,8 +10,26 @@ export function nextTastingStatus(status: TastingStatus): TastingStatus | null {
   return TASTING_STATUSES[index + 1] ?? null;
 }
 
+export function canAddWines(status: TastingStatus): boolean {
+  return status === "draft";
+}
+
+export function canOpenWines(status: TastingStatus): boolean {
+  return status === "live";
+}
+
 export function canRateWines(status: TastingStatus): boolean {
   return status === "live";
+}
+
+// En avslöjad provning går inte att gå med i.
+export function canJoinTasting(status: TastingStatus): boolean {
+  return status !== "revealed";
+}
+
+// Den enda regeln som avgör när deltagare får se vinets riktiga uppgifter.
+export function canRevealWineDetails(status: TastingStatus): boolean {
+  return status === "revealed";
 }
 
 // 32 tecken utan de lättförväxlade 0, O, 1 och I. Med 10 tecken blir det

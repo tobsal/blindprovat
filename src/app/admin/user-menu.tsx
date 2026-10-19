@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { auth, signOut } from "@/auth";
 
 async function logOut() {
@@ -6,6 +7,8 @@ async function logOut() {
 }
 
 export async function UserMenu() {
+  // auth() skapar slumpvärden som inte får förrenderas.
+  await connection();
   const session = await auth();
   if (!session) return null;
 

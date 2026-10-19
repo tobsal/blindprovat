@@ -53,7 +53,6 @@ npm run test:db         # Vitest mot migrerad databas (*.db.test.ts, kräver DAT
 npm run test:e2e        # Playwright (bygger och startar appen, kräver DATABASE_URL och AUTH_SECRET, läser .env.local)
 npm run db:generate     # generera migration från ändrat schema
 npm run db:migrate      # kör migrationer mot DATABASE_URL
-npm run db:seed         # fyll databasen med demodata
 ```
 
 Kör alltid `npm run typecheck && npm run lint && npm test` innan du säger att en uppgift är klar.
@@ -79,6 +78,8 @@ Utöver lagren gäller:
 - **Valideringsregler** delas mellan formulär och server och ligger separat från både UI och lagring.
 - **Konfiguration** och **autentisering/sessioner** hålls samlade och undviker spridda direktuppslag i koden. Skapa dock ingen egen modul eller abstraktion för det förrän det behövs.
 - **Enhetstester** ligger bredvid koden de testar. **E2E-tester** ligger separat från källkoden.
+- **Testhjälp** som delas mellan tester (till exempel fixtures för databastester) ligger i `src/test-support/`. Den får bara importeras från tester (`*.test.ts`) och e2e, aldrig från produktionskod. Det upprätthålls av en lintregel.
+- **Låsregel för skrivningar** som beror på provningens status eller på om ett vin är öppet: lås provningsraden först, i en egen fråga, och läs sedan det som ska avgöra saken. Skrivare som ändrar status eller stänger ett vin tar exklusivt lås, betygsparare delat lås. Lås aldrig bara vinraden. Regeln och skälen står överst i `src/repositories/wines.ts`.
 - **Migrationer** är genererade av verktyget och redigeras inte för hand.
 - Lagergränserna ska så långt möjligt upprätthållas av lintregler, inte bara av den här texten.
 
@@ -110,6 +111,7 @@ Utöver lagren gäller:
     - Serveranrop returnerar typade fel (till exempel valideringsfel per fält, saknad behörighet, ogiltigt tillstånd) som UI:t visar på svenska vid rätt fält. Oväntade fel kastas och fångas av närmaste `error.tsx`.
     - Deltagarklienten behåller det som skrivits in när ett anrop misslyckas, och skiljer på "ingen uppkoppling" och "något gick fel hos oss".
     - Logga oväntade fel på servern med tillräckligt sammanhang för att felsöka, men aldrig hemligheter, sessionstoken, anteckningar eller vininformation.
+    - Next.js loggar fel som kastas på servern av sig själv, med ett `digest` men utan sammanhang. Det räcker så länge ingen kod fångar felet. Bygg ingen egen loggmodul i förväg. När kod först behöver fånga ett oväntat fel (till exempel ett `catch` runt ett externt anrop) loggar den felet med vad som försöktes, utan indata som kan innehålla hemligheter, anteckningar eller vininformation, och kastar sedan om det.
 
 ## Språk
 

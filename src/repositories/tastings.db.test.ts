@@ -1,8 +1,12 @@
+import { randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import { TASTING_CODE_ALPHABET, TASTING_CODE_LENGTH } from "@/domain/tasting";
 import { createTestOwners, sampleWine } from "@/test-support/fixtures";
 import { unwrap } from "@/test-support/unwrap";
+import { db } from "./db";
+import { isUniqueViolation } from "./errors";
 import { joinTasting } from "./participants";
+import { constraintNames, tastings } from "./schema";
 import {
   advanceTastingStatus,
   createTasting,
@@ -23,6 +27,23 @@ describe("provningar", () => {
     expect(tasting.status).toBe("draft");
     expect(tasting.code).toMatch(
       new RegExp(`^[${TASTING_CODE_ALPHABET}]{${TASTING_CODE_LENGTH}}$`),
+    );
+  });
+
+  it("känner igen ett brott mot den unika provningskoden", async () => {
+    const ownerId = owners.createOwnerId();
+    const code = `test-${randomUUID()}`;
+    await db.insert(tastings).values({ ownerId, name: "Första", code });
+
+    const error = await db
+      .insert(tastings)
+      .values({ ownerId, name: "Andra", code })
+      .then(
+        () => null,
+        (rejection: unknown) => rejection,
+      );
+    expect(isUniqueViolation(error, constraintNames.tastingCodeUnique)).toBe(
+      true,
     );
   });
 

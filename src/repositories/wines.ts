@@ -5,6 +5,13 @@ import type { SessionParticipant } from "./participants";
 import { tastings, wines } from "./schema";
 import type { AdminWine } from "./tastings";
 
+// Låsregel för alla skrivningar som beror på provningens status eller på om
+// ett vin är öppet: lås provningsraden först, i en egen fråga, och läs sedan
+// det som ska avgöra saken. Skrivare som ändrar statusen eller stänger ett
+// vin tar exklusivt lås (FOR UPDATE eller UPDATE), betygsparare tar delat lås
+// (FOR SHARE). Lås aldrig bara vinraden. Då tas locken alltid i samma
+// ordning och ingen kan läsa ett gammalt värde efter att ha väntat på låset.
+
 export type WineDetails = Pick<
   AdminWine,
   "name" | "producer" | "grape" | "region" | "country" | "vintage" | "price"

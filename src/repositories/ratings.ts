@@ -30,17 +30,25 @@ export async function saveRating(
   values: RatingValues,
 ): Promise<SaveRatingResult> {
   return db.transaction(async (tx) => {
-    // Låser vinet så att det inte kan stängas mellan kontrollen och skrivningen.
+    // Delat lås på provningen, så att den inte kan avslöjas och vinet inte
+    // stängas mellan kontrollen och skrivningen. Betyg kan sparas samtidigt.
+    // Låset tas i en egen fråga så att nästa fråga ser allt som var
+    // committat när låset beviljades (låsregeln står i wines.ts).
+    const [tasting] = await tx
+      .select({ status: tastings.status })
+      .from(tastings)
+      .where(eq(tastings.id, participant.tastingId))
+      .for("share");
+    if (!tasting) return { ok: false, error: "not_found" };
+
     const [wine] = await tx
-      .select({ isOpen: wines.isOpen, status: tastings.status })
+      .select({ isOpen: wines.isOpen })
       .from(wines)
-      .innerJoin(tastings, eq(wines.tastingId, tastings.id))
       .where(
         and(eq(wines.id, wineId), eq(wines.tastingId, participant.tastingId)),
-      )
-      .for("update");
+      );
     if (!wine) return { ok: false, error: "not_found" };
-    if (!wine.isOpen || !canRateWines(wine.status)) {
+    if (!wine.isOpen || !canRateWines(tasting.status)) {
       return { ok: false, error: "invalid_state" };
     }
 

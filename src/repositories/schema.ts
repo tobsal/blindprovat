@@ -27,6 +27,13 @@ import { WINE_DETAIL_MAX, WINE_NAME_MAX } from "@/domain/wine";
 
 export const tastingStatus = pgEnum("tasting_status", TASTING_STATUSES);
 
+// Namn på constraints som koden känner igen i databasfel (isUniqueViolation).
+// De namnges här så att de inte beror på vad Drizzle genererar.
+export const constraintNames = {
+  tastingCodeUnique: "tastings_code_key",
+  participantDisplayNameUnique: "participants_tasting_id_display_name_key",
+} as const;
+
 export const tastings = pgTable(
   "tastings",
   {
@@ -34,11 +41,14 @@ export const tastings = pgTable(
     // Auth.js-användarens id.
     ownerId: text().notNull(),
     name: varchar({ length: TASTING_NAME_MAX }).notNull(),
-    code: text().notNull().unique(),
+    code: text().notNull(),
     status: tastingStatus().notNull().default("draft"),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index().on(table.ownerId)],
+  (table) => [
+    index().on(table.ownerId),
+    unique(constraintNames.tastingCodeUnique).on(table.code),
+  ],
 );
 
 export const wines = pgTable(
@@ -76,7 +86,7 @@ export const participants = pgTable(
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
-    uniqueIndex("participants_tasting_id_display_name_key").on(
+    uniqueIndex(constraintNames.participantDisplayNameUnique).on(
       table.tastingId,
       sql`lower(${table.displayName})`,
     ),

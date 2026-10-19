@@ -9,7 +9,7 @@ import { db } from "./db";
 import { isUniqueViolation } from "./errors";
 import { tastingOwnedBy } from "./ownership";
 import type { SessionParticipant } from "./participants";
-import { tastings, wines } from "./schema";
+import { constraintNames, tastings, wines } from "./schema";
 
 export type AdminTasting = typeof tastings.$inferSelect;
 export type AdminWine = typeof wines.$inferSelect;
@@ -39,7 +39,7 @@ export async function createTasting(
     } catch (error) {
       if (
         attempt < MAX_CODE_ATTEMPTS &&
-        isUniqueViolation(error, "tastings_code_unique")
+        isUniqueViolation(error, constraintNames.tastingCodeUnique)
       ) {
         continue;
       }

@@ -4,7 +4,8 @@ import { ownerIdFromAccount } from "./auth-owner-id";
 
 declare module "next-auth" {
   interface Session {
-    user: { ownerId: string; name?: string | null; image?: string | null };
+    // Saknas om sessionen inte har loggats in via den här appen.
+    user: { ownerId?: string; name?: string | null; image?: string | null };
   }
 }
 

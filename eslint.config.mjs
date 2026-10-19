@@ -148,6 +148,17 @@ const eslintConfig = defineConfig([
         ["repositories"],
         "Presentationslagret ska anropa src/api, inte dataåtkomstlagret.",
       ),
+      // Sessionen läses via src/api/admin-session, inte direkt från Auth.js.
+      {
+        group: ["@/auth"],
+        message:
+          "Presentationslagret ska läsa sessionen via src/api/admin-session och inte importera @/auth.",
+      },
+      {
+        regex: "^\\.\\./(.*/)?auth$",
+        message:
+          "Presentationslagret ska läsa sessionen via src/api/admin-session och inte importera auth.",
+      },
       forbidPackages(
         databasePackages,
         "Databasen nås bara via dataåtkomstlagret (src/repositories).",

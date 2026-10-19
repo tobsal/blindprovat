@@ -16,14 +16,7 @@ describe("calculateResults", () => {
 
   it("tar med viner utan betyg med tomma värden", () => {
     expect(calculateResults(["w1"], []).wines).toEqual([
-      {
-        wineId: "w1",
-        rank: null,
-        average: null,
-        lowest: null,
-        highest: null,
-        ratingCount: 0,
-      },
+      { wineId: "w1", rating: null },
     ]);
   });
 
@@ -35,11 +28,7 @@ describe("calculateResults", () => {
     expect(wines).toEqual([
       {
         wineId: "w1",
-        rank: 1,
-        average: 22 / 3,
-        lowest: 6,
-        highest: 9,
-        ratingCount: 3,
+        rating: { rank: 1, average: 22 / 3, lowest: 6, highest: 9, count: 3 },
       },
     ]);
   });
@@ -53,7 +42,7 @@ describe("calculateResults", () => {
         rating("a", "w3", 8),
       ],
     );
-    expect(wines.map((wine) => [wine.wineId, wine.rank])).toEqual([
+    expect(wines.map((wine) => [wine.wineId, wine.rating?.rank])).toEqual([
       ["w2", 1],
       ["w3", 1],
       ["w1", 3],

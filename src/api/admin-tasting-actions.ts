@@ -8,6 +8,10 @@ import { addWine } from "@/repositories/wines";
 import { tastingIdSchema, tastingInputSchema } from "@/validation/tasting";
 import { wineFormSchema } from "@/validation/wine";
 import { requireAdminOwnerId } from "./admin-session";
+import {
+  messageForRepositoryError,
+  tastingNotFoundMessage,
+} from "./error-messages";
 
 // Det som skrevs in skickas tillbaka, så att formuläret kan visa det igen
 // när något gick fel.
@@ -60,10 +64,6 @@ const wineFields = [
 ] as const;
 export type WineField = (typeof wineFields)[number];
 
-// Saknad provning ger samma svar som någon annans (princip 14).
-const tastingNotFoundMessage =
-  "Provningen finns inte, eller så har du inte åtkomst till den.";
-
 export async function addWineAction(
   rawTastingId: string,
   _previous: FormState<WineField>,
@@ -82,10 +82,10 @@ export async function addWineAction(
   const result = await addWine(ownerId, tastingId.data, parsed.data);
   if (!result.ok) {
     return {
-      formError:
-        result.error === "not_found"
-          ? tastingNotFoundMessage
-          : "Viner kan bara läggas till innan provningen har startat.",
+      formError: messageForRepositoryError(
+        result.error,
+        "Viner kan bara läggas till innan provningen har startat.",
+      ),
       values,
     };
   }

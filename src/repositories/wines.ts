@@ -2,6 +2,7 @@ import { and, asc, eq, max } from "drizzle-orm";
 import { db } from "./db";
 import { tastingOwnedBy } from "./ownership";
 import type { SessionParticipant } from "./participants";
+import type { RepositoryResult } from "./result";
 import { tastings, wines } from "./schema";
 import type { AdminWine } from "./tastings";
 
@@ -25,15 +26,11 @@ export type ParticipantWine = Pick<
   details: WineDetails | null;
 };
 
-export type AddWineResult =
-  | { ok: true; wine: AdminWine }
-  | { ok: false; error: "not_found" | "invalid_state" };
-
 export async function addWine(
   ownerId: string,
   tastingId: string,
   details: WineDetails,
-): Promise<AddWineResult> {
+): Promise<RepositoryResult<{ wine: AdminWine }>> {
   return db.transaction(async (tx) => {
     // Låser provningen så att två samtidiga anrop inte får samma blindnummer.
     const [tasting] = await tx
@@ -56,15 +53,11 @@ export async function addWine(
   });
 }
 
-export type SetWineOpenResult =
-  | { ok: true; wine: AdminWine }
-  | { ok: false; error: "not_found" | "invalid_state" };
-
 export async function setWineOpen(
   ownerId: string,
   wineId: string,
   isOpen: boolean,
-): Promise<SetWineOpenResult> {
+): Promise<RepositoryResult<{ wine: AdminWine }>> {
   return db.transaction(async (tx) => {
     // Samma ägarregel som tastingOwnedBy, men uppslaget går via vinet.
     const [found] = await tx

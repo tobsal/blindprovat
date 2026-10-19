@@ -1,13 +1,13 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-<<<<<<< HEAD
-import { getMyTasting, type AdminWine } from "@/api/admin-tastings";
-=======
-import { getMyTasting, type AdminTastingWithWines } from "@/api/admin-tastings";
-import { canAddWines } from "@/domain/tasting";
 import { LoadingStatus } from "@/app/_components/loading-status";
->>>>>>> origin/main
+import {
+  getMyTasting,
+  type AdminTastingWithWines,
+  type AdminWine,
+} from "@/api/admin-tastings";
+import { canAddWines } from "@/domain/tasting";
 import { tastingStatusLabels } from "../../tasting-status";
 import { AddWineForm } from "./add-wine-form";
 

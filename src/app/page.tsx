@@ -7,7 +7,7 @@ export default function Home() {
       <p>Arrangera blindprovningar av vin i grupp.</p>
       <Link
         href="/login"
-        className="inline-flex min-h-11 items-center underline focus-visible:outline-2 focus-visible:outline-offset-2"
+        className="link-action"
       >
         För dig som håller i en provning: logga in
       </Link>

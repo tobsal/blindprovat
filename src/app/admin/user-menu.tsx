@@ -18,7 +18,7 @@ export async function UserMenu() {
       <form action={logOut}>
         <button
           type="submit"
-          className="min-h-11 rounded border border-foreground px-4 focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="btn-secondary"
         >
           Logga ut
         </button>

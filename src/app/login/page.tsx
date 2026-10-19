@@ -3,6 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { auth, signIn } from "@/auth";
+import { FormError } from "@/app/_components/form-error";
+import { LoadingStatus } from "@/app/_components/loading-status";
 import { parseLoginError } from "@/validation/login-error";
 
 const errorMessages = {
@@ -30,15 +32,11 @@ async function LoginContent({
 
   return (
     <>
-      {error && (
-        <p role="alert" className="border-l-4 border-foreground pl-3">
-          <strong>Fel:</strong> {errorMessages[error]}
-        </p>
-      )}
+      {error && <FormError>{errorMessages[error]}</FormError>}
       <form action={logIn}>
         <button
           type="submit"
-          className="min-h-11 rounded bg-foreground px-4 text-background focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="btn-primary"
         >
           Logga in med GitHub
         </button>
@@ -58,16 +56,14 @@ export default function LoginPage({
       <p>Logga in med ditt GitHub-konto för att skapa och leda provningar.</p>
       <Suspense
         fallback={
-          <p role="status" className="min-h-11">
-            Laddar …
-          </p>
+          <LoadingStatus className="min-h-11" />
         }
       >
         <LoginContent searchParams={searchParams} />
       </Suspense>
       <Link
         href="/"
-        className="inline-flex min-h-11 items-center underline focus-visible:outline-2 focus-visible:outline-offset-2"
+        className="link-action"
       >
         Till startsidan
       </Link>

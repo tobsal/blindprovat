@@ -13,7 +13,7 @@ export function ErrorPage({ reset }: { reset: () => void }) {
         <button
           type="button"
           onClick={reset}
-          className="min-h-11 rounded bg-foreground px-4 text-background focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="btn-primary"
         >
           Försök igen
         </button>
@@ -21,7 +21,7 @@ export function ErrorPage({ reset }: { reset: () => void }) {
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- routern kan vara trasig efter ett fel */}
         <a
           href="/"
-          className="inline-flex min-h-11 items-center rounded border border-foreground px-4 focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="btn-secondary"
         >
           Till startsidan
         </a>

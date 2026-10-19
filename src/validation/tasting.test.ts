@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { tastingInputSchema } from "./tasting";
+import { tastingIdSchema, tastingInputSchema } from "./tasting";
 
 function messagesFor(input: unknown) {
   const result = tastingInputSchema.safeParse(input);
@@ -25,5 +25,16 @@ describe("tastingInputSchema", () => {
     expect(messagesFor({ name: "a".repeat(81) })).toEqual([
       "Namnet får vara högst 80 tecken",
     ]);
+  });
+});
+
+describe("tastingIdSchema", () => {
+  it("godtar ett uuid", () => {
+    const id = "6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b";
+    expect(tastingIdSchema.parse(id)).toBe(id);
+  });
+
+  it.each(["abc", "", "1", "6f1c2a3b-4d5e-4f60-8a7b"])("avvisar %j", (id) => {
+    expect(tastingIdSchema.safeParse(id).success).toBe(false);
   });
 });

@@ -51,3 +51,16 @@ export const wineInputSchema = z.object({
 });
 
 export type WineInput = z.infer<typeof wineInputSchema>;
+
+// Formulär skickar tal som text. Tomt fält betyder inget värde, och text
+// som inte är ett tal blir NaN så att talregeln ger sitt felmeddelande.
+function numberFromForm(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  return trimmed === "" ? null : Number(trimmed);
+}
+
+export const wineFormSchema = wineInputSchema.extend({
+  vintage: z.preprocess(numberFromForm, wineInputSchema.shape.vintage),
+  price: z.preprocess(numberFromForm, wineInputSchema.shape.price),
+});

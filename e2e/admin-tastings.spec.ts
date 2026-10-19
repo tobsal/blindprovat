@@ -57,6 +57,7 @@ test("tomt namn ger ett fel vid fältet", async ({ context, page }) => {
   await page.getByRole("button", { name: "Skapa provning" }).click();
 
   const nameField = page.getByLabel("Namn på provningen");
+  await expect(nameField).toBeFocused();
   await expect(nameField).toHaveAttribute("aria-invalid", "true");
   await expect(nameField).toHaveAccessibleDescription(
     "Fel: Ange provningens namn",

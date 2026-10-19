@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { eq } from "drizzle-orm";
+import { canJoinTasting } from "@/domain/tasting";
 import { db } from "./db";
 import { isUniqueViolation } from "./errors";
 import { constraintNames, participants, tastings } from "./schema";
@@ -41,7 +42,7 @@ export async function joinTasting(input: {
         .where(eq(tastings.code, input.code))
         .for("update");
       // En avslöjad provning ger samma svar som en som inte finns.
-      if (!tasting || tasting.status === "revealed") {
+      if (!tasting || !canJoinTasting(tasting.status)) {
         return { ok: false, error: "not_found" } as const;
       }
 

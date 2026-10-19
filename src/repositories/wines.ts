@@ -1,4 +1,9 @@
 import { and, asc, eq, max } from "drizzle-orm";
+import {
+  canAddWines,
+  canOpenWines,
+  canRevealWineDetails,
+} from "@/domain/tasting";
 import { db } from "./db";
 import { tastingOwnedBy } from "./ownership";
 import type { SessionParticipant } from "./participants";
@@ -39,7 +44,9 @@ export async function addWine(
       .where(tastingOwnedBy(ownerId, tastingId))
       .for("update");
     if (!tasting) return { ok: false, error: "not_found" };
-    if (tasting.status !== "draft") return { ok: false, error: "invalid_state" };
+    if (!canAddWines(tasting.status)) {
+      return { ok: false, error: "invalid_state" };
+    }
 
     const [{ highest }] = await tx
       .select({ highest: max(wines.blindNumber) })
@@ -67,7 +74,9 @@ export async function setWineOpen(
       .where(and(eq(wines.id, wineId), eq(tastings.ownerId, ownerId)))
       .for("update", { of: tastings });
     if (!found) return { ok: false, error: "not_found" };
-    if (found.status !== "live") return { ok: false, error: "invalid_state" };
+    if (!canOpenWines(found.status)) {
+      return { ok: false, error: "invalid_state" };
+    }
 
     const [wine] = await tx
       .update(wines)
@@ -108,7 +117,7 @@ export async function listWinesForParticipant(
     .where(eq(tastings.id, tastingId));
   if (!tasting) return [];
 
-  if (tasting.status !== "revealed") {
+  if (!canRevealWineDetails(tasting.status)) {
     const rows = await db
       .select(blindColumns)
       .from(wines)

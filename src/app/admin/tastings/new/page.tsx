@@ -8,7 +8,7 @@ export default function NewTastingPage() {
       <CreateTastingForm />
       <Link
         href="/admin"
-        className="mt-6 inline-flex min-h-11 items-center underline focus-visible:outline-2 focus-visible:outline-offset-2"
+        className="link-action mt-6"
       >
         Till dina provningar
       </Link>

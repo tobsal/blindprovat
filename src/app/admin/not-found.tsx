@@ -8,7 +8,7 @@ export default function AdminNotFound() {
       <p className="mt-4">{tastingNotFoundMessage}</p>
       <Link
         href="/admin"
-        className="mt-6 inline-flex min-h-11 items-center rounded border border-foreground px-4 focus-visible:outline-2 focus-visible:outline-offset-2"
+        className="btn-secondary mt-6"
       >
         Till dina provningar
       </Link>

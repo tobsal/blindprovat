@@ -1,7 +1,13 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+<<<<<<< HEAD
 import { getMyTasting, type AdminWine } from "@/api/admin-tastings";
+=======
+import { getMyTasting, type AdminTastingWithWines } from "@/api/admin-tastings";
+import { canAddWines } from "@/domain/tasting";
+import { LoadingStatus } from "@/app/_components/loading-status";
+>>>>>>> origin/main
 import { tastingStatusLabels } from "../../tasting-status";
 import { AddWineForm } from "./add-wine-form";
 
@@ -50,7 +56,7 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
             ))}
           </ol>
         )}
-        {tasting.status === "draft" ? (
+        {canAddWines(tasting.status) ? (
           <AddWineForm tastingId={tasting.id} />
         ) : (
           <p className="mt-4">
@@ -69,9 +75,7 @@ export default function TastingPage({
     <main className="mx-auto w-full max-w-3xl flex-1 p-6">
       <Suspense
         fallback={
-          <p role="status" className="min-h-11">
-            Laddar provningen …
-          </p>
+          <LoadingStatus className="min-h-11">Laddar provningen …</LoadingStatus>
         }
       >
         <TastingDetails params={params} />
@@ -79,7 +83,7 @@ export default function TastingPage({
 
       <Link
         href="/admin"
-        className="mt-8 inline-flex min-h-11 items-center underline focus-visible:outline-2 focus-visible:outline-offset-2"
+        className="link-action mt-8"
       >
         Till dina provningar
       </Link>

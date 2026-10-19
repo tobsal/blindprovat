@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getMyTasting, type AdminTastingWithWines } from "@/api/admin-tastings";
+import { canAddWines } from "@/domain/tasting";
 import { tastingStatusLabels } from "../../tasting-status";
 import { AddWineForm } from "./add-wine-form";
 
@@ -52,7 +53,7 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
             ))}
           </ol>
         )}
-        {tasting.status === "draft" ? (
+        {canAddWines(tasting.status) ? (
           <AddWineForm tastingId={tasting.id} />
         ) : (
           <p className="mt-4">

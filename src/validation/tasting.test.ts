@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { messagesFor } from "@/test-support/messages-for";
 import { tastingIdSchema, tastingInputSchema } from "./tasting";
-
-function messagesFor(input: unknown) {
-  const result = tastingInputSchema.safeParse(input);
-  return result.success ? [] : result.error.issues.map((issue) => issue.message);
-}
 
 describe("tastingInputSchema", () => {
   it("trimmar namnet", () => {
@@ -14,15 +10,15 @@ describe("tastingInputSchema", () => {
   });
 
   it("kräver namn", () => {
-    expect(messagesFor({ name: "  " })).toEqual(["Ange provningens namn"]);
-    expect(messagesFor({})).toEqual(["Ange provningens namn"]);
+    expect(messagesFor(tastingInputSchema, { name: "  " })).toEqual(["Ange provningens namn"]);
+    expect(messagesFor(tastingInputSchema, {})).toEqual(["Ange provningens namn"]);
   });
 
   it("godtar 80 tecken men inte 81", () => {
     expect(
       tastingInputSchema.safeParse({ name: "a".repeat(80) }).success,
     ).toBe(true);
-    expect(messagesFor({ name: "a".repeat(81) })).toEqual([
+    expect(messagesFor(tastingInputSchema, { name: "a".repeat(81) })).toEqual([
       "Namnet får vara högst 80 tecken",
     ]);
   });

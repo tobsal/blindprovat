@@ -5,8 +5,18 @@ import {
   canRevealWineDetails,
 } from "@/domain/tasting";
 import { db } from "./db";
+import { tastingOwnedBy } from "./ownership";
+import type { SessionParticipant } from "./participants";
+import type { RepositoryResult } from "./result";
 import { tastings, wines } from "./schema";
 import type { AdminWine } from "./tastings";
+
+// Låsregel för alla skrivningar som beror på provningens status eller på om
+// ett vin är öppet: lås provningsraden först, i en egen fråga, och läs sedan
+// det som ska avgöra saken. Skrivare som ändrar statusen eller stänger ett
+// vin tar exklusivt lås (FOR UPDATE eller UPDATE), betygsparare tar delat lås
+// (FOR SHARE). Lås aldrig bara vinraden. Då tas locken alltid i samma
+// ordning och ingen kan läsa ett gammalt värde efter att ha väntat på låset.
 
 export type WineDetails = Pick<
   AdminWine,
@@ -21,21 +31,17 @@ export type ParticipantWine = Pick<
   details: WineDetails | null;
 };
 
-export type AddWineResult =
-  | { ok: true; wine: AdminWine }
-  | { ok: false; error: "not_found" | "invalid_state" };
-
 export async function addWine(
   ownerId: string,
   tastingId: string,
   details: WineDetails,
-): Promise<AddWineResult> {
+): Promise<RepositoryResult<{ wine: AdminWine }>> {
   return db.transaction(async (tx) => {
     // Låser provningen så att två samtidiga anrop inte får samma blindnummer.
     const [tasting] = await tx
       .select({ status: tastings.status })
       .from(tastings)
-      .where(and(eq(tastings.id, tastingId), eq(tastings.ownerId, ownerId)))
+      .where(tastingOwnedBy(ownerId, tastingId))
       .for("update");
     if (!tasting) return { ok: false, error: "not_found" };
     if (!canAddWines(tasting.status)) {
@@ -54,16 +60,13 @@ export async function addWine(
   });
 }
 
-export type SetWineOpenResult =
-  | { ok: true; wine: AdminWine }
-  | { ok: false; error: "not_found" | "invalid_state" };
-
 export async function setWineOpen(
   ownerId: string,
   wineId: string,
   isOpen: boolean,
-): Promise<SetWineOpenResult> {
+): Promise<RepositoryResult<{ wine: AdminWine }>> {
   return db.transaction(async (tx) => {
+    // Samma ägarregel som tastingOwnedBy, men uppslaget går via vinet.
     const [found] = await tx
       .select({ status: tastings.status })
       .from(wines)
@@ -103,9 +106,11 @@ const detailColumns = {
 // Vininformationen hämtas inte ens från databasen före avslöjandet.
 // Statusen går bara framåt, så en samtidig ändring kan som värst dölja
 // detaljerna en gång för mycket, aldrig visa dem för tidigt.
+// Bara deltagarens egen provning går att läsa, via sessionen.
 export async function listWinesForParticipant(
-  tastingId: string,
+  participant: SessionParticipant,
 ): Promise<ParticipantWine[]> {
+  const { tastingId } = participant;
   const [tasting] = await db
     .select({ status: tastings.status })
     .from(tastings)

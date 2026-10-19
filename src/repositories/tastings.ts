@@ -7,7 +7,10 @@ import {
 } from "@/domain/tasting";
 import { db } from "./db";
 import { isUniqueViolation } from "./errors";
-import { tastings, wines } from "./schema";
+import { tastingOwnedBy } from "./ownership";
+import type { SessionParticipant } from "./participants";
+import type { RepositoryResult } from "./result";
+import { constraintNames, tastings, wines } from "./schema";
 
 export type AdminTasting = typeof tastings.$inferSelect;
 export type AdminWine = typeof wines.$inferSelect;
@@ -37,7 +40,7 @@ export async function createTasting(
     } catch (error) {
       if (
         attempt < MAX_CODE_ATTEMPTS &&
-        isUniqueViolation(error, "tastings_code_unique")
+        isUniqueViolation(error, constraintNames.tastingCodeUnique)
       ) {
         continue;
       }
@@ -64,7 +67,7 @@ export async function getTastingForOwner(
   const [tasting] = await db
     .select()
     .from(tastings)
-    .where(and(eq(tastings.id, tastingId), eq(tastings.ownerId, ownerId)));
+    .where(tastingOwnedBy(ownerId, tastingId));
   if (!tasting) return null;
 
   const tastingWines = await db
@@ -75,18 +78,11 @@ export async function getTastingForOwner(
   return { ...tasting, wines: tastingWines };
 }
 
-export type AdvanceTastingStatusResult =
-  | { ok: true; tasting: AdminTasting }
-  | { ok: false; error: "not_found" | "invalid_state" };
-
 export async function advanceTastingStatus(
   ownerId: string,
   tastingId: string,
-): Promise<AdvanceTastingStatusResult> {
-  const ownedTasting = and(
-    eq(tastings.id, tastingId),
-    eq(tastings.ownerId, ownerId),
-  );
+): Promise<RepositoryResult<{ tasting: AdminTasting }>> {
+  const ownedTasting = tastingOwnedBy(ownerId, tastingId);
   const [current] = await db
     .select({ status: tastings.status })
     .from(tastings)
@@ -106,12 +102,14 @@ export async function advanceTastingStatus(
   return tasting ? { ok: true, tasting } : { ok: false, error: "invalid_state" };
 }
 
+// Deltagaren får bara se sin egen provning, så den slås upp via sessionen
+// och inte via ett id som kommer utifrån.
 export async function findTastingForParticipant(
-  tastingId: string,
+  participant: SessionParticipant,
 ): Promise<ParticipantTasting | null> {
   const [tasting] = await db
     .select({ id: tastings.id, name: tastings.name, status: tastings.status })
     .from(tastings)
-    .where(eq(tastings.id, tastingId));
+    .where(eq(tastings.id, participant.tastingId));
   return tasting ?? null;
 }

@@ -1,5 +1,12 @@
+import { randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import { TASTING_CODE_ALPHABET, TASTING_CODE_LENGTH } from "@/domain/tasting";
+import { createTestOwners, sampleWine } from "@/test-support/fixtures";
+import { unwrap } from "@/test-support/unwrap";
+import { db } from "./db";
+import { isUniqueViolation } from "./errors";
+import { joinTasting } from "./participants";
+import { constraintNames, tastings } from "./schema";
 import {
   advanceTastingStatus,
   createTasting,
@@ -7,7 +14,6 @@ import {
   getTastingForOwner,
   listTastingsForOwner,
 } from "./tastings";
-import { createTestOwners, sampleWine } from "./test-fixtures";
 import { addWine, listWinesForParticipant, setWineOpen } from "./wines";
 
 const owners = createTestOwners();
@@ -21,6 +27,23 @@ describe("provningar", () => {
     expect(tasting.status).toBe("draft");
     expect(tasting.code).toMatch(
       new RegExp(`^[${TASTING_CODE_ALPHABET}]{${TASTING_CODE_LENGTH}}$`),
+    );
+  });
+
+  it("känner igen ett brott mot den unika provningskoden", async () => {
+    const ownerId = owners.createOwnerId();
+    const code = `test-${randomUUID()}`;
+    await db.insert(tastings).values({ ownerId, name: "Första", code });
+
+    const error = await db
+      .insert(tastings)
+      .values({ ownerId, name: "Andra", code })
+      .then(
+        () => null,
+        (rejection: unknown) => rejection,
+      );
+    expect(isUniqueViolation(error, constraintNames.tastingCodeUnique)).toBe(
+      true,
     );
   });
 
@@ -62,7 +85,11 @@ describe("provningar", () => {
     const tasting = await createTasting(owners.createOwnerId(), {
       name: "Deltagarvy",
     });
-    expect(await findTastingForParticipant(tasting.id)).toEqual({
+    const { participant } = unwrap(
+      await joinTasting({ code: tasting.code, displayName: "Kim" }),
+      "Kunde inte gå med",
+    );
+    expect(await findTastingForParticipant(participant)).toEqual({
       id: tasting.id,
       name: "Deltagarvy",
       status: "draft",
@@ -90,8 +117,10 @@ describe("viner", () => {
   it("öppnar och stänger viner bara medan provningen pågår", async () => {
     const ownerId = owners.createOwnerId();
     const tasting = await createTasting(ownerId, { name: "Öppna" });
-    const added = await addWine(ownerId, tasting.id, sampleWine);
-    if (!added.ok) throw new Error("Kunde inte lägga till vin");
+    const added = unwrap(
+      await addWine(ownerId, tasting.id, sampleWine),
+      "Kunde inte lägga till vin",
+    );
 
     expect(await setWineOpen(ownerId, added.wine.id, true)).toEqual({
       ok: false,
@@ -109,9 +138,13 @@ describe("viner", () => {
     const ownerId = owners.createOwnerId();
     const tasting = await createTasting(ownerId, { name: "Blint" });
     await addWine(ownerId, tasting.id, sampleWine);
+    const { participant } = unwrap(
+      await joinTasting({ code: tasting.code, displayName: "Kim" }),
+      "Kunde inte gå med",
+    );
 
     for (const step of ["draft", "live"]) {
-      const blind = await listWinesForParticipant(tasting.id);
+      const blind = await listWinesForParticipant(participant);
       expect(blind, step).toEqual([
         { id: expect.any(String), blindNumber: 1, isOpen: false, details: null },
       ]);
@@ -119,7 +152,26 @@ describe("viner", () => {
       await advanceTastingStatus(ownerId, tasting.id);
     }
 
-    const revealed = await listWinesForParticipant(tasting.id);
+    const revealed = await listWinesForParticipant(participant);
     expect(revealed[0].details).toEqual(sampleWine);
+  });
+
+  it("låter en deltagare bara läsa sin egen provnings viner", async () => {
+    const ownerId = owners.createOwnerId();
+    const own = await createTasting(ownerId, { name: "Egen" });
+    const other = await createTasting(ownerId, { name: "Annan" });
+    const ownWine = unwrap(
+      await addWine(ownerId, own.id, sampleWine),
+      "Kunde inte lägga till vin",
+    );
+    await addWine(ownerId, other.id, sampleWine);
+    const { participant } = unwrap(
+      await joinTasting({ code: own.code, displayName: "Kim" }),
+      "Kunde inte gå med",
+    );
+
+    const visible = await listWinesForParticipant(participant);
+    expect(visible.map((wine) => wine.id)).toEqual([ownWine.wine.id]);
+    expect((await findTastingForParticipant(participant))?.id).toBe(own.id);
   });
 });

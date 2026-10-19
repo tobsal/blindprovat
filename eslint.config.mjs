@@ -53,6 +53,31 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  // Testhjälp (src/test-support) får bara användas av tester. Reglerna för
+  // lagergränserna nedan använder no-restricted-imports, så den här regeln
+  // är en egen för att inte skriva över dem.
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/test-support/**"],
+    rules: {
+      "import/no-restricted-paths": [
+        "error",
+        {
+          zones: [
+            {
+              target: [
+                "./src/*/**/!(*.test).{ts,tsx}",
+                "./src/!(*.test).{ts,tsx}",
+              ],
+              from: "./src/test-support",
+              message:
+                "Testhjälp i src/test-support får bara importeras från tester (*.test.ts).",
+            },
+          ],
+        },
+      ],
+    },
+  },
   // Domän: ren affärslogik som inte beror på något annat lager eller ramverk.
   restrictImports(
     ["src/domain/**/*.{ts,tsx}"],

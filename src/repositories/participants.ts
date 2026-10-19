@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { canJoinTasting } from "@/domain/tasting";
 import { db } from "./db";
 import { isUniqueViolation } from "./errors";
-import { participants, tastings } from "./schema";
+import { constraintNames, participants, tastings } from "./schema";
 
 export type SessionParticipant = {
   id: string;
@@ -57,7 +57,9 @@ export async function joinTasting(input: {
       return { ok: true, participant, sessionToken } as const;
     });
   } catch (error) {
-    if (isUniqueViolation(error, "participants_tasting_id_display_name_key")) {
+    if (
+      isUniqueViolation(error, constraintNames.participantDisplayNameUnique)
+    ) {
       return { ok: false, error: "name_taken" };
     }
     throw error;

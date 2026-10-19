@@ -9,6 +9,7 @@ import { db } from "./db";
 import { isUniqueViolation } from "./errors";
 import { tastingOwnedBy } from "./ownership";
 import type { SessionParticipant } from "./participants";
+import type { RepositoryResult } from "./result";
 import { constraintNames, tastings, wines } from "./schema";
 
 export type AdminTasting = typeof tastings.$inferSelect;
@@ -77,14 +78,10 @@ export async function getTastingForOwner(
   return { ...tasting, wines: tastingWines };
 }
 
-export type AdvanceTastingStatusResult =
-  | { ok: true; tasting: AdminTasting }
-  | { ok: false; error: "not_found" | "invalid_state" };
-
 export async function advanceTastingStatus(
   ownerId: string,
   tastingId: string,
-): Promise<AdvanceTastingStatusResult> {
+): Promise<RepositoryResult<{ tasting: AdminTasting }>> {
   const ownedTasting = tastingOwnedBy(ownerId, tastingId);
   const [current] = await db
     .select({ status: tastings.status })

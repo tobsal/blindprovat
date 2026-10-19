@@ -4,6 +4,7 @@ import { canRateWines } from "@/domain/tasting";
 import { db } from "./db";
 import { tastingOwnedBy } from "./ownership";
 import type { SessionParticipant } from "./participants";
+import type { RepositoryResult } from "./result";
 import { ratings, tastings, wines } from "./schema";
 
 type Rating = typeof ratings.$inferSelect;
@@ -11,10 +12,6 @@ type Rating = typeof ratings.$inferSelect;
 export type RatingValues = Pick<Rating, "score" | "note" | "tags" | "guess">;
 
 export type OwnRating = RatingValues & Pick<Rating, "wineId">;
-
-export type SaveRatingResult =
-  | { ok: true; rating: OwnRating }
-  | { ok: false; error: "not_found" | "invalid_state" };
 
 const ownRatingColumns = {
   wineId: ratings.wineId,
@@ -28,7 +25,7 @@ export async function saveRating(
   participant: SessionParticipant,
   wineId: string,
   values: RatingValues,
-): Promise<SaveRatingResult> {
+): Promise<RepositoryResult<{ rating: OwnRating }>> {
   return db.transaction(async (tx) => {
     // Delat lås på provningen, så att den inte kan avslöjas och vinet inte
     // stängas mellan kontrollen och skrivningen. Betyg kan sparas samtidigt.

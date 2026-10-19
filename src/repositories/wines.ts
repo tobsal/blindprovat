@@ -1,5 +1,7 @@
 import { and, asc, eq, max } from "drizzle-orm";
 import { db } from "./db";
+import { tastingOwnedBy } from "./ownership";
+import type { SessionParticipant } from "./participants";
 import { tastings, wines } from "./schema";
 import type { AdminWine } from "./tastings";
 
@@ -30,7 +32,7 @@ export async function addWine(
     const [tasting] = await tx
       .select({ status: tastings.status })
       .from(tastings)
-      .where(and(eq(tastings.id, tastingId), eq(tastings.ownerId, ownerId)))
+      .where(tastingOwnedBy(ownerId, tastingId))
       .for("update");
     if (!tasting) return { ok: false, error: "not_found" };
     if (tasting.status !== "draft") return { ok: false, error: "invalid_state" };
@@ -57,6 +59,7 @@ export async function setWineOpen(
   isOpen: boolean,
 ): Promise<SetWineOpenResult> {
   return db.transaction(async (tx) => {
+    // Samma ägarregel som tastingOwnedBy, men uppslaget går via vinet.
     const [found] = await tx
       .select({ status: tastings.status })
       .from(wines)
@@ -94,9 +97,11 @@ const detailColumns = {
 // Vininformationen hämtas inte ens från databasen före avslöjandet.
 // Statusen går bara framåt, så en samtidig ändring kan som värst dölja
 // detaljerna en gång för mycket, aldrig visa dem för tidigt.
+// Bara deltagarens egen provning går att läsa, via sessionen.
 export async function listWinesForParticipant(
-  tastingId: string,
+  participant: SessionParticipant,
 ): Promise<ParticipantWine[]> {
+  const { tastingId } = participant;
   const [tasting] = await db
     .select({ status: tastings.status })
     .from(tastings)

@@ -2,6 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { TASTING_CODE_ALPHABET, TASTING_CODE_LENGTH } from "@/domain/tasting";
 import { createTestOwners, sampleWine } from "@/test-support/fixtures";
 import { unwrap } from "@/test-support/unwrap";
+import { joinTasting } from "./participants";
 import {
   advanceTastingStatus,
   createTasting,
@@ -63,7 +64,11 @@ describe("provningar", () => {
     const tasting = await createTasting(owners.createOwnerId(), {
       name: "Deltagarvy",
     });
-    expect(await findTastingForParticipant(tasting.id)).toEqual({
+    const { participant } = unwrap(
+      await joinTasting({ code: tasting.code, displayName: "Kim" }),
+      "Kunde inte gå med",
+    );
+    expect(await findTastingForParticipant(participant)).toEqual({
       id: tasting.id,
       name: "Deltagarvy",
       status: "draft",
@@ -112,9 +117,13 @@ describe("viner", () => {
     const ownerId = owners.createOwnerId();
     const tasting = await createTasting(ownerId, { name: "Blint" });
     await addWine(ownerId, tasting.id, sampleWine);
+    const { participant } = unwrap(
+      await joinTasting({ code: tasting.code, displayName: "Kim" }),
+      "Kunde inte gå med",
+    );
 
     for (const step of ["draft", "live"]) {
-      const blind = await listWinesForParticipant(tasting.id);
+      const blind = await listWinesForParticipant(participant);
       expect(blind, step).toEqual([
         { id: expect.any(String), blindNumber: 1, isOpen: false, details: null },
       ]);
@@ -122,7 +131,26 @@ describe("viner", () => {
       await advanceTastingStatus(ownerId, tasting.id);
     }
 
-    const revealed = await listWinesForParticipant(tasting.id);
+    const revealed = await listWinesForParticipant(participant);
     expect(revealed[0].details).toEqual(sampleWine);
+  });
+
+  it("låter en deltagare bara läsa sin egen provnings viner", async () => {
+    const ownerId = owners.createOwnerId();
+    const own = await createTasting(ownerId, { name: "Egen" });
+    const other = await createTasting(ownerId, { name: "Annan" });
+    const ownWine = unwrap(
+      await addWine(ownerId, own.id, sampleWine),
+      "Kunde inte lägga till vin",
+    );
+    await addWine(ownerId, other.id, sampleWine);
+    const { participant } = unwrap(
+      await joinTasting({ code: own.code, displayName: "Kim" }),
+      "Kunde inte gå med",
+    );
+
+    const visible = await listWinesForParticipant(participant);
+    expect(visible.map((wine) => wine.id)).toEqual([ownWine.wine.id]);
+    expect((await findTastingForParticipant(participant))?.id).toBe(own.id);
   });
 });

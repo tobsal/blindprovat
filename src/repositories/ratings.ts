@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import type { ScoredRating } from "@/domain/results";
 import { canRateWines } from "@/domain/tasting";
 import { db } from "./db";
+import { tastingOwnedBy } from "./ownership";
 import type { SessionParticipant } from "./participants";
 import { ratings, tastings, wines } from "./schema";
 
@@ -65,14 +66,14 @@ export async function listOwnRatings(
 }
 
 // null om provningen inte finns eller ägs av någon annan.
-export async function listScoredRatings(
+export async function listScoredRatingsForOwner(
   ownerId: string,
   tastingId: string,
 ): Promise<ScoredRating[] | null> {
   const [tasting] = await db
     .select({ id: tastings.id })
     .from(tastings)
-    .where(and(eq(tastings.id, tastingId), eq(tastings.ownerId, ownerId)));
+    .where(tastingOwnedBy(ownerId, tastingId));
   if (!tasting) return null;
 
   return db

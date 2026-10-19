@@ -4,14 +4,19 @@ export type ScoredRating = {
   score: number;
 };
 
+export type WineScoreSummary = {
+  average: number;
+  lowest: number;
+  highest: number;
+  count: number;
+};
+
+export type WineRating = WineScoreSummary & { rank: number };
+
 export type WineResult = {
   wineId: string;
   // null när vinet saknar betyg.
-  rank: number | null;
-  average: number | null;
-  lowest: number | null;
-  highest: number | null;
-  ratingCount: number;
+  rating: WineRating | null;
 };
 
 export type ParticipantResult = {
@@ -33,14 +38,7 @@ const MIN_RATINGS_FOR_COMPARISON = 2;
 // Snitt räknas i flyttal, så lika värden kan skilja sig i sista decimalen.
 const TIE_TOLERANCE = 1e-9;
 
-type ScoreSummary = {
-  average: number;
-  lowest: number;
-  highest: number;
-  count: number;
-};
-
-function summarizeScores(scores: readonly number[]): ScoreSummary | null {
+function summarizeScores(scores: readonly number[]): WineScoreSummary | null {
   if (scores.length === 0) return null;
   return {
     average: mean(scores),
@@ -79,42 +77,32 @@ function groupScoresByWine(
   return scoresByWine;
 }
 
+// Betygsatta viner kommer först, rankade efter snitt. Viner utan betyg kommer
+// sist, i den ordning de skickades in.
 function rankWines(
   wineIds: readonly string[],
   scoresByWine: ReadonlyMap<string, readonly number[]>,
 ): WineResult[] {
-  const rated = wineIds
-    .flatMap((wineId) => {
-      const summary = summarizeScores(scoresByWine.get(wineId) ?? []);
-      return summary ? [{ wineId, ...summary }] : [];
-    })
-    // Stabil sortering behåller blindnummerordningen vid lika snitt.
-    .sort((a, b) => b.average - a.average);
-  const ranks = competitionRanks(rated.map((wine) => wine.average));
+  const rated: { wineId: string; summary: WineScoreSummary }[] = [];
+  const unrated: WineResult[] = [];
+  for (const wineId of wineIds) {
+    const summary = summarizeScores(scoresByWine.get(wineId) ?? []);
+    if (summary) rated.push({ wineId, summary });
+    else unrated.push({ wineId, rating: null });
+  }
+  // Stabil sortering behåller blindnummerordningen vid lika snitt.
+  rated.sort((a, b) => b.summary.average - a.summary.average);
+  const ranks = competitionRanks(rated.map(({ summary }) => summary.average));
 
-  const ratedResults = rated.map(
-    ({ wineId, average, lowest, highest, count }, index): WineResult => ({
-      wineId,
-      rank: ranks[index],
-      average,
-      lowest,
-      highest,
-      ratingCount: count,
-    }),
-  );
-  const unratedResults = wineIds
-    .filter((wineId) => !scoresByWine.get(wineId)?.length)
-    .map(
-      (wineId): WineResult => ({
+  return [
+    ...rated.map(
+      ({ wineId, summary }, index): WineResult => ({
         wineId,
-        rank: null,
-        average: null,
-        lowest: null,
-        highest: null,
-        ratingCount: 0,
+        rating: { ...summary, rank: ranks[index] },
       }),
-    );
-  return [...ratedResults, ...unratedResults];
+    ),
+    ...unrated,
+  ];
 }
 
 function rankParticipantsByCloseness(
@@ -122,9 +110,9 @@ function rankParticipantsByCloseness(
   wines: readonly WineResult[],
 ): ParticipantResult[] {
   const comparableAverages = new Map(
-    wines.flatMap((wine) =>
-      wine.average !== null && wine.ratingCount >= MIN_RATINGS_FOR_COMPARISON
-        ? [[wine.wineId, wine.average] as const]
+    wines.flatMap(({ wineId, rating }) =>
+      rating && rating.count >= MIN_RATINGS_FOR_COMPARISON
+        ? [[wineId, rating.average] as const]
         : [],
     ),
   );

@@ -49,15 +49,8 @@ export async function createTastingAction(
   redirect(`/admin/tastings/${tasting.id}`);
 }
 
-const wineFields = [
-  "name",
-  "producer",
-  "grape",
-  "region",
-  "country",
-  "vintage",
-  "price",
-] as const;
+// Fälten följer schemat, så att ett nytt vinfält inte behöver läggas till här.
+const wineFields = wineFormSchema.keyof().options;
 export type WineField = (typeof wineFields)[number];
 
 // Saknad provning ger samma svar som någon annans (princip 14).

@@ -1,10 +1,11 @@
 import { eq } from "drizzle-orm";
 import { afterAll, describe, expect, it } from "vitest";
+import { createTestOwners } from "@/test-support/fixtures";
+import { unwrap } from "@/test-support/unwrap";
 import { db } from "./db";
 import { findParticipantBySessionToken, joinTasting } from "./participants";
 import { participants } from "./schema";
 import { advanceTastingStatus, createTasting } from "./tastings";
-import { createTestOwners } from "./test-fixtures";
 
 const owners = createTestOwners();
 afterAll(() => owners.cleanUp());
@@ -16,8 +17,10 @@ async function createTestTasting() {
 describe("deltagare", () => {
   it("går med via kod och hittas igen via sin sessionstoken", async () => {
     const tasting = await createTestTasting();
-    const joined = await joinTasting({ code: tasting.code, displayName: "Kim" });
-    if (!joined.ok) throw new Error("Kunde inte gå med");
+    const joined = unwrap(
+      await joinTasting({ code: tasting.code, displayName: "Kim" }),
+      "Kunde inte gå med",
+    );
 
     expect(joined.participant).toEqual({
       id: expect.any(String),
@@ -31,8 +34,10 @@ describe("deltagare", () => {
 
   it("lagrar bara en hash av sessionstoken", async () => {
     const tasting = await createTestTasting();
-    const joined = await joinTasting({ code: tasting.code, displayName: "Kim" });
-    if (!joined.ok) throw new Error("Kunde inte gå med");
+    const joined = unwrap(
+      await joinTasting({ code: tasting.code, displayName: "Kim" }),
+      "Kunde inte gå med",
+    );
 
     const [stored] = await db
       .select({ sessionTokenHash: participants.sessionTokenHash })

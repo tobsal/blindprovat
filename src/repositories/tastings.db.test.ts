@@ -1,5 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { TASTING_CODE_ALPHABET, TASTING_CODE_LENGTH } from "@/domain/tasting";
+import { createTestOwners, sampleWine } from "@/test-support/fixtures";
+import { unwrap } from "@/test-support/unwrap";
 import {
   advanceTastingStatus,
   createTasting,
@@ -7,7 +9,6 @@ import {
   getTastingForOwner,
   listTastingsForOwner,
 } from "./tastings";
-import { createTestOwners, sampleWine } from "./test-fixtures";
 import { addWine, listWinesForParticipant, setWineOpen } from "./wines";
 
 const owners = createTestOwners();
@@ -90,8 +91,10 @@ describe("viner", () => {
   it("öppnar och stänger viner bara medan provningen pågår", async () => {
     const ownerId = owners.createOwnerId();
     const tasting = await createTasting(ownerId, { name: "Öppna" });
-    const added = await addWine(ownerId, tasting.id, sampleWine);
-    if (!added.ok) throw new Error("Kunde inte lägga till vin");
+    const added = unwrap(
+      await addWine(ownerId, tasting.id, sampleWine),
+      "Kunde inte lägga till vin",
+    );
 
     expect(await setWineOpen(ownerId, added.wine.id, true)).toEqual({
       ok: false,

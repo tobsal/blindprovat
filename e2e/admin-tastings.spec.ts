@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { createTestOwners } from "@/repositories/test-fixtures";
+import { createTestOwners } from "@/test-support/fixtures";
 import { logInAsAdmin } from "./auth";
 
 const owners = createTestOwners();

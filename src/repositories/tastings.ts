@@ -7,6 +7,8 @@ import {
 } from "@/domain/tasting";
 import { db } from "./db";
 import { isUniqueViolation } from "./errors";
+import { tastingOwnedBy } from "./ownership";
+import type { SessionParticipant } from "./participants";
 import { tastings, wines } from "./schema";
 
 export type AdminTasting = typeof tastings.$inferSelect;
@@ -64,7 +66,7 @@ export async function getTastingForOwner(
   const [tasting] = await db
     .select()
     .from(tastings)
-    .where(and(eq(tastings.id, tastingId), eq(tastings.ownerId, ownerId)));
+    .where(tastingOwnedBy(ownerId, tastingId));
   if (!tasting) return null;
 
   const tastingWines = await db
@@ -83,10 +85,7 @@ export async function advanceTastingStatus(
   ownerId: string,
   tastingId: string,
 ): Promise<AdvanceTastingStatusResult> {
-  const ownedTasting = and(
-    eq(tastings.id, tastingId),
-    eq(tastings.ownerId, ownerId),
-  );
+  const ownedTasting = tastingOwnedBy(ownerId, tastingId);
   const [current] = await db
     .select({ status: tastings.status })
     .from(tastings)
@@ -106,12 +105,14 @@ export async function advanceTastingStatus(
   return tasting ? { ok: true, tasting } : { ok: false, error: "invalid_state" };
 }
 
+// Deltagaren får bara se sin egen provning, så den slås upp via sessionen
+// och inte via ett id som kommer utifrån.
 export async function findTastingForParticipant(
-  tastingId: string,
+  participant: SessionParticipant,
 ): Promise<ParticipantTasting | null> {
   const [tasting] = await db
     .select({ id: tastings.id, name: tastings.name, status: tastings.status })
     .from(tastings)
-    .where(eq(tastings.id, tastingId));
+    .where(eq(tastings.id, participant.tastingId));
   return tasting ?? null;
 }

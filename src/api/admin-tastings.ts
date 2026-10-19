@@ -3,11 +3,12 @@ import {
   listTastingsForOwner,
   type AdminTasting,
   type AdminTastingWithWines,
+  type AdminWine,
 } from "@/repositories/tastings";
 import { tastingIdSchema } from "@/validation/tasting";
 import { requireAdminOwnerId } from "./admin-session";
 
-export type { AdminTasting, AdminTastingWithWines };
+export type { AdminTasting, AdminTastingWithWines, AdminWine };
 
 export async function listMyTastings(): Promise<AdminTasting[]> {
   const ownerId = await requireAdminOwnerId();

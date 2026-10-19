@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { createLiveTasting, createTestOwners } from "@/test-support/fixtures";
 import {
   listOwnRatings,
-  listScoredRatings,
+  listScoredRatingsForOwner,
   saveRating,
   type RatingValues,
 } from "./ratings";
@@ -65,11 +65,11 @@ describe("betyg", () => {
       await createLiveTasting(owners);
     await saveRating(participant, openWineId, values);
 
-    expect(await listScoredRatings(ownerId, tasting.id)).toEqual([
+    expect(await listScoredRatingsForOwner(ownerId, tasting.id)).toEqual([
       { wineId: openWineId, participantId: participant.id, score: 7 },
     ]);
     expect(
-      await listScoredRatings(owners.createOwnerId(), tasting.id),
+      await listScoredRatingsForOwner(owners.createOwnerId(), tasting.id),
     ).toBeNull();
   });
 });

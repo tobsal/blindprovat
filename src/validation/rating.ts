@@ -7,18 +7,9 @@ import {
   SCORE_MAX,
   SCORE_MIN,
 } from "@/domain/rating";
+import { optionalText } from "./optional-text";
 
 const scoreMessage = `Välj ett betyg mellan ${SCORE_MIN} och ${SCORE_MAX}`;
-
-// Trimmar texten och gör tom text eller saknat värde till null.
-function optionalText(max: number, tooLongMessage: string) {
-  return z
-    .string()
-    .trim()
-    .max(max, tooLongMessage)
-    .nullish()
-    .transform((value) => value || null);
-}
 
 export const ratingInputSchema = z.object({
   score: z

@@ -1,11 +1,13 @@
 import { z } from "zod";
 import { TASTING_NAME_MAX } from "@/domain/tasting";
 
+const nameRequiredMessage = "Ange provningens namn";
+
 export const tastingInputSchema = z.object({
   name: z
-    .string({ error: "Ange provningens namn" })
+    .string({ error: nameRequiredMessage })
     .trim()
-    .min(1, "Ange provningens namn")
+    .min(1, nameRequiredMessage)
     .max(
       TASTING_NAME_MAX,
       `Namnet får vara högst ${TASTING_NAME_MAX} tecken`,

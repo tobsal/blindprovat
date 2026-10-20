@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { canJoinTasting } from "@/domain/tasting";
 import { db } from "./db";
-import { isUniqueViolation } from "./errors";
+import { isUniqueViolation, withSafeErrors } from "./errors";
 import { constraintNames, participants, tastings } from "./schema";
 
 export type SessionParticipant = {
@@ -33,45 +33,49 @@ export async function joinTasting(input: {
   displayName: string;
 }): Promise<JoinTastingResult> {
   const sessionToken = randomBytes(SESSION_TOKEN_BYTES).toString("base64url");
-  try {
-    return await db.transaction(async (tx) => {
-      // Låser provningen så att den inte kan avslöjas mellan kontrollen och skrivningen.
-      const [tasting] = await tx
-        .select({ id: tastings.id, status: tastings.status })
-        .from(tastings)
-        .where(eq(tastings.code, input.code))
-        .for("update");
-      // En avslöjad provning ger samma svar som en som inte finns.
-      if (!tasting || !canJoinTasting(tasting.status)) {
-        return { ok: false, error: "not_found" } as const;
-      }
+  return withSafeErrors("joinTasting", async () => {
+    try {
+      return await db.transaction(async (tx) => {
+        // Låser provningen så att den inte kan avslöjas mellan kontrollen och skrivningen.
+        const [tasting] = await tx
+          .select({ id: tastings.id, status: tastings.status })
+          .from(tastings)
+          .where(eq(tastings.code, input.code))
+          .for("update");
+        // En avslöjad provning ger samma svar som en som inte finns.
+        if (!tasting || !canJoinTasting(tasting.status)) {
+          return { ok: false, error: "not_found" } as const;
+        }
 
-      const [participant] = await tx
-        .insert(participants)
-        .values({
-          tastingId: tasting.id,
-          displayName: input.displayName,
-          sessionTokenHash: hashSessionToken(sessionToken),
-        })
-        .returning(participantColumns);
-      return { ok: true, participant, sessionToken } as const;
-    });
-  } catch (error) {
-    if (
-      isUniqueViolation(error, constraintNames.participantDisplayNameUnique)
-    ) {
-      return { ok: false, error: "name_taken" };
+        const [participant] = await tx
+          .insert(participants)
+          .values({
+            tastingId: tasting.id,
+            displayName: input.displayName,
+            sessionTokenHash: hashSessionToken(sessionToken),
+          })
+          .returning(participantColumns);
+        return { ok: true, participant, sessionToken } as const;
+      });
+    } catch (error) {
+      if (
+        isUniqueViolation(error, constraintNames.participantDisplayNameUnique)
+      ) {
+        return { ok: false, error: "name_taken" } as const;
+      }
+      throw error;
     }
-    throw error;
-  }
+  });
 }
 
 export async function findParticipantBySessionToken(
   sessionToken: string,
 ): Promise<SessionParticipant | null> {
-  const [participant] = await db
-    .select(participantColumns)
-    .from(participants)
-    .where(eq(participants.sessionTokenHash, hashSessionToken(sessionToken)));
-  return participant ?? null;
+  return withSafeErrors("findParticipantBySessionToken", async () => {
+    const [participant] = await db
+      .select(participantColumns)
+      .from(participants)
+      .where(eq(participants.sessionTokenHash, hashSessionToken(sessionToken)));
+    return participant ?? null;
+  });
 }

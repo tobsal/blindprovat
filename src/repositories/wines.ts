@@ -1,4 +1,4 @@
-import { and, asc, eq, max } from "drizzle-orm";
+import { asc, eq, max } from "drizzle-orm";
 import {
   canAddWines,
   canOpenWines,
@@ -14,8 +14,8 @@ import type { AdminWine } from "./tastings";
 // Låsregel för alla skrivningar som beror på provningens status eller på om
 // ett vin är öppet: lås provningsraden först, i en egen fråga, och läs sedan
 // det som ska avgöra saken. Skrivare som ändrar statusen eller stänger ett
-// vin tar exklusivt lås (FOR UPDATE eller UPDATE), betygsparare tar delat lås
-// (FOR SHARE). Lås aldrig bara vinraden. Då tas locken alltid i samma
+// vin tar exklusivt lås (FOR UPDATE eller UPDATE). Betygsparare och den som
+// går med i provningen tar delat lås (FOR SHARE). Lås aldrig bara vinraden. Då tas locken alltid i samma
 // ordning och ingen kan läsa ett gammalt värde efter att ha väntat på låset.
 
 export type WineDetails = Pick<
@@ -66,15 +66,20 @@ export async function setWineOpen(
   isOpen: boolean,
 ): Promise<RepositoryResult<{ wine: AdminWine }>> {
   return db.transaction(async (tx) => {
-    // Samma ägarregel som tastingOwnedBy, men uppslaget går via vinet.
+    // Ett vin byter aldrig provning, så den kan slås upp utan lås.
     const [found] = await tx
-      .select({ status: tastings.status })
+      .select({ tastingId: wines.tastingId })
       .from(wines)
-      .innerJoin(tastings, eq(wines.tastingId, tastings.id))
-      .where(and(eq(wines.id, wineId), eq(tastings.ownerId, ownerId)))
-      .for("update", { of: tastings });
+      .where(eq(wines.id, wineId));
     if (!found) return { ok: false, error: "not_found" };
-    if (!canOpenWines(found.status)) {
+
+    const [tasting] = await tx
+      .select({ status: tastings.status })
+      .from(tastings)
+      .where(tastingOwnedBy(ownerId, found.tastingId))
+      .for("update");
+    if (!tasting) return { ok: false, error: "not_found" };
+    if (!canOpenWines(tasting.status)) {
       return { ok: false, error: "invalid_state" };
     }
 

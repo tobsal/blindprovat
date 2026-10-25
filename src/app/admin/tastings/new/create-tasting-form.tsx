@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
+import { FormError } from "@/app/_components/form-error";
+import { keepInputWhenOffline } from "@/app/_components/keep-input-when-offline";
 import { TextField } from "@/app/_components/text-field";
 import {
   createTastingAction,
@@ -9,10 +11,13 @@ import {
 } from "@/api/admin-tasting-actions";
 
 const initialState: FormState<TastingField> = {};
+const offlineSafeCreateTasting = keepInputWhenOffline(createTastingAction, [
+  "name",
+]);
 
 export function CreateTastingForm() {
   const [state, formAction, isPending] = useActionState(
-    createTastingAction,
+    offlineSafeCreateTasting,
     initialState,
   );
   const nameInput = useRef<HTMLInputElement>(null);
@@ -26,6 +31,7 @@ export function CreateTastingForm() {
 
   return (
     <form action={formAction} className="mt-6 flex flex-col gap-4" noValidate>
+      {state.formError && <FormError>{state.formError}</FormError>}
       <TextField
         ref={nameInput}
         id="tasting-name"

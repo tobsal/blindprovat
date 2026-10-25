@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { FormError } from "@/app/_components/form-error";
+import { keepInputWhenOffline } from "@/app/_components/keep-input-when-offline";
 import { TextField } from "@/app/_components/text-field";
 import {
   addWineAction,
@@ -35,7 +36,10 @@ const fields: {
 
 export function AddWineForm({ tastingId }: { tastingId: string }) {
   const [state, formAction, isPending] = useActionState(
-    addWineAction.bind(null, tastingId),
+    keepInputWhenOffline(
+      addWineAction.bind(null, tastingId),
+      fields.map(({ field }) => field),
+    ),
     initialState,
   );
   const inputs = useRef<Partial<Record<WineField, HTMLInputElement | null>>>(

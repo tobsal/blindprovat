@@ -20,12 +20,12 @@ test("deltagare går med via kod och landar i provningen", async ({ page }) => {
   await page.getByRole("button", { name: "Gå med" }).click();
 
   await expect(page).toHaveURL(/\/tasting$/);
-  await expect(page.getByRole("heading", { name: "Betyg" })).toBeVisible();
-  await expect(page.getByText("Du är med som Lisa.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Betyg", exact: true })).toBeVisible();
+  await expect(page.getByText("du är med som Lisa")).toBeVisible();
 
   // Sessionen finns kvar vid omladdning.
   await page.reload();
-  await expect(page.getByText("Du är med som Lisa.")).toBeVisible();
+  await expect(page.getByText("du är med som Lisa")).toBeVisible();
 });
 
 test("fel kod ger ett fel vid fältet och behåller det som skrivits", async ({

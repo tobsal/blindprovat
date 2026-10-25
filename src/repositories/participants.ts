@@ -36,12 +36,14 @@ export async function joinTasting(input: {
   return withSafeErrors("joinTasting", async () => {
     try {
       return await db.transaction(async (tx) => {
-        // Låser provningen så att den inte kan avslöjas mellan kontrollen och skrivningen.
+        // Delat lås, så att provningen inte kan avslöjas mellan kontrollen och
+        // skrivningen men flera deltagare kan gå med samtidigt (låsregeln står
+        // i wines.ts).
         const [tasting] = await tx
           .select({ id: tastings.id, status: tastings.status })
           .from(tastings)
           .where(eq(tastings.code, input.code))
-          .for("update");
+          .for("share");
         // En avslöjad provning ger samma svar som en som inte finns.
         if (!tasting || !canJoinTasting(tasting.status)) {
           return { ok: false, error: "not_found" } as const;

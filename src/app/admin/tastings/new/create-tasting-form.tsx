@@ -6,9 +6,9 @@ import { keepInputWhenOffline } from "@/app/_components/keep-input-when-offline"
 import { TextField } from "@/app/_components/text-field";
 import {
   createTastingAction,
-  type FormState,
   type TastingField,
 } from "@/api/admin-tasting-actions";
+import type { FormState } from "@/api/form-state";
 
 const initialState: FormState<TastingField> = {};
 const offlineSafeCreateTasting = keepInputWhenOffline(createTastingAction, [

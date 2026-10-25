@@ -1,4 +1,4 @@
-import type { FormState } from "@/api/admin-tasting-actions";
+import type { FormState } from "@/api/form-state";
 
 export const offlineMessage =
   "Ingen uppkoppling. Det du skrivit finns kvar. Försök igen när du är uppkopplad.";

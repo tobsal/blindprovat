@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { eq } from "drizzle-orm";
+import { SESSION_TOKEN_BYTES } from "@/domain/participant";
 import { canJoinTasting } from "@/domain/tasting";
 import { db } from "./db";
 import { isUniqueViolation, withSafeErrors } from "./errors";
@@ -14,8 +15,6 @@ export type SessionParticipant = {
 export type JoinTastingResult =
   | { ok: true; participant: SessionParticipant; sessionToken: string }
   | { ok: false; error: "not_found" | "name_taken" };
-
-const SESSION_TOKEN_BYTES = 32;
 
 function hashSessionToken(sessionToken: string): string {
   return createHash("sha256").update(sessionToken).digest("hex");

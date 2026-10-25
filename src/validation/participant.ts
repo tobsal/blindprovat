@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { PARTICIPANT_NAME_MAX } from "@/domain/participant";
+import {
+  PARTICIPANT_NAME_MAX,
+  SESSION_TOKEN_BYTES,
+} from "@/domain/participant";
 import {
   TASTING_CODE_ALPHABET,
   TASTING_CODE_LENGTH,
@@ -27,5 +30,12 @@ export const joinTastingInputSchema = z.object({
       `Namnet får vara högst ${PARTICIPANT_NAME_MAX} tecken`,
     ),
 });
+
+// Cookien kommer utifrån och valideras innan den slås upp. Tokenen är
+// base64url av SESSION_TOKEN_BYTES byte, vilket ger exakt så här många tecken.
+const sessionTokenLength = Math.ceil((SESSION_TOKEN_BYTES * 4) / 3);
+export const sessionTokenSchema = z
+  .string()
+  .regex(new RegExp(`^[A-Za-z0-9_-]{${sessionTokenLength}}$`));
 
 export type JoinTastingInput = z.infer<typeof joinTastingInputSchema>;

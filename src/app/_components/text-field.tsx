@@ -6,6 +6,8 @@ type TextFieldProps = {
   error?: string;
   defaultValue?: string;
   inputMode?: "numeric";
+  autoComplete?: string;
+  autoCapitalize?: "characters";
   required?: boolean;
   ref?: React.Ref<HTMLInputElement>;
 };
@@ -21,6 +23,8 @@ export function TextField({
   error,
   defaultValue,
   inputMode,
+  autoComplete,
+  autoCapitalize,
   required,
   ref,
 }: TextFieldProps) {
@@ -44,6 +48,8 @@ export function TextField({
         name={name}
         type="text"
         inputMode={inputMode}
+        autoComplete={autoComplete}
+        autoCapitalize={autoCapitalize}
         required={required}
         defaultValue={defaultValue}
         aria-invalid={error ? true : undefined}

@@ -1,5 +1,7 @@
+import { inspect } from "node:util";
 import { afterAll, describe, expect, it } from "vitest";
 import { createLiveTasting, createTestOwners } from "@/test-support/fixtures";
+import { DatabaseError } from "./errors";
 import {
   listOwnRatings,
   listScoredRatingsForOwner,
@@ -58,6 +60,25 @@ describe("betyg", () => {
       ok: false,
       error: "invalid_state",
     });
+  });
+
+  it("kastar databasfel utan anteckningen i felet", async () => {
+    const { participant, openWineId } = await createLiveTasting(owners);
+    // Poängen bryter mot CHECK-constrainten. Postgres lägger då hela raden,
+    // med anteckningen, i felets detail.
+    const error = await saveRating(participant, openWineId, {
+      ...values,
+      score: 99,
+    }).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(DatabaseError);
+    expect(error).toMatchObject({
+      code: "23514",
+      constraint_name: "ratings_score_range",
+    });
+    const logged = inspect(error, { depth: Infinity });
+    expect(logged).not.toContain(values.note);
+    expect(logged).not.toContain(values.guess);
   });
 
   it("ger ägaren poängen för resultatberäkningen", async () => {

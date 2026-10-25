@@ -83,4 +83,37 @@ describe("samtidiga skrivningar", () => {
       ),
     TEST_TIMEOUT_MS,
   );
+
+  // Två deltagare går med samtidigt som provningen avslöjas. Ingen får ett
+  // databasfel, och var och en släpps antingen in eller nekas.
+  it(
+    "klarar deltagare som går med samtidigt som provningen avslöjas",
+    async () => {
+      for (let i = 0; i < ITERATIONS; i++) {
+        const { ownerId, tasting } = await createLiveTasting(owners);
+
+        const outcomes = await Promise.allSettled([
+          joinTasting({ code: tasting.code, displayName: "Alva" }),
+          joinTasting({ code: tasting.code, displayName: "Bo" }),
+          advanceTastingStatus(ownerId, tasting.id),
+        ]);
+
+        const [first, second, revealed] = outcomes;
+        if (
+          first.status !== "fulfilled" ||
+          second.status !== "fulfilled" ||
+          revealed.status !== "fulfilled"
+        ) {
+          throw new Error(
+            `Ett anrop kastade i varv ${i}: ${JSON.stringify(outcomes)}`,
+          );
+        }
+        expect(revealed.value.ok).toBe(true);
+        for (const joined of [first.value, second.value]) {
+          expect(joined.ok || joined.error === "not_found").toBe(true);
+        }
+      }
+    },
+    TEST_TIMEOUT_MS,
+  );
 });

@@ -48,7 +48,7 @@ export function TextField({
         defaultValue={defaultValue}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy || undefined}
-        className="min-h-12 rounded border border-outline bg-surface px-4 text-base focus:border-accent"
+        className="min-h-12 rounded border border-outline bg-surface px-4 text-base"
       />
       {error && (
         <p id={`${id}-error`} className="text-error">

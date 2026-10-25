@@ -74,12 +74,12 @@ Koden ligger under `src/` och är indelad i lager. Följ befintlig placering i r
 
 Utöver lagren gäller:
 
-- **Datamodellen** definieras på ett enda ställe. Domänlogiken får gärna arbeta direkt på typer härledda från datamodellen. Inför en separat mappning till egna domäntyper först när lagringsformen faktiskt börjar skapa problem.
+- **Datamodellen** definieras på ett enda ställe, schemat i dataåtkomstlagret. Domänen får inte importera schemat. Därför äger domänen de konstanter och typer som schemat bygger på (till exempel statusar och maxlängder), och domänfunktioner tar enkla typer som dataåtkomstlagret kan returnera direkt. Inför ingen separat mappning mellan lagringsform och domäntyper förrän lagringsformen faktiskt börjar skapa problem.
 - **Valideringsregler** delas mellan formulär och server och ligger separat från både UI och lagring.
 - **Konfiguration** och **autentisering/sessioner** hålls samlade och undviker spridda direktuppslag i koden. Skapa dock ingen egen modul eller abstraktion för det förrän det behövs.
 - **Enhetstester** ligger bredvid koden de testar. **E2E-tester** ligger separat från källkoden.
 - **Testhjälp** som delas mellan tester (till exempel fixtures för databastester) ligger i `src/test-support/`. Den får bara importeras från tester (`*.test.ts`) och e2e, aldrig från produktionskod. Det upprätthålls av en lintregel.
-- **Låsregel för skrivningar** som beror på provningens status eller på om ett vin är öppet: lås provningsraden först, i en egen fråga, och läs sedan det som ska avgöra saken. Skrivare som ändrar status eller stänger ett vin tar exklusivt lås, betygsparare delat lås. Lås aldrig bara vinraden. Regeln och skälen står överst i `src/repositories/wines.ts`.
+- **Låsregel för skrivningar** som beror på provningens status eller på om ett vin är öppet: lås provningsraden först, i en egen fråga, och läs sedan det som ska avgöra saken. Skrivare som ändrar status eller stänger ett vin tar exklusivt lås. Betygsparare och den som går med i provningen tar delat lås. Lås aldrig bara vinraden. Regeln och skälen står överst i `src/repositories/wines.ts`.
 - **Migrationer** är genererade av verktyget och redigeras inte för hand.
 - Lagergränserna ska så långt möjligt upprätthållas av lintregler, inte bara av den här texten.
 
@@ -93,7 +93,7 @@ Utöver lagren gäller:
 6. **Behörighet kontrolleras på servern för varje anrop.** Admin får bara se och ändra sina egna provningar. En deltagare får bara läsa och skriva sina egna betyg i den provning sessionstoken gäller för.
 7. **Rendera på servern som standard.** Använd klientkod bara där interaktivitet krävs.
 8. **Realtid via polling.** Deltagare och admin hämtar status var 3–5 sekund via ett enkelt läsanrop. Byt inte till push-baserad kommunikation eller tredjepartstjänst utan att fråga.
-9. **Funktioner gör en sak** och har beskrivande namn. Inga globala muterbara variabler.
+9. **Funktioner gör en sak** och har beskrivande namn. Inga globala muterbara variabler. Enda undantaget är databasanslutningen, som sparas på `globalThis` i `src/repositories/db.ts` så att den överlever omladdning av moduler i dev. Kopiera inte mönstret till annat.
 10. **Mobil först för deltagarklienten.** Stora tryckytor och fungerande utan hovring.
 11. **YAGNI.** Bygg bara det som uppgiften kräver nu. Inga abstraktioner, konfigurationsmöjligheter, generella hjälpklasser eller extra lager för tänkbara framtida behov. Duplicera hellre två gånger än att abstrahera i förväg, och bryt ut först när mönstret återkommer och är tydligt.
 12. **Anonym åtkomst skyddas mot gissning.** Provningskoden ska vara slumpmässig och tillräckligt lång för att inte gå att gissa fram, aldrig löpnummer eller härledd från namn eller datum. 

@@ -1,45 +1,79 @@
 @import "tailwindcss";
 
+/*
+  Färgroller efter Material 3: varma neutrala ytor med vinrött som enda accent.
+  --primary är fyllnadsfärgen (knappar, valda betyg) med --on-primary som text
+  på den. --accent är vinrött som text, ram och fokus direkt på ytan. I ljust
+  läge är de samma, i mörkt läge måste accenten vara ljusare för att nå 3:1
+  mot ytan.
+*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --surface: #faf8f6;
+  --surface-low: #f2efec;
+  --surface-high: #e9e4e0;
+  --on-surface: #1f1b19;
+  --on-surface-variant: #4d4643;
+  --outline: #7a726d;
+  --outline-variant: #d3ccc7;
+  --primary: #7d2e46;
+  --on-primary: #ffffff;
+  --accent: #7d2e46;
+  --error: #b3261e;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-surface: var(--surface);
+  --color-surface-low: var(--surface-low);
+  --color-surface-high: var(--surface-high);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-accent: var(--accent);
+  --color-error: var(--error);
+  --font-sans: var(--font-roboto);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --surface: #191513;
+    --surface-low: #221d1b;
+    --surface-high: #2b2522;
+    --on-surface: #ece0dc;
+    --on-surface-variant: #d0c5c0;
+    --outline: #968e89;
+    --outline-variant: #4d4643;
+    --primary: #9b3a57;
+    --on-primary: #ffffff;
+    --accent: #e2a9b5;
+    --error: #f2b8b5;
   }
 }
 
 /* En enda fokusmarkering för alla interaktiva element (WCAG 2.4.7 och 2.4.11). */
 :focus-visible {
-  outline: 2px solid var(--foreground);
+  outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
 
-/* Tryckytor är minst 44 px höga (min-h-11). */
+/* Tryckytor är minst 44 px höga (min-h-11), knappar 48 px (min-h-12). */
 @utility btn-primary {
-  @apply inline-flex min-h-11 items-center justify-center rounded bg-foreground px-4 text-background;
+  @apply inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-6 font-medium text-on-primary;
 }
 
 @utility btn-secondary {
-  @apply inline-flex min-h-11 items-center justify-center rounded border border-foreground px-4;
+  @apply inline-flex min-h-12 items-center justify-center rounded-full border border-outline px-6 font-medium text-accent;
 }
 
 @utility link-action {
-  @apply inline-flex min-h-11 items-center underline;
+  @apply inline-flex min-h-11 items-center font-medium text-accent underline underline-offset-4;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  background: var(--surface);
+  color: var(--on-surface);
+  font-family: var(--font-roboto), Arial, Helvetica, sans-serif;
 }

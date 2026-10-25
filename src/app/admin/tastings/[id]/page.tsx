@@ -43,9 +43,9 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
         {tasting.wines.length === 0 ? (
           <p className="mt-2">Inga viner tillagda än.</p>
         ) : (
-          <ol className="mt-2 divide-y divide-foreground/30 border-y border-foreground/30">
+          <ol className="mt-2 divide-y divide-outline-variant overflow-hidden rounded-2xl bg-surface-low">
             {tasting.wines.map((wine) => (
-              <li key={wine.id} className="py-3">
+              <li key={wine.id} className="px-4 py-3">
                 <span className="font-medium">Vin {wine.blindNumber}</span> –{" "}
                 {describeWine(wine)}
               </li>

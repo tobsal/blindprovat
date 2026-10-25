@@ -12,12 +12,12 @@ async function TastingList() {
   }
 
   return (
-    <ul className="mt-6 divide-y divide-foreground/30 border-y border-foreground/30">
+    <ul className="mt-6 divide-y divide-outline-variant overflow-hidden rounded-2xl bg-surface-low">
       {tastings.map((tasting) => (
         <li key={tasting.id}>
           <Link
             href={`/admin/tastings/${tasting.id}`}
-            className="flex min-h-11 flex-wrap items-center justify-between gap-2 px-2 py-3 underline-offset-4 hover:underline"
+            className="flex min-h-11 flex-wrap items-center justify-between gap-2 px-4 py-3 underline-offset-4 hover:bg-surface-high hover:underline"
           >
             <span className="font-medium">{tasting.name}</span>
             <span>Status: {tastingStatusLabels[tasting.status]}</span>

@@ -65,3 +65,10 @@ export const wineFormSchema = wineInputSchema.extend({
   vintage: z.preprocess(numberFromForm, wineInputSchema.shape.vintage),
   price: z.preprocess(numberFromForm, wineInputSchema.shape.price),
 });
+
+// Blindnumret kommer från sökvägen eller formuläret. Ett ogiltigt nummer ska
+// ge "hittades inte", inte ett databasfel.
+export const blindNumberSchema = z
+  .string()
+  .regex(/^[1-9][0-9]{0,5}$/)
+  .transform(Number);

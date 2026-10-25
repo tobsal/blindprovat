@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import {
   getParticipantView,
   type ParticipantWineView,
@@ -44,6 +45,12 @@ async function TastingOverview() {
             <p className="mt-1 text-sm">
               Sätt ditt betyg innan värden stänger vinet.
             </p>
+            <Link
+              href={`/tasting/wines/${wineToRate.blindNumber}`}
+              className="mt-3 inline-flex min-h-12 items-center rounded-full bg-on-primary px-6 font-medium text-primary focus-visible:outline-on-primary"
+            >
+              Betygsätt vin {wineToRate.blindNumber}
+            </Link>
           </section>
         )}
       </div>
@@ -64,11 +71,8 @@ async function TastingOverview() {
             {wines.map((wine) => {
               const isOpen =
                 wine.state === "open" || wine.state === "open_rated";
-              return (
-                <li
-                  key={wine.blindNumber}
-                  className="flex min-h-18 items-center gap-4 px-4 py-3"
-                >
+              const row = (
+                <>
                   <span
                     aria-hidden="true"
                     className={`flex size-10 shrink-0 items-center justify-center rounded-full font-medium ${
@@ -86,6 +90,21 @@ async function TastingOverview() {
                     </span>
                   </span>
                   <WineStateIcon state={wine.state} />
+                </>
+              );
+              const rowClass = "flex min-h-18 items-center gap-4 px-4 py-3";
+              return (
+                <li key={wine.blindNumber}>
+                  {wine.state === "waiting" ? (
+                    <div className={rowClass}>{row}</div>
+                  ) : (
+                    <Link
+                      href={`/tasting/wines/${wine.blindNumber}`}
+                      className={`${rowClass} hover:bg-surface-high`}
+                    >
+                      {row}
+                    </Link>
+                  )}
                 </li>
               );
             })}

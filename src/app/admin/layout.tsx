@@ -16,7 +16,7 @@ export default function AdminLayout({
 }) {
   return (
     <div className="flex min-h-full flex-col">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-foreground px-6 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant bg-surface-low px-6 py-3">
         <p className="text-lg font-semibold">Blindprovat – admin</p>
         <Suspense fallback={null}>
           <UserMenu />

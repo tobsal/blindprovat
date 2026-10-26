@@ -33,7 +33,11 @@ export function TextField({
       <label htmlFor={id} className="font-medium">
         {label}
       </label>
-      {hint && <p id={`${id}-hint`}>{hint}</p>}
+      {hint && (
+        <p id={`${id}-hint`} className="text-sm text-on-surface-variant">
+          {hint}
+        </p>
+      )}
       <input
         ref={ref}
         id={id}
@@ -44,10 +48,10 @@ export function TextField({
         defaultValue={defaultValue}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy || undefined}
-        className="min-h-11 rounded border border-foreground bg-background px-3"
+        className="min-h-12 rounded border border-outline bg-surface px-4 text-base"
       />
       {error && (
-        <p id={`${id}-error`}>
+        <p id={`${id}-error`} className="text-error">
           <strong>Fel:</strong> {error}
         </p>
       )}

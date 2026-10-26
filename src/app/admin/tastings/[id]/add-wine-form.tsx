@@ -6,9 +6,9 @@ import { keepInputWhenOffline } from "@/app/_components/keep-input-when-offline"
 import { TextField } from "@/app/_components/text-field";
 import {
   addWineAction,
-  type FormState,
   type WineField,
 } from "@/api/admin-tasting-actions";
+import type { FormState } from "@/api/form-state";
 
 const initialState: FormState<WineField> = {};
 

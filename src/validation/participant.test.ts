@@ -1,6 +1,7 @@
+import { randomBytes } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { messagesFor } from "@/test-support/messages-for";
-import { joinTastingInputSchema } from "./participant";
+import { joinTastingInputSchema, sessionTokenSchema } from "./participant";
 
 const validInput = { code: "ABCDE23456", displayName: "Kim" };
 
@@ -42,5 +43,21 @@ describe("joinTastingInputSchema", () => {
     expect(messagesFor(joinTastingInputSchema, { ...validInput, displayName: "a".repeat(31) })).toEqual(
       ["Namnet får vara högst 30 tecken"],
     );
+  });
+});
+
+describe("sessionTokenSchema", () => {
+  it("godtar en token som en deltagare får vid anslutning", () => {
+    const token = randomBytes(32).toString("base64url");
+    expect(sessionTokenSchema.safeParse(token).success).toBe(true);
+  });
+
+  it("nekar fel längd, tecken utanför base64url och saknat värde", () => {
+    expect(sessionTokenSchema.safeParse("a".repeat(42)).success).toBe(false);
+    expect(sessionTokenSchema.safeParse("a".repeat(44)).success).toBe(false);
+    expect(sessionTokenSchema.safeParse("a".repeat(42) + "=").success).toBe(
+      false,
+    );
+    expect(sessionTokenSchema.safeParse(undefined).success).toBe(false);
   });
 });

@@ -12,3 +12,7 @@ export function messageForRepositoryError(
 ): string {
   return error === "not_found" ? tastingNotFoundMessage : invalidStateMessage;
 }
+
+// En saknad, felskriven och avslöjad provning ger samma svar vid anslutning.
+export const joinNotFoundMessage =
+  "Vi hittar ingen provning med den koden. Kontrollera koden eller fråga den som håller i provningen.";

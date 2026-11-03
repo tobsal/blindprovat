@@ -55,7 +55,7 @@ describe("betyg", () => {
   it("nekar betyg när provningen är avslöjad", async () => {
     const { ownerId, tasting, participant, openWineId } =
       await createLiveTasting(owners);
-    await advanceTastingStatus(ownerId, tasting.id);
+    await advanceTastingStatus(ownerId, tasting.id, "live");
     expect(await saveRating(participant, openWineId, values)).toEqual({
       ok: false,
       error: "invalid_state",

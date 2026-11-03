@@ -57,7 +57,7 @@ describe("provningar", () => {
       (await listTastingsForOwner(ownerId)).map((own) => own.id),
     ).toEqual([tasting.id]);
     expect(await getTastingForOwner(otherOwnerId, tasting.id)).toBeNull();
-    expect(await advanceTastingStatus(otherOwnerId, tasting.id)).toEqual({
+    expect(await advanceTastingStatus(otherOwnerId, tasting.id, "draft")).toEqual({
       ok: false,
       error: "not_found",
     });
@@ -70,12 +70,36 @@ describe("provningar", () => {
   it("flyttar statusen bara framåt", async () => {
     const ownerId = owners.createOwnerId();
     const tasting = await createTasting(ownerId, { name: "Status" });
+    await addWine(ownerId, tasting.id, sampleWine);
 
-    const toLive = await advanceTastingStatus(ownerId, tasting.id);
+    const toLive = await advanceTastingStatus(ownerId, tasting.id, "draft");
     expect(toLive.ok && toLive.tasting.status).toBe("live");
-    const toRevealed = await advanceTastingStatus(ownerId, tasting.id);
+    const toRevealed = await advanceTastingStatus(ownerId, tasting.id, "live");
     expect(toRevealed.ok && toRevealed.tasting.status).toBe("revealed");
-    expect(await advanceTastingStatus(ownerId, tasting.id)).toEqual({
+    expect(
+      await advanceTastingStatus(ownerId, tasting.id, "revealed"),
+    ).toEqual({ ok: false, error: "invalid_state" });
+  });
+
+  it("hoppar inte över ett steg när samma start skickas två gånger", async () => {
+    const ownerId = owners.createOwnerId();
+    const tasting = await createTasting(ownerId, { name: "Dubbelklick" });
+    await addWine(ownerId, tasting.id, sampleWine);
+
+    const [first, second] = await Promise.all([
+      advanceTastingStatus(ownerId, tasting.id, "draft"),
+      advanceTastingStatus(ownerId, tasting.id, "draft"),
+    ]);
+    expect([first.ok, second.ok].sort()).toEqual([false, true]);
+    expect((await getTastingForOwner(ownerId, tasting.id))?.status).toBe(
+      "live",
+    );
+  });
+
+  it("startar inte en provning utan viner", async () => {
+    const ownerId = owners.createOwnerId();
+    const tasting = await createTasting(ownerId, { name: "Tom" });
+    expect(await advanceTastingStatus(ownerId, tasting.id, "draft")).toEqual({
       ok: false,
       error: "invalid_state",
     });
@@ -107,7 +131,7 @@ describe("viner", () => {
     const loaded = await getTastingForOwner(ownerId, tasting.id);
     expect(loaded?.wines.map((wine) => wine.blindNumber)).toEqual([1, 2]);
 
-    await advanceTastingStatus(ownerId, tasting.id);
+    await advanceTastingStatus(ownerId, tasting.id, "draft");
     expect(await addWine(ownerId, tasting.id, sampleWine)).toEqual({
       ok: false,
       error: "invalid_state",
@@ -126,7 +150,7 @@ describe("viner", () => {
       ok: false,
       error: "invalid_state",
     });
-    await advanceTastingStatus(ownerId, tasting.id);
+    await advanceTastingStatus(ownerId, tasting.id, "draft");
     const opened = await setWineOpen(ownerId, added.wine.id, true);
     expect(opened.ok && opened.wine.isOpen).toBe(true);
     expect(
@@ -143,13 +167,13 @@ describe("viner", () => {
       "Kunde inte gå med",
     );
 
-    for (const step of ["draft", "live"]) {
+    for (const step of ["draft", "live"] as const) {
       const blind = await listWinesForParticipant(participant);
       expect(blind, step).toEqual([
         { id: expect.any(String), blindNumber: 1, isOpen: false, details: null },
       ]);
       expect(JSON.stringify(blind)).not.toContain("Vietti");
-      await advanceTastingStatus(ownerId, tasting.id);
+      await advanceTastingStatus(ownerId, tasting.id, step);
     }
 
     const revealed = await listWinesForParticipant(participant);

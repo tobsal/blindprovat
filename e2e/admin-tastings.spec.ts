@@ -33,7 +33,9 @@ test("admin skapar en provning och ser den i listan", async ({
   await page.getByLabel("Producent (valfritt)").fill("Vietti");
   await page.getByLabel("Årgång (valfritt)").fill("2019");
   await page.getByRole("button", { name: "Lägg till vin" }).click();
-  await expect(page.getByRole("status")).toHaveText("Vin 1 är tillagt.");
+  await expect(
+    page.getByRole("form", { name: "Lägg till vin" }).getByRole("status"),
+  ).toHaveText("Vin 1 är tillagt.");
   await expect(page.getByRole("listitem")).toHaveText(
     "Vin 1 – Barolo, Vietti, 2019",
   );
@@ -109,7 +111,9 @@ test("utan uppkoppling finns inmatningen kvar och går att skicka igen", async (
 
   await context.setOffline(false);
   await page.getByRole("button", { name: "Lägg till vin" }).click();
-  await expect(page.getByRole("status")).toHaveText("Vin 1 är tillagt.");
+  await expect(
+    page.getByRole("form", { name: "Lägg till vin" }).getByRole("status"),
+  ).toHaveText("Vin 1 är tillagt.");
 });
 
 test("okänd eller ogiltig provning ger samma sida", async ({
@@ -123,4 +127,48 @@ test("okänd eller ogiltig provning ger samma sida", async ({
       page.getByRole("heading", { name: "Provningen finns inte" }),
     ).toBeVisible();
   }
+});
+
+test("admin startar och avslutar provningen", async ({ context, page }) => {
+  await logInAsAdmin(context, owners.createOwnerId());
+  await page.goto("/admin/tastings/new");
+  await page.getByLabel("Namn på provningen").fill("Statusprovning");
+  await page.getByRole("button", { name: "Skapa provning" }).click();
+
+  const start = page.getByRole("button", { name: "Starta provningen" });
+  await expect(start).toBeDisabled();
+  await expect(start).toHaveAccessibleDescription(
+    "Lägg till minst ett vin innan du startar.",
+  );
+
+  await page.getByLabel("Namn", { exact: true }).fill("Barolo");
+  await page.getByRole("button", { name: "Lägg till vin" }).click();
+  await expect(page.getByRole("listitem")).toHaveCount(1);
+
+  await start.click();
+  await expect(page.getByText("Status: Pågår")).toBeVisible();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Provningen har startat." }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Lägg till vin" })).toHaveCount(
+    0,
+  );
+
+  const reveal = page.getByRole("button", { name: "Avsluta och avslöja" });
+  await expect(reveal).toBeFocused();
+  await reveal.click();
+  await page.getByRole("button", { name: "Avbryt" }).click();
+  await expect(reveal).toBeFocused();
+  await expect(page.getByText("Status: Pågår")).toBeVisible();
+
+  await reveal.click();
+  await expect(page.getByText(/Det går inte att ångra/)).toBeFocused();
+  await page.getByRole("button", { name: "Ja, avsluta" }).click();
+  await expect(page.getByText("Status: Avslöjad")).toBeVisible();
+  await expect(
+    page.getByRole("status").filter({ hasText: "vinerna är avslöjade" }),
+  ).toBeFocused();
+  await expect(
+    page.getByRole("button", { name: /Starta|Avsluta/ }),
+  ).toHaveCount(0);
 });

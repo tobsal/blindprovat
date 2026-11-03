@@ -6,6 +6,7 @@ import { getMyTasting, type AdminWine } from "@/api/admin-tastings";
 import { canAddWines } from "@/domain/tasting";
 import { tastingStatusLabels } from "../../tasting-status";
 import { AddWineForm } from "./add-wine-form";
+import { TastingStatusControl } from "./tasting-status-control";
 
 function describeWine(wine: AdminWine): string {
   return [wine.name, wine.producer, wine.vintage ?? "Årgångslöst"]
@@ -22,6 +23,11 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
     <>
       <h1 className="text-2xl font-semibold">{tasting.name}</h1>
       <p className="mt-2">Status: {tastingStatusLabels[tasting.status]}</p>
+      <TastingStatusControl
+        tastingId={tasting.id}
+        status={tasting.status}
+        wineCount={tasting.wines.length}
+      />
 
       <section aria-labelledby="code-heading" className="mt-6">
         <h2 id="code-heading" className="text-lg font-semibold">
@@ -56,7 +62,7 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
           <AddWineForm tastingId={tasting.id} />
         ) : (
           <p className="mt-4">
-            Provningen har startat, så inga fler viner kan läggas till.
+            Viner kan bara läggas till innan provningen startar.
           </p>
         )}
       </section>

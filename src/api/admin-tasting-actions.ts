@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { createTasting } from "@/repositories/tastings";
+import type { TastingStatus } from "@/domain/tasting";
+import { advanceTastingStatus, createTasting } from "@/repositories/tastings";
 import { addWine } from "@/repositories/wines";
 import { tastingIdSchema, tastingInputSchema } from "@/validation/tasting";
 import { wineFormSchema } from "@/validation/wine";
@@ -65,4 +66,52 @@ export async function addWineAction(
 
   revalidatePath(`/admin/tastings/${tastingId.data}`);
   return { message: `Vin ${result.wine.blindNumber} är tillagt.` };
+}
+
+// Statusknapparna har inga fält, bara fel och kvitto. Föregående tillstånd
+// och formulärdata behövs inte, så de tas inte emot.
+export type StatusFormState = FormState<never>;
+
+async function advanceStatus(
+  rawTastingId: string,
+  from: TastingStatus,
+  invalidStateMessage: string,
+  successMessage: string,
+): Promise<StatusFormState> {
+  const ownerId = await requireAdminOwnerId();
+  const tastingId = tastingIdSchema.safeParse(rawTastingId);
+  if (!tastingId.success) return { formError: tastingNotFoundMessage };
+
+  const result = await advanceTastingStatus(ownerId, tastingId.data, from);
+  if (!result.ok) {
+    return {
+      formError: messageForRepositoryError(result.error, invalidStateMessage),
+    };
+  }
+
+  revalidatePath(`/admin/tastings/${tastingId.data}`);
+  revalidatePath("/admin");
+  return { message: successMessage };
+}
+
+export async function startTastingAction(
+  rawTastingId: string,
+): Promise<StatusFormState> {
+  return advanceStatus(
+    rawTastingId,
+    "draft",
+    "Provningen kan bara startas medan den förbereds och har minst ett vin.",
+    "Provningen har startat.",
+  );
+}
+
+export async function revealTastingAction(
+  rawTastingId: string,
+): Promise<StatusFormState> {
+  return advanceStatus(
+    rawTastingId,
+    "live",
+    "Provningen kan bara avslutas medan den pågår.",
+    "Provningen är avslutad och vinerna är avslöjade.",
+  );
 }

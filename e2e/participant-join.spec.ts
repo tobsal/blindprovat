@@ -46,7 +46,7 @@ test("en avslöjad provning ger samma svar som en okänd kod", async ({
   page,
 }) => {
   const { ownerId, tasting } = await createLiveTasting(owners);
-  await advanceTastingStatus(ownerId, tasting.id);
+  await advanceTastingStatus(ownerId, tasting.id, "live");
 
   await page.goto("/");
   await page.getByLabel("Provningskod").fill(tasting.code);

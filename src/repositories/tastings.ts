@@ -1,9 +1,11 @@
 import { randomBytes } from "node:crypto";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { asc, count, desc, eq } from "drizzle-orm";
 import {
+  canAdvanceTasting,
   formatTastingCode,
   nextTastingStatus,
   TASTING_CODE_LENGTH,
+  type TastingStatus,
 } from "@/domain/tasting";
 import { db } from "./db";
 import { isUniqueViolation, withSafeErrors } from "./errors";
@@ -84,32 +86,45 @@ export async function getTastingForOwner(
   });
 }
 
+// Anroparen anger statusen den utgår från. Ett dubbelklick eller en gammal
+// flik kan då inte hoppa över ett steg och avslöja provningen av misstag.
 export async function advanceTastingStatus(
   ownerId: string,
   tastingId: string,
+  from: TastingStatus,
 ): Promise<RepositoryResult<{ tasting: AdminTasting }>> {
-  return withSafeErrors("advanceTastingStatus", async () => {
-    const ownedTasting = tastingOwnedBy(ownerId, tastingId);
-    const [current] = await db
-      .select({ status: tastings.status })
-      .from(tastings)
-      .where(ownedTasting);
-    if (!current) return { ok: false, error: "not_found" };
+  return withSafeErrors("advanceTastingStatus", () =>
+    db.transaction(async (tx) => {
+      // Exklusivt lås på provningen enligt låsregeln i wines.ts. addWine tar
+      // samma lås, så antalet viner kan inte ändras före skrivningen.
+      const [current] = await tx
+        .select({ status: tastings.status })
+        .from(tastings)
+        .where(tastingOwnedBy(ownerId, tastingId))
+        .for("update");
+      if (!current) return { ok: false, error: "not_found" };
 
-    const next = nextTastingStatus(current.status);
-    if (!next) return { ok: false, error: "invalid_state" };
+      const next = nextTastingStatus(from);
+      if (current.status !== from || !next) {
+        return { ok: false, error: "invalid_state" };
+      }
 
-    // Villkoret på nuvarande status hindrar att två samtidiga anrop hoppar
-    // över ett steg.
-    const [tasting] = await db
-      .update(tastings)
-      .set({ status: next })
-      .where(and(ownedTasting, eq(tastings.status, current.status)))
-      .returning();
-    return tasting
-      ? { ok: true, tasting }
-      : { ok: false, error: "invalid_state" };
-  });
+      const [{ wineCount }] = await tx
+        .select({ wineCount: count() })
+        .from(wines)
+        .where(eq(wines.tastingId, tastingId));
+      if (!canAdvanceTasting(from, wineCount)) {
+        return { ok: false, error: "invalid_state" };
+      }
+
+      const [tasting] = await tx
+        .update(tastings)
+        .set({ status: next })
+        .where(eq(tastings.id, tastingId))
+        .returning();
+      return { ok: true, tasting };
+    }),
+  );
 }
 
 // Deltagaren får bara se sin egen provning, så den slås upp via sessionen

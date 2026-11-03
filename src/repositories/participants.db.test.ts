@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { afterAll, describe, expect, it } from "vitest";
-import { createTestOwners } from "@/test-support/fixtures";
+import { createLiveTasting, createTestOwners } from "@/test-support/fixtures";
 import { unwrap } from "@/test-support/unwrap";
 import { db } from "./db";
 import { findParticipantBySessionToken, joinTasting } from "./participants";
@@ -63,10 +63,8 @@ describe("deltagare", () => {
   });
 
   it("ger samma svar för okänd kod som för avslöjad provning", async () => {
-    const ownerId = owners.createOwnerId();
-    const tasting = await createTasting(ownerId, { name: "Avslöjad" });
-    await advanceTastingStatus(ownerId, tasting.id);
-    await advanceTastingStatus(ownerId, tasting.id);
+    const { ownerId, tasting } = await createLiveTasting(owners);
+    await advanceTastingStatus(ownerId, tasting.id, "live");
 
     const notFound = { ok: false, error: "not_found" };
     expect(

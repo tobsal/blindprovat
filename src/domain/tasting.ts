@@ -10,6 +10,16 @@ export function nextTastingStatus(status: TastingStatus): TastingStatus | null {
   return TASTING_STATUSES[index + 1] ?? null;
 }
 
+// En provning utan viner går inte att starta. En pågående provning kan alltid
+// avslutas, och en avslöjad har inget steg kvar.
+export function canAdvanceTasting(
+  status: TastingStatus,
+  wineCount: number,
+): boolean {
+  if (status === "draft") return wineCount > 0;
+  return nextTastingStatus(status) !== null;
+}
+
 export function canAddWines(status: TastingStatus): boolean {
   return status === "draft";
 }

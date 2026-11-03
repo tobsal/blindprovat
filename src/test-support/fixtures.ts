@@ -53,7 +53,7 @@ export async function createLiveTasting(owners: TestOwners) {
     await addWine(ownerId, tasting.id, sampleWine),
     "Kunde inte lägga till vin",
   );
-  await advanceTastingStatus(ownerId, tasting.id);
+  await advanceTastingStatus(ownerId, tasting.id, "draft");
   await setWineOpen(ownerId, openWine.wine.id, true);
   const joined = unwrap(
     await joinTasting({ code: tasting.code, displayName: "Kim" }),

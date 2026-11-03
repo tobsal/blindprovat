@@ -79,7 +79,7 @@ describe("samtidiga skrivningar", () => {
     "klarar betyg samtidigt som provningen avslöjas",
     () =>
       raceRatingsAgainst(({ ownerId, tastingId }) =>
-        advanceTastingStatus(ownerId, tastingId),
+        advanceTastingStatus(ownerId, tastingId, "live"),
       ),
     TEST_TIMEOUT_MS,
   );
@@ -95,7 +95,7 @@ describe("samtidiga skrivningar", () => {
         const outcomes = await Promise.allSettled([
           joinTasting({ code: tasting.code, displayName: "Alva" }),
           joinTasting({ code: tasting.code, displayName: "Bo" }),
-          advanceTastingStatus(ownerId, tasting.id),
+          advanceTastingStatus(ownerId, tasting.id, "live"),
         ]);
 
         const [first, second, revealed] = outcomes;

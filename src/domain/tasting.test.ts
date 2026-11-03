@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   canAddWines,
+  canAdvanceTasting,
   canJoinTasting,
   canOpenWines,
   canRateWines,
@@ -19,6 +20,21 @@ describe("nextTastingStatus", () => {
 
   it("har inget steg efter revealed", () => {
     expect(nextTastingStatus("revealed")).toBeNull();
+  });
+});
+
+describe("canAdvanceTasting", () => {
+  it("startar en provning bara om den har minst ett vin", () => {
+    expect(canAdvanceTasting("draft", 0)).toBe(false);
+    expect(canAdvanceTasting("draft", 1)).toBe(true);
+  });
+
+  it("avslutar en pågående provning även utan viner", () => {
+    expect(canAdvanceTasting("live", 0)).toBe(true);
+  });
+
+  it("har inget steg efter avslöjandet", () => {
+    expect(canAdvanceTasting("revealed", 3)).toBe(false);
   });
 });
 

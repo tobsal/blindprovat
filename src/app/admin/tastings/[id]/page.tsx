@@ -3,10 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LoadingStatus } from "@/app/_components/loading-status";
 import { getMyTasting, type AdminWine } from "@/api/admin-tastings";
-import { canAddWines } from "@/domain/tasting";
+import { canAddWines, canOpenWines } from "@/domain/tasting";
 import { tastingStatusLabels } from "../../tasting-status";
 import { AddWineForm } from "./add-wine-form";
 import { TastingStatusControl } from "./tasting-status-control";
+import { WineOpenToggle } from "./wine-open-toggle";
 
 function describeWine(wine: AdminWine): string {
   return [wine.name, wine.producer, wine.vintage ?? "Årgångslöst"]
@@ -54,6 +55,13 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
               <li key={wine.id} className="px-4 py-3">
                 <span className="font-medium">Vin {wine.blindNumber}</span> –{" "}
                 {describeWine(wine)}
+                {canOpenWines(tasting.status) && (
+                  <WineOpenToggle
+                    wineId={wine.id}
+                    blindNumber={wine.blindNumber}
+                    isOpen={wine.isOpen}
+                  />
+                )}
               </li>
             ))}
           </ol>

@@ -5,9 +5,9 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import type { TastingStatus } from "@/domain/tasting";
 import { advanceTastingStatus, createTasting } from "@/repositories/tastings";
-import { addWine } from "@/repositories/wines";
+import { addWine, setWineOpen } from "@/repositories/wines";
 import { tastingIdSchema, tastingInputSchema } from "@/validation/tasting";
-import { wineFormSchema } from "@/validation/wine";
+import { wineFormSchema, wineIdSchema } from "@/validation/wine";
 import { requireAdminOwnerId } from "./admin-session";
 import {
   messageForRepositoryError,
@@ -114,4 +114,31 @@ export async function revealTastingAction(
     "Provningen kan bara avslutas medan den pågår.",
     "Provningen är avslutad och vinerna är avslöjade.",
   );
+}
+
+export async function setWineOpenAction(
+  rawWineId: string,
+  isOpen: boolean,
+): Promise<StatusFormState> {
+  const ownerId = await requireAdminOwnerId();
+  const wineId = wineIdSchema.safeParse(rawWineId);
+  if (!wineId.success) return { formError: tastingNotFoundMessage };
+
+  const result = await setWineOpen(ownerId, wineId.data, isOpen);
+  if (!result.ok) {
+    return {
+      formError: messageForRepositoryError(
+        result.error,
+        "Viner kan bara öppnas och stängas medan provningen pågår.",
+      ),
+    };
+  }
+
+  const { blindNumber, tastingId } = result.wine;
+  revalidatePath(`/admin/tastings/${tastingId}`);
+  return {
+    message: isOpen
+      ? `Vin ${blindNumber} är öppet för betyg.`
+      : `Vin ${blindNumber} är stängt för betyg.`,
+  };
 }

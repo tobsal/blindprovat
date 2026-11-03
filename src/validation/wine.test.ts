@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { messagesFor } from "@/test-support/messages-for";
-import { wineFormSchema, wineInputSchema } from "./wine";
+import { wineFormSchema, wineIdSchema, wineInputSchema } from "./wine";
 
 const valid = { name: "Barolo" };
 
@@ -121,5 +121,14 @@ describe("wineFormSchema", () => {
 
   it("trimmar och kräver namn som vanligt", () => {
     expect(messagesFor(wineFormSchema, { name: "  " })).toEqual(["Ange vinets namn"]);
+  });
+});
+
+describe("wineIdSchema", () => {
+  it("godtar ett uuid och nekar annat", () => {
+    expect(
+      wineIdSchema.safeParse("6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b").success,
+    ).toBe(true);
+    expect(wineIdSchema.safeParse("1").success).toBe(false);
   });
 });

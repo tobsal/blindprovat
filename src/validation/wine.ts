@@ -72,3 +72,7 @@ export const blindNumberSchema = z
   .string()
   .regex(/^[1-9][0-9]{0,5}$/)
   .transform(Number);
+
+// Vinets id kommer från admins formulär. Ett ogiltigt id ska ge "hittades
+// inte", inte ett databasfel.
+export const wineIdSchema = z.uuid();

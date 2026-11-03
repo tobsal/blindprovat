@@ -172,3 +172,55 @@ test("admin startar och avslutar provningen", async ({ context, page }) => {
     page.getByRole("button", { name: /Starta|Avsluta/ }),
   ).toHaveCount(0);
 });
+
+test("admin öppnar och stänger viner och deltagaren ser det utan omladdning", async ({
+  browser,
+  context,
+  page,
+}) => {
+  await logInAsAdmin(context, owners.createOwnerId());
+  await page.goto("/admin/tastings/new");
+  await page.getByLabel("Namn på provningen").fill("Öppna och stäng");
+  await page.getByRole("button", { name: "Skapa provning" }).click();
+  for (const name of ["Barolo", "Chianti"]) {
+    await page.getByLabel("Namn", { exact: true }).fill(name);
+    await page.getByRole("button", { name: "Lägg till vin" }).click();
+    await expect(page.getByRole("listitem").getByText(name)).toBeVisible();
+  }
+  const code = await page.getByTestId("tasting-code").innerText();
+  await page.getByRole("button", { name: "Starta provningen" }).click();
+
+  const participantContext = await browser.newContext();
+  const participant = await participantContext.newPage();
+  await participant.goto("/");
+  await participant.getByLabel("Provningskod").fill(code);
+  await participant.getByLabel("Ditt namn").fill("Lisa");
+  await participant.getByRole("button", { name: "Gå med" }).click();
+  const firstWine = participant.getByRole("listitem").nth(0);
+  await expect(firstWine).toContainText("Inte öppet");
+
+  const firstRow = page.getByRole("listitem").nth(0);
+  await expect(firstRow).toContainText("Stängt");
+  const open = page.getByRole("button", { name: "Öppna Vin 1" });
+  await open.click();
+  await expect(firstRow.getByRole("status")).toHaveText(
+    "Vin 1 är öppet för betyg.",
+  );
+  await expect(firstRow).toContainText("Öppet för betyg");
+  await expect(page.getByRole("listitem").nth(1)).toContainText("Stängt");
+  const close = page.getByRole("button", { name: "Stäng Vin 1" });
+  await expect(close).toBeFocused();
+
+  await expect(firstWine).toContainText("Öppet · inte betygsatt än", {
+    timeout: 10_000,
+  });
+
+  await close.click();
+  await expect(firstRow.getByRole("status")).toHaveText(
+    "Vin 1 är stängt för betyg.",
+  );
+  await expect(firstRow).toContainText("Stängt");
+  await expect(firstWine).toContainText("Inte öppet", { timeout: 10_000 });
+
+  await participantContext.close();
+});

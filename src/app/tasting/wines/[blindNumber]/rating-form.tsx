@@ -59,9 +59,10 @@ export function RatingForm({ blindNumber, isOpen, initial }: Props) {
   // vinet stängs. Annars skulle det som skrivits försvinna.
   const [seenOpen, setSeenOpen] = useState(isOpen);
 
-  useEffect(() => {
-    if (isOpen) setSeenOpen(true);
-  }, [isOpen]);
+  // Justeras under rendering i stället för i en effekt, så att det inte blir en
+  // extra rendering efteråt.
+  if (isOpen && !seenOpen) setSeenOpen(true);
+
   const action = useMemo(
     () =>
       keepInputWhenOffline(

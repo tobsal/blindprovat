@@ -1,3 +1,5 @@
+import { forwardRef } from "react";
+
 type TextAreaProps = {
   id: string;
   name: string;
@@ -7,22 +9,15 @@ type TextAreaProps = {
   defaultValue?: string;
   maxLength?: number;
   rows?: number;
-  ref?: React.Ref<HTMLTextAreaElement>;
 };
 
 // Samma upplägg som TextField: synlig etikett och fel kopplat med
 // aria-describedby.
-export function TextArea({
-  id,
-  name,
-  label,
-  hint,
-  error,
-  defaultValue,
-  maxLength,
-  rows = 4,
-  ref,
-}: TextAreaProps) {
+export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
+  function TextArea(
+    { id, name, label, hint, error, defaultValue, maxLength, rows = 4 },
+    ref,
+  ) {
   const describedBy = [hint && `${id}-hint`, error && `${id}-error`]
     .filter(Boolean)
     .join(" ");

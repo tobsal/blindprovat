@@ -1,6 +1,7 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
 import { joinTasting } from "@/repositories/participants";
 import { listOwnRatings } from "@/repositories/ratings";
+import { advanceTastingStatus } from "@/repositories/tastings";
 import { setWineOpen } from "@/repositories/wines";
 import { createLiveTasting, createTestOwners } from "@/test-support/fixtures";
 import { unwrap } from "@/test-support/unwrap";
@@ -66,7 +67,9 @@ test("deltagaren betygsätter ett öppet vin och ser betyget i listan", async ({
   await page.getByLabel("Anteckning (valfritt)").fill("Körsbär och jord.");
   await page.getByRole("button", { name: "Spara betyg" }).click();
 
-  await expect(page.getByRole("status")).toHaveText("Betyget är sparat.");
+  await expect(
+    page.getByRole("status").filter({ hasText: "Betyget är sparat." }),
+  ).toBeVisible();
   // Det som skrivits finns kvar efter att formuläret skickats.
   await expect(page.getByLabel("Anteckning (valfritt)")).toHaveValue(
     "Körsbär och jord.",
@@ -147,6 +150,30 @@ test("ett vin som stängs medan deltagaren skriver låser formuläret men behål
   expect(await listOwnRatings(participant)).toEqual([]);
 });
 
+test("ett öppet vin låses när provningen avslöjas medan deltagaren skriver", async ({
+  context,
+  page,
+}) => {
+  const { ownerId, tasting } = await createLiveTasting(owners);
+  const participant = await joinWithCookie(context, tasting.code, "Lisa");
+  await page.goto("/tasting/wines/1");
+  await page.getByLabel("Anteckning (valfritt)").fill("Hann inte spara");
+
+  await advanceTastingStatus(ownerId, tasting.id, "live");
+
+  await expect(
+    page.getByText("Vinet har stängts för betyg.").first(),
+  ).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("Stängt", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Anteckning (valfritt)")).toHaveValue(
+    "Hann inte spara",
+  );
+  await expect(
+    page.getByRole("button", { name: "Spara betyg" }),
+  ).toBeDisabled();
+  expect(await listOwnRatings(participant)).toEqual([]);
+});
+
 test("ett vin som inte är öppet går inte att betygsätta", async ({
   context,
   page,
@@ -208,8 +235,87 @@ test("ett serverfel vid sparning visar ett fel och behåller det som skrivits", 
 
   await page.unrouteAll();
   await page.getByRole("button", { name: "Spara betyg" }).click();
-  await expect(page.getByRole("status")).toHaveText("Betyget är sparat.");
+  await expect(
+    page.getByRole("status").filter({ hasText: "Betyget är sparat." }),
+  ).toBeVisible();
   expect(await listOwnRatings(participant)).toEqual([
     expect.objectContaining({ score: 7, note: "Fat och vanilj." }),
   ]);
+});
+
+test("ett serverfel vid pollingen behåller formuläret och det som skrivits", async ({
+  context,
+  page,
+}) => {
+  const { ownerId, tasting, openWineId } = await createLiveTasting(owners);
+  await joinWithCookie(context, tasting.code, "Lisa");
+  await page.goto("/tasting/wines/1");
+  await page.getByLabel("Anteckning (valfritt)").fill("Halvfärdig anteckning");
+
+  // Pollingen är ett serveranrop (POST med huvudet next-action).
+  await page.route("**/tasting/wines/1", async (route) => {
+    const request = route.request();
+    if (request.method() === "POST" && request.headers()["next-action"]) {
+      await route.fulfill({ status: 500, body: "Internal Server Error" });
+    } else {
+      await route.continue();
+    }
+  });
+
+  await expect(
+    page.getByRole("status").filter({ hasText: "Kunde inte hämta vinets" }),
+  ).toBeVisible({ timeout: 15_000 });
+  await expect(
+    page.getByRole("heading", { name: "Något gick fel" }),
+  ).toHaveCount(0);
+  await expect(page.getByLabel("Anteckning (valfritt)")).toHaveValue(
+    "Halvfärdig anteckning",
+  );
+
+  // När servern svarar igen fortsätter pollingen, och ett stängt vin syns.
+  await page.unrouteAll();
+  unwrap(await setWineOpen(ownerId, openWineId, false), "Kunde inte stänga");
+  await expect(
+    page.getByText("Vinet har stängts för betyg.").first(),
+  ).toBeVisible({ timeout: 15_000 });
+  await expect(
+    page.getByRole("status").filter({ hasText: "Kunde inte hämta vinets" }),
+  ).toHaveCount(0);
+  await expect(page.getByLabel("Anteckning (valfritt)")).toHaveValue(
+    "Halvfärdig anteckning",
+  );
+});
+
+test("utan uppkoppling finns det som skrivits kvar på vinsidan", async ({
+  context,
+  page,
+}) => {
+  const { tasting } = await createLiveTasting(owners);
+  await joinWithCookie(context, tasting.code, "Lisa");
+  await page.goto("/tasting/wines/1");
+  await page.getByRole("button", { name: "6 av 10" }).click();
+  await page.getByLabel("Anteckning (valfritt)").fill("Skriven offline");
+
+  await context.setOffline(true);
+  await expect(
+    page.getByRole("status").filter({ hasText: "Ingen uppkoppling" }),
+  ).toBeVisible();
+  // Längre än ett pollintervall, så att en omladdning skulle ha hunnit ske.
+  await page.waitForTimeout(6_000);
+  await expect(page.getByLabel("Anteckning (valfritt)")).toHaveValue(
+    "Skriven offline",
+  );
+  await expect(page.getByRole("button", { name: "6 av 10" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+
+  await context.setOffline(false);
+  await expect(
+    page.getByRole("status").filter({ hasText: "Ingen uppkoppling" }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Spara betyg" }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Betyget är sparat." }),
+  ).toBeVisible();
 });

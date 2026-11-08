@@ -108,3 +108,17 @@ export async function saveRatingAction(
   }
   return { message: "Betyget är sparat.", values };
 }
+
+// Det enkla läsanrop som vinsidan pollar (princip 8). Sidan renderas inte om,
+// så ett fel här kan inte ersätta betygsformuläret med felsidan. Ogiltigt
+// blindnummer och vin som saknas ger null. Bara öppet eller stängt skickas.
+export async function getWineOpenAction(
+  rawBlindNumber: string,
+): Promise<{ isOpen: boolean } | null> {
+  const participant = await requireParticipant();
+  const blindNumber = blindNumberSchema.safeParse(rawBlindNumber);
+  if (!blindNumber.success) return null;
+
+  const wine = await findWineForParticipant(participant, blindNumber.data);
+  return wine ? { isOpen: wine.isOpen } : null;
+}

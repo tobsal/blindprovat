@@ -132,14 +132,7 @@ async function TastingOverview() {
       )}
 
       {/* Efter avslöjandet ändras inget mer, så pollingen upphör. */}
-      {status !== "revealed" && (
-        <>
-          <p className="mt-6 text-xs text-on-surface-variant">
-            Sidan uppdateras automatiskt.
-          </p>
-          <PollRefresh />
-        </>
-      )}
+      {status !== "revealed" && <PollRefresh />}
     </>
   );
 }

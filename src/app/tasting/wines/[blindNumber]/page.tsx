@@ -2,8 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { getParticipantWine } from "@/api/participant-wine";
 import { LoadingStatus } from "@/app/_components/loading-status";
-import { PollRefresh } from "../../poll-refresh";
-import { RatingForm } from "./rating-form";
+import { LiveWineRating } from "./live-wine-rating";
 
 async function WineRating({
   params,
@@ -15,43 +14,12 @@ async function WineRating({
 
   return (
     <>
-      <div className="flex items-center gap-2">
-        <Link
-          href="/tasting"
-          aria-label="Tillbaka till alla viner"
-          className="-ml-2 flex size-12 shrink-0 items-center justify-center rounded-full hover:bg-surface-high active:bg-surface-highest"
-        >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M19 12H5" />
-            <path d="m12 19-7-7 7-7" />
-          </svg>
-        </Link>
-        <h1 className="flex-1 text-2xl font-semibold">
-          Vin {wine.blindNumber}
-        </h1>
-        <span className="rounded-lg bg-surface-high px-3 py-1 text-sm font-medium">
-          {wine.isOpen ? "Öppet för betyg" : "Stängt"}
-        </span>
-      </div>
-
-      <div className="mt-4">
-        <RatingForm
-          blindNumber={wine.blindNumber}
-          isOpen={wine.isOpen}
-          type={wine.type}
-          initial={wine.rating}
-        />
-      </div>
+      <LiveWineRating
+        blindNumber={wine.blindNumber}
+        initialIsOpen={wine.isOpen}
+        type={wine.type}
+        initial={wine.rating}
+      />
 
       <nav
         aria-label="Byt vin"
@@ -76,7 +44,6 @@ async function WineRating({
           </Link>
         )}
       </nav>
-      <PollRefresh />
     </>
   );
 }

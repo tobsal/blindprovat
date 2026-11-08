@@ -110,3 +110,26 @@ test("ett vin som öppnas visas utan omladdning av sidan", async ({
     ),
   ).toBe(true);
 });
+
+test("utan uppkoppling visar översikten det och pausar uppdateringen", async ({
+  context,
+  page,
+}) => {
+  const { tasting } = await createLiveTasting(owners);
+  await joinWithCookie(context, tasting.code, "Lisa");
+  await page.goto("/tasting");
+  await expect(page.getByText("Sidan uppdateras automatiskt.")).toBeVisible();
+
+  await context.setOffline(true);
+  await expect(
+    page.getByRole("status").filter({ hasText: "Ingen uppkoppling" }),
+  ).toBeVisible();
+  // Längre än ett pollintervall, så att en omladdning skulle ha hunnit ske.
+  await page.waitForTimeout(6_000);
+  await expect(
+    page.getByRole("heading", { name: "Betyg", exact: true }),
+  ).toBeVisible();
+
+  await context.setOffline(false);
+  await expect(page.getByText("Sidan uppdateras automatiskt.")).toBeVisible();
+});

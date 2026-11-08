@@ -162,7 +162,7 @@ test("admin startar och avslutar provningen", async ({ context, page }) => {
   await expect(page.getByText("Status: Pågår")).toBeVisible();
 
   await reveal.click();
-  await expect(page.getByText(/Det går inte att ångra/)).toBeFocused();
+  await expect(page.getByText(/Deltagarna får se vinerna/)).toBeFocused();
   await page.getByRole("button", { name: "Ja, avsluta" }).click();
   await expect(page.getByText("Status: Avslöjad")).toBeVisible();
   await expect(
@@ -223,4 +223,38 @@ test("admin öppnar och stänger viner och deltagaren ser det utan omladdning", 
   await expect(firstWine).toContainText("Inte öppet", { timeout: 10_000 });
 
   await participantContext.close();
+});
+
+test("admin tar bort en provning efter bekräftelse", async ({
+  context,
+  page,
+}) => {
+  await logInAsAdmin(context, owners.createOwnerId());
+  await page.goto("/admin/tastings/new");
+  await page.getByLabel("Namn på provningen").fill("Borttagningsprovning");
+  await page.getByRole("button", { name: "Skapa provning" }).click();
+
+  const deleteButton = page.getByRole("button", { name: "Ta bort provningen" });
+  const dialog = page.getByRole("dialog", { name: "Ta bort provningen?" });
+
+  await deleteButton.click();
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toHaveAccessibleDescription(/Det går inte att ångra/);
+  await expect(dialog.getByRole("button", { name: "Avbryt" })).toBeFocused();
+  await dialog.getByRole("button", { name: "Avbryt" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(deleteButton).toBeFocused();
+
+  await deleteButton.click();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(
+    page.getByRole("heading", { name: "Borttagningsprovning" }),
+  ).toBeVisible();
+
+  await deleteButton.click();
+  await dialog.getByRole("button", { name: "Ja, ta bort" }).click();
+
+  await expect(page).toHaveURL(/\/admin$/);
+  await expect(page.getByText("Du har inga provningar än.")).toBeVisible();
 });

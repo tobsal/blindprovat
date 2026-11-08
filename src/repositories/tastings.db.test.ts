@@ -1,15 +1,22 @@
 import { randomUUID } from "node:crypto";
+import { eq } from "drizzle-orm";
 import { afterAll, describe, expect, it } from "vitest";
 import { TASTING_CODE_ALPHABET, TASTING_CODE_LENGTH } from "@/domain/tasting";
-import { createTestOwners, sampleWine } from "@/test-support/fixtures";
+import {
+  createLiveTasting,
+  createTestOwners,
+  sampleWine,
+} from "@/test-support/fixtures";
 import { unwrap } from "@/test-support/unwrap";
 import { db } from "./db";
 import { isUniqueViolation } from "./errors";
 import { joinTasting } from "./participants";
-import { constraintNames, tastings } from "./schema";
+import { listOwnRatings, saveRating } from "./ratings";
+import { constraintNames, participants, tastings } from "./schema";
 import {
   advanceTastingStatus,
   createTasting,
+  deleteTasting,
   findTastingForParticipant,
   getTastingForOwner,
   listTastingsForOwner,
@@ -117,6 +124,58 @@ describe("provningar", () => {
       id: tasting.id,
       name: "Deltagarvy",
       status: "draft",
+    });
+  });
+});
+
+describe("borttagning av provning", () => {
+  it("tar bort provningen med viner, deltagare och betyg", async () => {
+    const { ownerId, tasting, participant, openWineId } =
+      await createLiveTasting(owners);
+    unwrap(
+      await saveRating(participant, openWineId, {
+        score: 7,
+        note: null,
+        tags: [],
+        guess: null,
+      }),
+      "Kunde inte spara betyg",
+    );
+
+    expect(await deleteTasting(ownerId, tasting.id)).toEqual({ ok: true });
+
+    expect(await getTastingForOwner(ownerId, tasting.id)).toBeNull();
+    expect(await listTastingsForOwner(ownerId)).toEqual([]);
+    expect(await findTastingForParticipant(participant)).toBeNull();
+    expect(await listWinesForParticipant(participant)).toEqual([]);
+    expect(await listOwnRatings(participant)).toEqual([]);
+    expect(
+      await db
+        .select()
+        .from(participants)
+        .where(eq(participants.id, participant.id)),
+    ).toEqual([]);
+  });
+
+  it("tar inte bort någon annans provning", async () => {
+    const ownerId = owners.createOwnerId();
+    const tasting = await createTasting(ownerId, { name: "Min" });
+
+    expect(await deleteTasting(owners.createOwnerId(), tasting.id)).toEqual({
+      ok: false,
+      error: "not_found",
+    });
+    expect(await getTastingForOwner(ownerId, tasting.id)).not.toBeNull();
+  });
+
+  it("ger not_found när provningen redan är borttagen", async () => {
+    const ownerId = owners.createOwnerId();
+    const tasting = await createTasting(ownerId, { name: "Två gånger" });
+
+    await deleteTasting(ownerId, tasting.id);
+    expect(await deleteTasting(ownerId, tasting.id)).toEqual({
+      ok: false,
+      error: "not_found",
     });
   });
 });

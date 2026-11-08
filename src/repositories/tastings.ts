@@ -127,6 +127,23 @@ export async function advanceTastingStatus(
   );
 }
 
+// Viner, deltagare och betyg tas bort med provningen (cascade i schemat).
+// DELETE tar exklusivt lås på provningsraden och väntar därför ut den som
+// håller delat lås enligt låsregeln i wines.ts, till exempel en betygsparare.
+// Provningen kan tas bort oavsett status.
+export async function deleteTasting(
+  ownerId: string,
+  tastingId: string,
+): Promise<RepositoryResult<object>> {
+  return withSafeErrors("deleteTasting", async () => {
+    const [deleted] = await db
+      .delete(tastings)
+      .where(tastingOwnedBy(ownerId, tastingId))
+      .returning({ id: tastings.id });
+    return deleted ? { ok: true } : { ok: false, error: "not_found" };
+  });
+}
+
 // Deltagaren får bara se sin egen provning, så den slås upp via sessionen
 // och inte via ett id som kommer utifrån.
 export async function findTastingForParticipant(

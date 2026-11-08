@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import type { TastingStatus } from "@/domain/tasting";
-import { advanceTastingStatus, createTasting } from "@/repositories/tastings";
+import {
+  advanceTastingStatus,
+  createTasting,
+  deleteTasting,
+} from "@/repositories/tastings";
 import { addWine, setWineOpen } from "@/repositories/wines";
 import { tastingIdSchema, tastingInputSchema } from "@/validation/tasting";
 import { wineFormSchema, wineIdSchema } from "@/validation/wine";
@@ -114,6 +118,21 @@ export async function revealTastingAction(
     "Provningen kan bara avslutas medan den pågår.",
     "Provningen är avslutad och vinerna är avslöjade.",
   );
+}
+
+// Lyckas borttagningen skickas admin till listan, så bara fel returneras.
+export async function deleteTastingAction(
+  rawTastingId: string,
+): Promise<StatusFormState> {
+  const ownerId = await requireAdminOwnerId();
+  const tastingId = tastingIdSchema.safeParse(rawTastingId);
+  if (!tastingId.success) return { formError: tastingNotFoundMessage };
+
+  const result = await deleteTasting(ownerId, tastingId.data);
+  if (!result.ok) return { formError: tastingNotFoundMessage };
+
+  revalidatePath("/admin");
+  redirect("/admin");
 }
 
 export async function setWineOpenAction(

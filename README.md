@@ -21,6 +21,20 @@ Webbapp för att arrangera blindprovningar av vin i grupp. Vad appen gör, tekni
 3. Kör migrationerna med `npm run db:migrate`.
 4. Starta appen med `npm run dev` och öppna http://localhost:3000.
 
+### Köra produktionsbygget lokalt
+
+```powershell
+npm run build
+$env:AUTH_TRUST_HOST = 'true'
+npm start
+```
+
+Auth.js litar bara automatiskt på värden i dev-läge och på Vercel. Utan `AUTH_TRUST_HOST` misslyckas admininloggningen i `npm start` med felet `UntrustedHost` i serverloggen. Sätt den inte på Vercel, där behövs den inte.
+
+## Vem som kan logga in som admin
+
+Alla med ett GitHub-konto kan logga in som admin. Det finns ingen lista över tillåtna konton. Varje admin ser och ändrar bara sina egna provningar, så att någon annan loggar in ger ingen åtkomst till dina. Deltagare loggar aldrig in, de går med via provningens kod.
+
 ## Tester och kontroller
 
 | Kommando               | Vad det gör                                         |

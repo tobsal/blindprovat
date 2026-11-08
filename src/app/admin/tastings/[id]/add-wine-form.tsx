@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { FormError } from "@/app/_components/form-error";
-import { keepInputWhenOffline } from "@/app/_components/keep-input-when-offline";
+import { keepInputOnFailure } from "@/app/_components/keep-input-on-failure";
 import { addWineAction, type WineField } from "@/api/admin-tasting-actions";
 import type { FormState } from "@/api/form-state";
 import {
@@ -16,7 +16,7 @@ const initialState: FormState<WineField> = {};
 
 export function AddWineForm({ tastingId }: { tastingId: string }) {
   const [state, formAction, isPending] = useActionState(
-    keepInputWhenOffline(addWineAction.bind(null, tastingId), wineFieldOrder),
+    keepInputOnFailure(addWineAction.bind(null, tastingId), wineFieldOrder),
     initialState,
   );
   const inputs = useRef<WineInputs>({});

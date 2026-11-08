@@ -53,7 +53,7 @@ async function TastingOverview() {
             </p>
             <Link
               href={`/tasting/wines/${wineToRate.blindNumber}`}
-              className="mt-3 inline-flex min-h-12 items-center rounded-full bg-on-primary px-6 font-medium text-primary focus-visible:outline-on-primary"
+              className="mt-3 inline-flex min-h-12 items-center rounded-full bg-on-primary px-6 font-medium text-primary transition-colors hover:bg-on-primary/90 active:bg-on-primary/80 focus-visible:outline-on-primary motion-reduce:transition-none"
             >
               Betygsätt vin {wineToRate.blindNumber}
             </Link>
@@ -119,7 +119,7 @@ async function TastingOverview() {
                   ) : (
                     <Link
                       href={`/tasting/wines/${wine.blindNumber}`}
-                      className={`${rowClass} hover:bg-surface-high`}
+                      className={`${rowClass} hover:bg-surface-high active:bg-surface-highest`}
                     >
                       {row}
                     </Link>

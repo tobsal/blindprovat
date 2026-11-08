@@ -19,7 +19,7 @@ async function WineRating({
         <Link
           href="/tasting"
           aria-label="Tillbaka till alla viner"
-          className="-ml-2 flex size-12 shrink-0 items-center justify-center rounded-full"
+          className="-ml-2 flex size-12 shrink-0 items-center justify-center rounded-full hover:bg-surface-high active:bg-surface-highest"
         >
           <svg
             width="24"

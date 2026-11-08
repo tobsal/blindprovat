@@ -6,16 +6,23 @@
   på den. --accent är vinrött som text, ram och fokus direkt på ytan. I ljust
   läge är de samma, i mörkt läge måste accenten vara ljusare för att nå 3:1
   mot ytan.
+
+  --primary-hover och --primary-pressed är tillståndslager på fyllda knappar
+  (mörkare i ljust läge, ljusare i mörkt) och håller minst 4,5:1 mot
+  --on-primary. --surface-highest är trycktillståndet för knappar på ytan.
 */
 :root {
   --surface: #faf8f6;
   --surface-low: #f2efec;
   --surface-high: #e9e4e0;
+  --surface-highest: #ddd7d2;
   --on-surface: #1f1b19;
   --on-surface-variant: #4d4643;
   --outline: #7a726d;
   --outline-variant: #d3ccc7;
   --primary: #7d2e46;
+  --primary-hover: #6a263b;
+  --primary-pressed: #5a1f32;
   --on-primary: #ffffff;
   --accent: #7d2e46;
   --error: #b3261e;
@@ -25,11 +32,14 @@
   --color-surface: var(--surface);
   --color-surface-low: var(--surface-low);
   --color-surface-high: var(--surface-high);
+  --color-surface-highest: var(--surface-highest);
   --color-on-surface: var(--on-surface);
   --color-on-surface-variant: var(--on-surface-variant);
   --color-outline: var(--outline);
   --color-outline-variant: var(--outline-variant);
   --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-pressed: var(--primary-pressed);
   --color-on-primary: var(--on-primary);
   --color-accent: var(--accent);
   --color-error: var(--error);
@@ -42,11 +52,14 @@
     --surface: #191513;
     --surface-low: #221d1b;
     --surface-high: #2b2522;
+    --surface-highest: #362f2b;
     --on-surface: #ece0dc;
     --on-surface-variant: #d0c5c0;
     --outline: #968e89;
     --outline-variant: #4d4643;
     --primary: #8f3249;
+    --primary-hover: #a03a54;
+    --primary-pressed: #ab4160;
     --on-primary: #ffffff;
     --accent: #d4939f;
     --error: #ffb4a8;
@@ -59,17 +72,35 @@
   outline-offset: 2px;
 }
 
-/* Tryckytor är minst 44 px höga (min-h-11), knappar 48 px (min-h-12). */
+/*
+  Tailwind v4 återställer markören på knappar till standardpilen. Handen visar
+  att knappen går att klicka på, och en inaktiv knapp visar att den inte gör det.
+*/
+@layer base {
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+/*
+  Tryckytor är minst 44 px höga (min-h-11), knappar 48 px (min-h-12).
+  Hover och tryck ger ett tillståndslager (Material 3). hover: gäller bara
+  enheter med mus, så active: är återkopplingen på mobil.
+*/
 @utility btn-primary {
-  @apply inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-6 font-medium text-on-primary;
+  @apply inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-6 font-medium text-on-primary transition-colors hover:not-disabled:bg-primary-hover active:not-disabled:bg-primary-pressed motion-reduce:transition-none;
 }
 
 @utility btn-secondary {
-  @apply inline-flex min-h-12 items-center justify-center rounded-full border border-outline px-6 font-medium text-accent;
+  @apply inline-flex min-h-12 items-center justify-center rounded-full border border-outline px-6 font-medium text-accent transition-colors hover:not-disabled:bg-surface-high active:not-disabled:bg-surface-highest motion-reduce:transition-none;
 }
 
 @utility link-action {
-  @apply inline-flex min-h-11 items-center font-medium text-accent underline underline-offset-4;
+  @apply inline-flex min-h-11 items-center font-medium text-accent underline underline-offset-4 hover:decoration-2 active:text-on-surface;
 }
 
 body {

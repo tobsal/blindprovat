@@ -146,10 +146,10 @@ export function RatingForm({ blindNumber, isOpen, initial }: Props) {
                   aria-pressed={selected}
                   aria-label={`${value} av ${SCORE_MAX}`}
                   onClick={() => setScore(value)}
-                  className={`flex min-h-12 items-center justify-center gap-1 rounded-full border font-medium ${
+                  className={`flex min-h-12 items-center justify-center gap-1 rounded-full border font-medium transition-colors motion-reduce:transition-none ${
                     selected
-                      ? "border-primary bg-primary text-on-primary"
-                      : "border-outline text-on-surface"
+                      ? "border-primary bg-primary text-on-primary hover:not-disabled:bg-primary-hover active:not-disabled:bg-primary-pressed"
+                      : "border-outline text-on-surface hover:not-disabled:bg-surface-high active:not-disabled:bg-surface-highest"
                   }`}
                 >
                   {selected && <CheckIcon />}
@@ -193,10 +193,10 @@ export function RatingForm({ blindNumber, isOpen, initial }: Props) {
                   aria-pressed={selected}
                   disabled={!selected && tagLimitReached}
                   onClick={() => toggleTag(tag)}
-                  className={`flex min-h-11 items-center gap-2 rounded-lg border px-4 font-medium disabled:opacity-50 ${
+                  className={`flex min-h-11 items-center gap-2 rounded-lg border px-4 font-medium transition-colors disabled:opacity-50 motion-reduce:transition-none ${
                     selected
-                      ? "border-primary bg-primary text-on-primary"
-                      : "border-outline text-on-surface-variant"
+                      ? "border-primary bg-primary text-on-primary hover:not-disabled:bg-primary-hover active:not-disabled:bg-primary-pressed"
+                      : "border-outline text-on-surface-variant hover:not-disabled:bg-surface-high active:not-disabled:bg-surface-highest"
                   }`}
                 >
                   {selected && <CheckIcon />}

@@ -17,7 +17,7 @@ async function TastingList() {
         <li key={tasting.id}>
           <Link
             href={`/admin/tastings/${tasting.id}`}
-            className="flex min-h-11 flex-wrap items-center justify-between gap-2 px-4 py-3 underline-offset-4 hover:bg-surface-high hover:underline"
+            className="flex min-h-11 flex-wrap items-center justify-between gap-2 px-4 py-3 underline-offset-4 hover:bg-surface-high hover:underline active:bg-surface-highest"
           >
             <span className="font-medium">{tasting.name}</span>
             <span>Status: {tastingStatusLabels[tasting.status]}</span>

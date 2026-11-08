@@ -50,6 +50,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Formatering
+        run: npm run format:check
+
       - name: Enhetstester
         run: npm test
 

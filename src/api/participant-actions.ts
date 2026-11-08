@@ -41,7 +41,11 @@ export async function joinTastingAction(
   if (!result.ok) {
     const fieldErrors =
       result.error === "name_taken"
-        ? { displayName: ["Det namnet används redan i provningen. Välj ett annat."] }
+        ? {
+            displayName: [
+              "Det namnet används redan i provningen. Välj ett annat.",
+            ],
+          }
         : { code: [joinNotFoundMessage] };
     return { fieldErrors, values };
   }
@@ -55,10 +59,7 @@ export async function joinTastingAction(
 // det som valts med knappar finns kvar i formuläret.
 const ratingTextFields = ["note", "guess"] as const;
 export type RatingField =
-  | "score"
-  | "tags"
-  | TasteClock
-  | (typeof ratingTextFields)[number];
+  "score" | "tags" | TasteClock | (typeof ratingTextFields)[number];
 
 // Tomt fält betyder inget värde. Text som inte är ett tal blir NaN, så att
 // valideringen ger sitt felmeddelande.

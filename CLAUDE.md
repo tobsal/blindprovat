@@ -25,20 +25,21 @@ Vinprovningar sköts i dag med papper, Excel eller gruppchattar. Det är krångl
 
 ## Teknikstack och varför
 
-| Del | Val | Varför |
-|---|---|---|
-| Ramverk | **Next.js (App Router)** | En kodbas för båda klienterna och servern. Välkända konventioner som agenter hanterar bra. |
-| Språk | **TypeScript (strict)** | Typfel fångar misstag tidigt. Delade typer mellan klient och server. |
-| Databas | **PostgreSQL på Neon** (free tier) | Gratis, permanent och skalar till noll. Vanlig Postgres, ingen inlåsning. |
-| ORM | **Drizzle ORM + drizzle-kit** | Typat schema i TypeScript, SQL-nära och tydliga migrationer. |
-| Validering | **Zod** | Validerar all input vid systemgränsen och ger typer på köpet. |
-| Admininloggning | **Auth.js** med GitHub som provider | Ingen e-posttjänst behövs, gratis. |
-| Styling | **Tailwind CSS** | Snabbt att bygga mobilanpassat utan egen CSS-arkitektur. |
-| Enhetstester | **Vitest** | Snabb återkoppling för domänlogik. |
-| E2E-tester | **Playwright** | Agenten kan själv verifiera hela flöden i webbläsaren. |
-| Hosting | **Vercel Hobby** | Automatisk deploy vid push och preview-deploy per PR. |
-| CI | **GitHub Actions** | Typkontroll, lint och tester måste vara gröna innan merge. |
-| Pakethanterare | **npm** | Följer med Node, inget extra att installera. Fantomberoenden fångas av ESLint (se nedan). |
+| Del             | Val                                 | Varför                                                                                     |
+| --------------- | ----------------------------------- | ------------------------------------------------------------------------------------------ |
+| Ramverk         | **Next.js (App Router)**            | En kodbas för båda klienterna och servern. Välkända konventioner som agenter hanterar bra. |
+| Språk           | **TypeScript (strict)**             | Typfel fångar misstag tidigt. Delade typer mellan klient och server.                       |
+| Databas         | **PostgreSQL på Neon** (free tier)  | Gratis, permanent och skalar till noll. Vanlig Postgres, ingen inlåsning.                  |
+| ORM             | **Drizzle ORM + drizzle-kit**       | Typat schema i TypeScript, SQL-nära och tydliga migrationer.                               |
+| Validering      | **Zod**                             | Validerar all input vid systemgränsen och ger typer på köpet.                              |
+| Admininloggning | **Auth.js** med GitHub som provider | Ingen e-posttjänst behövs, gratis.                                                         |
+| Styling         | **Tailwind CSS**                    | Snabbt att bygga mobilanpassat utan egen CSS-arkitektur.                                   |
+| Enhetstester    | **Vitest**                          | Snabb återkoppling för domänlogik.                                                         |
+| E2E-tester      | **Playwright**                      | Agenten kan själv verifiera hela flöden i webbläsaren.                                     |
+| Hosting         | **Vercel Hobby**                    | Automatisk deploy vid push och preview-deploy per PR.                                      |
+| Formatering     | **Prettier**                        | En enda kodstil utan diskussion. Standardinställningar, kontrolleras i CI.                 |
+| CI              | **GitHub Actions**                  | Typkontroll, lint, formatering och tester måste vara gröna innan merge.                    |
+| Pakethanterare  | **npm**                             | Följer med Node, inget extra att installera. Fantomberoenden fångas av ESLint (se nedan).  |
 
 ## Kommandon
 
@@ -47,6 +48,8 @@ npm install             # installera beroenden
 npm run dev             # starta lokalt på http://localhost:3000
 npm run build           # produktionsbygge
 npm run lint            # ESLint
+npm run format          # formatera alla filer med Prettier
+npm run format:check    # kontrollera formateringen utan att ändra (körs i CI)
 npm run typecheck       # tsc --noEmit
 npm test                # Vitest (enhetstester)
 npm run test:db         # Vitest mot migrerad databas (*.db.test.ts, kräver DATABASE_URL)
@@ -55,7 +58,14 @@ npm run db:generate     # generera migration från ändrat schema
 npm run db:migrate      # kör migrationer mot DATABASE_URL
 ```
 
-Kör alltid `npm run typecheck && npm run lint && npm test` innan du säger att en uppgift är klar.
+Kör alltid `npm run format && npm run typecheck && npm run lint && npm test` innan du säger att en uppgift är klar.
+
+### Formatering
+
+- All kod och dokumentation formateras med **Prettier**. Kör `npm run format` innan du committar. CI stoppar ändringar som inte är formaterade.
+- Konfigurationen ligger i `.prettierrc.json` och använder standardinställningarna. Ändra dem inte utan att fråga, eftersom det formaterar om hela repot.
+- Formatera inte för hand och lägg inte till stilregler i ESLint som krockar med Prettier.
+- Genererade filer (migrationer i `drizzle/` och `package-lock.json`) undantas i `.prettierignore`.
 
 ### Beroenden
 
@@ -96,7 +106,7 @@ Utöver lagren gäller:
 9. **Funktioner gör en sak** och har beskrivande namn. Inga globala muterbara variabler. Enda undantaget är databasanslutningen, som sparas på `globalThis` i `src/repositories/db.ts` så att den överlever omladdning av moduler i dev. Kopiera inte mönstret till annat.
 10. **Mobil först för deltagarklienten.** Stora tryckytor och fungerande utan hovring.
 11. **YAGNI.** Bygg bara det som uppgiften kräver nu. Inga abstraktioner, konfigurationsmöjligheter, generella hjälpklasser eller extra lager för tänkbara framtida behov. Duplicera hellre två gånger än att abstrahera i förväg, och bryt ut först när mönstret återkommer och är tydligt.
-12. **Anonym åtkomst skyddas mot gissning.** Provningskoden ska vara slumpmässig och tillräckligt lång för att inte gå att gissa fram, aldrig löpnummer eller härledd från namn eller datum. 
+12. **Anonym åtkomst skyddas mot gissning.** Provningskoden ska vara slumpmässig och tillräckligt lång för att inte gå att gissa fram, aldrig löpnummer eller härledd från namn eller datum.
 
 13. **Tillgänglighet är ett krav, inte en finish.** Målet är WCAG 2.2 AA i både admin- och deltagarvyer.
     - Använd semantisk HTML (`button`, `label`, rubriknivåer, listor) före ARIA. Varje formulärfält har en synlig `label`.
@@ -145,7 +155,7 @@ Utöver lagren gäller:
 
 ### Definition of done
 
-- [ ] `npm run typecheck`, `npm run lint` och `npm test` är gröna
+- [ ] `npm run typecheck`, `npm run lint`, `npm run format:check` och `npm test` är gröna
 - [ ] Nytt beteende har tester
 - [ ] Inga nya beroenden utan godkännande
 - [ ] Ingen vininformation läcker till deltagare före avslöjande

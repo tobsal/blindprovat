@@ -3,10 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 import { FormError } from "@/app/_components/form-error";
 import { keepInputWhenOffline } from "@/app/_components/keep-input-when-offline";
-import {
-  addWineAction,
-  type WineField,
-} from "@/api/admin-tasting-actions";
+import { addWineAction, type WineField } from "@/api/admin-tasting-actions";
 import type { FormState } from "@/api/form-state";
 import {
   firstInvalidWineField,

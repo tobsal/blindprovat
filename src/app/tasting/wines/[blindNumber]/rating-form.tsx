@@ -175,10 +175,10 @@ export function RatingForm({ blindNumber, isOpen, type, initial }: Props) {
 
   const action = useMemo(
     () =>
-      keepInputWhenOffline(
-        saveRatingAction.bind(null, String(blindNumber)),
-        ["note", "guess"],
-      ),
+      keepInputWhenOffline(saveRatingAction.bind(null, String(blindNumber)), [
+        "note",
+        "guess",
+      ]),
     [blindNumber],
   );
   const [state, formAction, isPending] = useActionState(action, initialState);

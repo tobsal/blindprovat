@@ -13,12 +13,12 @@ Webbapp för att arrangera blindprovningar av vin i grupp. Vad appen gör, tekni
 
 De flesta kommandon läser `DATABASE_URL` från `.env.local` själva:
 
-| Kommando | Läser `.env.local` |
-|---|---|
-| `npm run dev`, `npm run build` | Ja |
-| `npm run db:generate`, `npm run db:migrate` | Ja |
-| `npm run test:e2e` | Ja |
-| `npm run test:db` | **Nej** |
+| Kommando                                    | Läser `.env.local` |
+| ------------------------------------------- | ------------------ |
+| `npm run dev`, `npm run build`              | Ja                 |
+| `npm run db:generate`, `npm run db:migrate` | Ja                 |
+| `npm run test:e2e`                          | Ja                 |
+| `npm run test:db`                           | **Nej**            |
 
 Innan du kör `npm run test:db` måste du därför sätta `DATABASE_URL` i terminalen. Annars stoppar testerna med felet `DATABASE_URL saknas. Se .env.example.`
 

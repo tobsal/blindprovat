@@ -55,9 +55,9 @@ describe("deltagare", () => {
     const tasting = await createTestTasting();
     await joinTasting({ code: tasting.code, displayName: "Kim" });
 
-    expect(await joinTasting({ code: tasting.code, displayName: "kim" })).toEqual(
-      { ok: false, error: "name_taken" },
-    );
+    expect(
+      await joinTasting({ code: tasting.code, displayName: "kim" }),
+    ).toEqual({ ok: false, error: "name_taken" });
     const otherTasting = await createTestTasting();
     const inOther = await joinTasting({
       code: otherTasting.code,

@@ -10,6 +10,8 @@ describe("ownerIdFromAccount", () => {
 
   it("ger samma id för samma konto vid varje inloggning", () => {
     const account = { provider: "github", providerAccountId: "12345" };
-    expect(ownerIdFromAccount(account)).toBe(ownerIdFromAccount({ ...account }));
+    expect(ownerIdFromAccount(account)).toBe(
+      ownerIdFromAccount({ ...account }),
+    );
   });
 });

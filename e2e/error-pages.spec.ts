@@ -9,5 +9,7 @@ test("okänd adress visar en svensk sida med väg vidare", async ({ page }) => {
 
   await page.getByRole("link", { name: "Till startsidan" }).click();
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole("heading", { name: "Blindprovat" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Blindprovat" }),
+  ).toBeVisible();
 });

@@ -124,16 +124,15 @@ export default function TastingPage({
     <main className="mx-auto w-full max-w-3xl flex-1 p-6">
       <Suspense
         fallback={
-          <LoadingStatus className="min-h-11">Laddar provningen …</LoadingStatus>
+          <LoadingStatus className="min-h-11">
+            Laddar provningen …
+          </LoadingStatus>
         }
       >
         <TastingDetails params={params} />
       </Suspense>
 
-      <Link
-        href="/admin"
-        className="link-action mt-8"
-      >
+      <Link href="/admin" className="link-action mt-8">
         Till dina provningar
       </Link>
     </main>

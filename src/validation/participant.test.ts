@@ -16,11 +16,18 @@ describe("joinTastingInputSchema", () => {
   it("nekar kod med fel längd eller tecken utanför alfabetet", () => {
     const message =
       "Koden består av 10 tecken. Kontrollera att du skrivit rätt.";
-    expect(messagesFor(joinTastingInputSchema, { ...validInput, code: "ABCDE2345" })).toEqual([message]);
-    expect(messagesFor(joinTastingInputSchema, { ...validInput, code: "ABCDE23450" })).toEqual([
-      message,
-    ]);
-    expect(messagesFor(joinTastingInputSchema, { ...validInput, code: undefined })).toEqual([message]);
+    expect(
+      messagesFor(joinTastingInputSchema, { ...validInput, code: "ABCDE2345" }),
+    ).toEqual([message]);
+    expect(
+      messagesFor(joinTastingInputSchema, {
+        ...validInput,
+        code: "ABCDE23450",
+      }),
+    ).toEqual([message]);
+    expect(
+      messagesFor(joinTastingInputSchema, { ...validInput, code: undefined }),
+    ).toEqual([message]);
   });
 
   it("trimmar namnet och kräver att det finns", () => {
@@ -28,9 +35,9 @@ describe("joinTastingInputSchema", () => {
       joinTastingInputSchema.parse({ ...validInput, displayName: "  Kim " })
         .displayName,
     ).toBe("Kim");
-    expect(messagesFor(joinTastingInputSchema, { ...validInput, displayName: "  " })).toEqual([
-      "Ange ditt namn",
-    ]);
+    expect(
+      messagesFor(joinTastingInputSchema, { ...validInput, displayName: "  " }),
+    ).toEqual(["Ange ditt namn"]);
   });
 
   it("godtar 30 tecken i namnet men inte 31", () => {
@@ -40,9 +47,12 @@ describe("joinTastingInputSchema", () => {
         displayName: "a".repeat(30),
       }).success,
     ).toBe(true);
-    expect(messagesFor(joinTastingInputSchema, { ...validInput, displayName: "a".repeat(31) })).toEqual(
-      ["Namnet får vara högst 30 tecken"],
-    );
+    expect(
+      messagesFor(joinTastingInputSchema, {
+        ...validInput,
+        displayName: "a".repeat(31),
+      }),
+    ).toEqual(["Namnet får vara högst 30 tecken"]);
   });
 });
 

@@ -3,10 +3,7 @@ import {
   PARTICIPANT_NAME_MAX,
   SESSION_TOKEN_BYTES,
 } from "@/domain/participant";
-import {
-  TASTING_CODE_ALPHABET,
-  TASTING_CODE_LENGTH,
-} from "@/domain/tasting";
+import { TASTING_CODE_ALPHABET, TASTING_CODE_LENGTH } from "@/domain/tasting";
 
 const codeMessage = `Koden består av ${TASTING_CODE_LENGTH} tecken. Kontrollera att du skrivit rätt.`;
 const nameRequiredMessage = "Ange ditt namn";

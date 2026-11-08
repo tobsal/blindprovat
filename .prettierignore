@@ -1,0 +1,8 @@
+# Prettier läser även .gitignore. Här står det som är incheckat men inte
+# ska formateras.
+
+# Genereras av drizzle-kit och redigeras inte för hand.
+drizzle/
+
+# Genereras av npm.
+package-lock.json

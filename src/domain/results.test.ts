@@ -41,11 +41,7 @@ describe("calculateResults", () => {
   it("rankar viner efter snitt och låter lika snitt dela plats", () => {
     const { wines } = calculateResults(
       ["w1", "w2", "w3"],
-      [
-        rating("a", "w1", 6),
-        rating("a", "w2", 8),
-        rating("a", "w3", 8),
-      ],
+      [rating("a", "w1", 6), rating("a", "w2", 8), rating("a", "w3", 8)],
     );
     expect(wines.map((wine) => [wine.wineId, wine.rating?.rank])).toEqual([
       ["w2", 1],
@@ -128,7 +124,12 @@ describe("calculateResults", () => {
 });
 
 describe("averageTasteClocksByWine", () => {
-  const empty = { sweetness: null, body: null, astringency: null, acidity: null };
+  const empty = {
+    sweetness: null,
+    body: null,
+    astringency: null,
+    acidity: null,
+  };
 
   function clocks(
     wineId: string,

@@ -117,9 +117,7 @@ test("betyg utan poäng ger ett fel vid poängen och behåller texten", async ({
   await page.getByLabel("Anteckning (valfritt)").fill("Glöm inte mig");
   await page.getByRole("button", { name: "Spara betyg" }).click();
 
-  await expect(
-    page.getByText("Välj ett betyg mellan 1 och 10"),
-  ).toBeVisible();
+  await expect(page.getByText("Välj ett betyg mellan 1 och 10")).toBeVisible();
   await expect(page.getByRole("button", { name: "1 av 10" })).toBeFocused();
   await expect(page.getByLabel("Anteckning (valfritt)")).toHaveValue(
     "Glöm inte mig",
@@ -143,7 +141,9 @@ test("ett vin som stängs medan deltagaren skriver låser formuläret men behål
   await expect(page.getByLabel("Anteckning (valfritt)")).toHaveValue(
     "Halvfärdig anteckning",
   );
-  await expect(page.getByRole("button", { name: "Spara betyg" })).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Spara betyg" }),
+  ).toBeDisabled();
   expect(await listOwnRatings(participant)).toEqual([]);
 });
 
@@ -156,7 +156,9 @@ test("ett vin som inte är öppet går inte att betygsätta", async ({
   await page.goto("/tasting/wines/2");
 
   await expect(page.getByText(/inte öppet för betyg ännu/)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Spara betyg" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Spara betyg" })).toHaveCount(
+    0,
+  );
 });
 
 test("okänt eller ogiltigt vin ger samma sida", async ({ context, page }) => {

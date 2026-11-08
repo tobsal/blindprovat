@@ -9,10 +9,7 @@ export async function UserMenu() {
     <div className="flex items-center gap-3">
       <p>Inloggad som {session.name ?? "okänd användare"}</p>
       <form action={logOut}>
-        <button
-          type="submit"
-          className="btn-secondary"
-        >
+        <button type="submit" className="btn-secondary">
           Logga ut
         </button>
       </form>

@@ -4,6 +4,7 @@ import { createLiveTasting, createTestOwners } from "@/test-support/fixtures";
 import { DatabaseError } from "./errors";
 import {
   listOwnRatings,
+  listResultInputsForParticipant,
   listScoredRatingsForOwner,
   saveRating,
   type RatingValues,
@@ -92,5 +93,34 @@ describe("betyg", () => {
     expect(
       await listScoredRatingsForOwner(owners.createOwnerId(), tasting.id),
     ).toBeNull();
+  });
+
+  it("ger deltagaren andras betyg och smeknamn först efter avslöjandet", async () => {
+    const { ownerId, tasting, participant, openWineId } =
+      await createLiveTasting(owners);
+    await saveRating(participant, openWineId, values);
+
+    expect(await listResultInputsForParticipant(participant)).toBeNull();
+
+    await advanceTastingStatus(ownerId, tasting.id, "live");
+    expect(await listResultInputsForParticipant(participant)).toEqual({
+      ratings: [
+        { wineId: openWineId, participantId: participant.id, score: 7 },
+      ],
+      participants: [{ id: participant.id, displayName: "Kim" }],
+    });
+  });
+
+  it("ger deltagaren bara resultatet från den egna provningen", async () => {
+    const first = await createLiveTasting(owners);
+    const second = await createLiveTasting(owners);
+    await saveRating(second.participant, second.openWineId, values);
+    await advanceTastingStatus(first.ownerId, first.tasting.id, "live");
+    await advanceTastingStatus(second.ownerId, second.tasting.id, "live");
+
+    expect(await listResultInputsForParticipant(first.participant)).toEqual({
+      ratings: [],
+      participants: [{ id: first.participant.id, displayName: "Kim" }],
+    });
   });
 });

@@ -37,7 +37,8 @@ Vinprovningar sköts i dag med papper, Excel eller gruppchattar. Det är krångl
 | Enhetstester    | **Vitest**                          | Snabb återkoppling för domänlogik.                                                         |
 | E2E-tester      | **Playwright**                      | Agenten kan själv verifiera hela flöden i webbläsaren.                                     |
 | Hosting         | **Vercel Hobby**                    | Automatisk deploy vid push och preview-deploy per PR.                                      |
-| CI              | **GitHub Actions**                  | Typkontroll, lint och tester måste vara gröna innan merge.                                 |
+| Formatering     | **Prettier**                        | En enda kodstil utan diskussion. Standardinställningar, kontrolleras i CI.                 |
+| CI              | **GitHub Actions**                  | Typkontroll, lint, formatering och tester måste vara gröna innan merge.                    |
 | Pakethanterare  | **npm**                             | Följer med Node, inget extra att installera. Fantomberoenden fångas av ESLint (se nedan).  |
 
 ## Kommandon
@@ -47,6 +48,8 @@ npm install             # installera beroenden
 npm run dev             # starta lokalt på http://localhost:3000
 npm run build           # produktionsbygge
 npm run lint            # ESLint
+npm run format          # formatera alla filer med Prettier
+npm run format:check    # kontrollera formateringen utan att ändra (körs i CI)
 npm run typecheck       # tsc --noEmit
 npm test                # Vitest (enhetstester)
 npm run test:db         # Vitest mot migrerad databas (*.db.test.ts, kräver DATABASE_URL)
@@ -55,7 +58,14 @@ npm run db:generate     # generera migration från ändrat schema
 npm run db:migrate      # kör migrationer mot DATABASE_URL
 ```
 
-Kör alltid `npm run typecheck && npm run lint && npm test` innan du säger att en uppgift är klar.
+Kör alltid `npm run format && npm run typecheck && npm run lint && npm test` innan du säger att en uppgift är klar.
+
+### Formatering
+
+- All kod och dokumentation formateras med **Prettier**. Kör `npm run format` innan du committar. CI stoppar ändringar som inte är formaterade.
+- Konfigurationen ligger i `.prettierrc.json` och använder standardinställningarna. Ändra dem inte utan att fråga, eftersom det formaterar om hela repot.
+- Formatera inte för hand och lägg inte till stilregler i ESLint som krockar med Prettier.
+- Genererade filer (migrationer i `drizzle/` och `package-lock.json`) undantas i `.prettierignore`.
 
 ### Beroenden
 
@@ -145,7 +155,7 @@ Utöver lagren gäller:
 
 ### Definition of done
 
-- [ ] `npm run typecheck`, `npm run lint` och `npm test` är gröna
+- [ ] `npm run typecheck`, `npm run lint`, `npm run format:check` och `npm test` är gröna
 - [ ] Nytt beteende har tester
 - [ ] Inga nya beroenden utan godkännande
 - [ ] Ingen vininformation läcker till deltagare före avslöjande

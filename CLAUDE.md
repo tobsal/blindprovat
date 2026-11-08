@@ -91,6 +91,11 @@ Utöver lagren gäller:
 - **Testhjälp** som delas mellan tester (till exempel fixtures för databastester) ligger i `src/test-support/`. Den får bara importeras från tester (`*.test.ts`) och e2e, aldrig från produktionskod. Det upprätthålls av en lintregel.
 - **Låsregel för skrivningar** som beror på provningens status eller på om ett vin är öppet: lås provningsraden först, i en egen fråga, och läs sedan det som ska avgöra saken. Skrivare som ändrar status eller stänger ett vin tar exklusivt lås. Betygsparare och den som går med i provningen tar delat lås. Lås aldrig bara vinraden. Regeln och skälen står överst i `src/repositories/wines.ts`.
 - **Migrationer** är genererade av verktyget och redigeras inte för hand.
+- **Migrationer är bakåtkompatibla** (expand/contract). Schemat ändras i produktion innan den nya koden har tagit över, så en stund kör den gamla koden mot det nya schemat. En återställning av koden rullar inte heller tillbaka schemat. Därför måste den kod som ligger i `main` före ändringen fungera mot schemat efter den.
+  - Nya kolumner är nullable eller har ett standardvärde. Nya tabeller och index går bra.
+  - Att byta namn på, ta bort eller ändra typ på en kolumn eller tabell görs i två PR:er: först kod som inte längre använder den gamla formen (och vid behov skriver till båda), sedan en separat PR som tar bort den.
+  - En kolumn som ska bli `NOT NULL` läggs först till som nullable, fylls med data och görs `NOT NULL` i en senare PR.
+  - Om en schemaändring inte går att göra bakåtkompatibel: fråga innan du fortsätter.
 - Lagergränserna ska så långt möjligt upprätthållas av lintregler, inte bara av den här texten.
 
 ## Arkitekturprinciper

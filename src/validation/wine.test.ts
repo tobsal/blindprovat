@@ -2,12 +2,13 @@ import { describe, expect, it } from "vitest";
 import { messagesFor } from "@/test-support/messages-for";
 import { wineFormSchema, wineIdSchema, wineInputSchema } from "./wine";
 
-const valid = { name: "Barolo" };
+const valid = { name: "Barolo", type: "red" };
 
 describe("wineInputSchema", () => {
-  it("godtar bara namn och sätter övriga fält till null", () => {
+  it("godtar bara namn och vintyp och sätter övriga fält till null", () => {
     expect(wineInputSchema.parse(valid)).toEqual({
       name: "Barolo",
+      type: "red",
       producer: null,
       grape: null,
       region: null,
@@ -18,15 +19,21 @@ describe("wineInputSchema", () => {
   });
 
   it("kräver namn efter trimning", () => {
-    expect(messagesFor(wineInputSchema, { name: "   " })).toEqual(["Ange vinets namn"]);
-    expect(messagesFor(wineInputSchema, {})).toEqual(["Ange vinets namn"]);
+    expect(messagesFor(wineInputSchema, { ...valid, name: "   " })).toEqual([
+      "Ange vinets namn",
+    ]);
+    expect(messagesFor(wineInputSchema, { type: "red" })).toEqual([
+      "Ange vinets namn",
+    ]);
   });
 
   it("godtar namn på 120 tecken men inte 121", () => {
     expect(
-      wineInputSchema.safeParse({ name: "a".repeat(120) }).success,
+      wineInputSchema.safeParse({ ...valid, name: "a".repeat(120) }).success,
     ).toBe(true);
-    expect(messagesFor(wineInputSchema, { name: "a".repeat(121) })).toEqual([
+    expect(
+      messagesFor(wineInputSchema, { ...valid, name: "a".repeat(121) }),
+    ).toEqual([
       "Namnet får vara högst 120 tecken",
     ]);
   });
@@ -47,6 +54,18 @@ describe("wineInputSchema", () => {
     expect(messagesFor(wineInputSchema, { ...valid, country: "a".repeat(101) })).toEqual([
       "Landet får vara högst 100 tecken",
     ]);
+  });
+
+  describe("vintyp", () => {
+    it.each(["red", "white", "rose", "sparkling"])("godtar %s", (type) => {
+      expect(wineInputSchema.parse({ ...valid, type }).type).toBe(type);
+    });
+
+    it.each([undefined, "", "orange"])("avvisar %s", (type) => {
+      expect(messagesFor(wineInputSchema, { ...valid, type })).toEqual([
+        "Välj vintyp",
+      ]);
+    });
   });
 
   describe("årgång", () => {
@@ -120,7 +139,9 @@ describe("wineFormSchema", () => {
   });
 
   it("trimmar och kräver namn som vanligt", () => {
-    expect(messagesFor(wineFormSchema, { name: "  " })).toEqual(["Ange vinets namn"]);
+    expect(messagesFor(wineFormSchema, { ...valid, name: "  " })).toEqual([
+      "Ange vinets namn",
+    ]);
   });
 });
 

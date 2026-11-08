@@ -24,10 +24,14 @@ export type WineDetails = Pick<
   "name" | "producer" | "grape" | "region" | "country" | "vintage" | "price"
 >;
 
-// details är null tills provningen är avslöjad.
+export type NewWine = WineDetails & Pick<AdminWine, "type">;
+
+// details är null tills provningen är avslöjad. Vintypen skickas redan före
+// avslöjandet, eftersom den styr vilka smakklockor deltagaren fyller i.
+// Det är ett medvetet undantag från blindheten: färgen syns ändå i glaset.
 export type ParticipantWine = Pick<
   AdminWine,
-  "id" | "blindNumber" | "isOpen"
+  "id" | "blindNumber" | "isOpen" | "type"
 > & {
   details: WineDetails | null;
 };
@@ -35,7 +39,7 @@ export type ParticipantWine = Pick<
 export async function addWine(
   ownerId: string,
   tastingId: string,
-  details: WineDetails,
+  details: NewWine,
 ): Promise<RepositoryResult<{ wine: AdminWine }>> {
   return withSafeErrors("addWine", () =>
     db.transaction(async (tx) => {
@@ -101,6 +105,7 @@ const blindColumns = {
   id: wines.id,
   blindNumber: wines.blindNumber,
   isOpen: wines.isOpen,
+  type: wines.type,
 };
 
 const detailColumns = {
@@ -142,10 +147,11 @@ export async function listWinesForParticipant(
       .from(wines)
       .where(eq(wines.tastingId, tastingId))
       .orderBy(asc(wines.blindNumber));
-    return rows.map(({ id, blindNumber, isOpen, ...details }) => ({
+    return rows.map(({ id, blindNumber, isOpen, type, ...details }) => ({
       id,
       blindNumber,
       isOpen,
+      type,
       details,
     }));
   });

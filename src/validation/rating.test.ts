@@ -11,6 +11,10 @@ describe("ratingInputSchema", () => {
       note: null,
       tags: [],
       guess: null,
+      sweetness: null,
+      body: null,
+      astringency: null,
+      acidity: null,
     });
   });
 
@@ -73,26 +77,49 @@ describe("ratingInputSchema", () => {
   });
 
   it("godtar upp till fem taggar", () => {
-    const tags = ["fruity", "spicy", "oaky", "acidic", "mineral"];
+    const tags = ["fruity", "spicy", "oaky", "herbal", "mineral"];
     expect(ratingInputSchema.parse({ ...valid, tags }).tags).toEqual(tags);
   });
 
   it("avvisar sex taggar", () => {
-    const tags = ["fruity", "spicy", "oaky", "acidic", "mineral", "floral"];
+    const tags = ["fruity", "spicy", "oaky", "herbal", "mineral", "floral"];
     expect(messagesFor(ratingInputSchema, { ...valid, tags })).toEqual([
       "Du kan välja högst 5 taggar",
     ]);
   });
 
-  it("avvisar okänd tagg", () => {
-    expect(messagesFor(ratingInputSchema, { ...valid, tags: ["buttery"] })).toEqual([
-      "Välj bland taggarna i listan",
-    ]);
-  });
+  it.each(["buttery", "acidic", "tannic", "sweet"])(
+    "avvisar okänd eller borttagen tagg %s",
+    (tag) => {
+      expect(messagesFor(ratingInputSchema, { ...valid, tags: [tag] })).toEqual([
+        "Välj bland taggarna i listan",
+      ]);
+    },
+  );
 
   it("avvisar dubbletter bland taggarna", () => {
     expect(messagesFor(ratingInputSchema, { ...valid, tags: ["fruity", "fruity"] })).toEqual([
       "Varje tagg kan bara väljas en gång",
     ]);
+  });
+
+  describe("smakklockor", () => {
+    it("godtar 1 och 12 i varje klocka", () => {
+      const clocks = { sweetness: 1, body: 12, astringency: 1, acidity: 12 };
+      expect(ratingInputSchema.parse({ ...valid, ...clocks })).toMatchObject(
+        clocks,
+      );
+    });
+
+    it("gör saknad klocka till null", () => {
+      expect(ratingInputSchema.parse({ ...valid, body: null }).body).toBeNull();
+      expect(ratingInputSchema.parse(valid).acidity).toBeNull();
+    });
+
+    it.each([0, 13, 6.5, NaN])("avvisar %s", (body) => {
+      expect(messagesFor(ratingInputSchema, { ...valid, body })).toEqual([
+        "Välj ett värde mellan 1 och 12 eller lämna tomt",
+      ]);
+    });
   });
 });

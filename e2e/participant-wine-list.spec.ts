@@ -2,7 +2,11 @@ import { expect, test, type BrowserContext } from "@playwright/test";
 import { joinTasting } from "@/repositories/participants";
 import { saveRating } from "@/repositories/ratings";
 import { setWineOpen } from "@/repositories/wines";
-import { createLiveTasting, createTestOwners } from "@/test-support/fixtures";
+import {
+  createLiveTasting,
+  createTestOwners,
+  noTasteClocks,
+} from "@/test-support/fixtures";
 import { unwrap } from "@/test-support/unwrap";
 
 const owners = createTestOwners();
@@ -62,6 +66,7 @@ test("ett betygsatt vin visar det egna betyget", async ({ context, page }) => {
       note: null,
       tags: [],
       guess: null,
+      ...noTasteClocks,
     }),
     "Kunde inte spara betyg",
   );

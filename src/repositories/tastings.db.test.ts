@@ -5,6 +5,7 @@ import { TASTING_CODE_ALPHABET, TASTING_CODE_LENGTH } from "@/domain/tasting";
 import {
   createLiveTasting,
   createTestOwners,
+  noTasteClocks,
   sampleWine,
 } from "@/test-support/fixtures";
 import { unwrap } from "@/test-support/unwrap";
@@ -138,6 +139,7 @@ describe("borttagning av provning", () => {
         note: null,
         tags: [],
         guess: null,
+        ...noTasteClocks,
       }),
       "Kunde inte spara betyg",
     );
@@ -229,14 +231,21 @@ describe("viner", () => {
     for (const step of ["draft", "live"] as const) {
       const blind = await listWinesForParticipant(participant);
       expect(blind, step).toEqual([
-        { id: expect.any(String), blindNumber: 1, isOpen: false, details: null },
+        {
+          id: expect.any(String),
+          blindNumber: 1,
+          isOpen: false,
+          type: "red",
+          details: null,
+        },
       ]);
       expect(JSON.stringify(blind)).not.toContain("Vietti");
       await advanceTastingStatus(ownerId, tasting.id, step);
     }
 
     const revealed = await listWinesForParticipant(participant);
-    expect(revealed[0].details).toEqual(sampleWine);
+    const { type, ...details } = sampleWine;
+    expect(revealed[0]).toMatchObject({ type, details });
   });
 
   it("låter en deltagare bara läsa sin egen provnings viner", async () => {

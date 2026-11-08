@@ -32,6 +32,7 @@ test("admin skapar en provning och ser den i listan", async ({
   await page.getByLabel("Namn", { exact: true }).fill("Barolo");
   await page.getByLabel("Producent (valfritt)").fill("Vietti");
   await page.getByLabel("Årgång (valfritt)").fill("2019");
+  await page.getByLabel("Rött", { exact: true }).check();
   await page.getByRole("button", { name: "Lägg till vin" }).click();
   await expect(
     page.getByRole("form", { name: "Lägg till vin" }).getByRole("status"),
@@ -43,6 +44,7 @@ test("admin skapar en provning och ser den i listan", async ({
   await expect(page.getByLabel("Namn", { exact: true })).toHaveValue("");
 
   await page.getByLabel("Namn", { exact: true }).fill("Chianti");
+  await page.getByLabel("Rött", { exact: true }).check();
   await page.getByRole("button", { name: "Lägg till vin" }).click();
   await expect(page.getByRole("listitem")).toHaveText([
     "Vin 1 – Barolo, Vietti, 2019",
@@ -77,6 +79,7 @@ test("ogiltig årgång ger fel och behåller det som skrivits", async ({
 
   await page.getByLabel("Namn", { exact: true }).fill("Barolo");
   await page.getByLabel("Årgång (valfritt)").fill("1899");
+  await page.getByLabel("Rött", { exact: true }).check();
   await page.getByRole("button", { name: "Lägg till vin" }).click();
 
   const vintageField = page.getByLabel("Årgång (valfritt)");
@@ -85,6 +88,26 @@ test("ogiltig årgång ger fel och behåller det som skrivits", async ({
     "Lämna tomt om vinet är årgångslöst. Fel: Årgången måste vara mellan 1900 och i år",
   );
   await expect(vintageField).toHaveValue("1899");
+  await expect(page.getByLabel("Namn", { exact: true })).toHaveValue("Barolo");
+  await expect(page.getByText("Inga viner tillagda än.")).toBeVisible();
+});
+
+test("vin utan vintyp ger ett fel vid vintypen", async ({
+  context,
+  page,
+}) => {
+  await logInAsAdmin(context, owners.createOwnerId());
+  await page.goto("/admin/tastings/new");
+  await page.getByLabel("Namn på provningen").fill("Vintypsprovning");
+  await page.getByRole("button", { name: "Skapa provning" }).click();
+
+  await page.getByLabel("Namn", { exact: true }).fill("Barolo");
+  await page.getByRole("button", { name: "Lägg till vin" }).click();
+
+  await expect(
+    page.getByRole("group", { name: "Vintyp" }),
+  ).toHaveAccessibleDescription("Fel: Välj vintyp");
+  await expect(page.getByLabel("Rött", { exact: true })).toBeFocused();
   await expect(page.getByLabel("Namn", { exact: true })).toHaveValue("Barolo");
   await expect(page.getByText("Inga viner tillagda än.")).toBeVisible();
 });
@@ -101,6 +124,7 @@ test("utan uppkoppling finns inmatningen kvar och går att skicka igen", async (
   await page.getByLabel("Namn", { exact: true }).fill("Barolo");
   await page.getByLabel("Producent (valfritt)").fill("Vietti");
   await context.setOffline(true);
+  await page.getByLabel("Rött", { exact: true }).check();
   await page.getByRole("button", { name: "Lägg till vin" }).click();
 
   await expect(
@@ -109,6 +133,7 @@ test("utan uppkoppling finns inmatningen kvar och går att skicka igen", async (
   await expect(page.getByLabel("Namn", { exact: true })).toHaveValue("Barolo");
   await expect(page.getByLabel("Producent (valfritt)")).toHaveValue("Vietti");
 
+  await expect(page.getByLabel("Rött", { exact: true })).toBeChecked();
   await context.setOffline(false);
   await page.getByRole("button", { name: "Lägg till vin" }).click();
   await expect(
@@ -142,6 +167,7 @@ test("admin startar och avslutar provningen", async ({ context, page }) => {
   );
 
   await page.getByLabel("Namn", { exact: true }).fill("Barolo");
+  await page.getByLabel("Rött", { exact: true }).check();
   await page.getByRole("button", { name: "Lägg till vin" }).click();
   await expect(page.getByRole("listitem")).toHaveCount(1);
 
@@ -184,6 +210,7 @@ test("admin öppnar och stänger viner och deltagaren ser det utan omladdning", 
   await page.getByRole("button", { name: "Skapa provning" }).click();
   for (const name of ["Barolo", "Chianti"]) {
     await page.getByLabel("Namn", { exact: true }).fill(name);
+    await page.getByLabel("Rött", { exact: true }).check();
     await page.getByRole("button", { name: "Lägg till vin" }).click();
     await expect(page.getByRole("listitem").getByText(name)).toBeVisible();
   }

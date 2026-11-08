@@ -2,6 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import {
+  keepTasteClocksForWineType,
+  TASTE_CLOCKS,
+  type TasteClock,
+} from "@/domain/rating";
 import { joinTasting } from "@/repositories/participants";
 import { joinTastingInputSchema } from "@/validation/participant";
 import { saveRating } from "@/repositories/ratings";
@@ -45,11 +50,22 @@ export async function joinTastingAction(
   redirect("/tasting");
 }
 
-// Poäng och taggar väljs med knappar och skickas som dolda fält, texten
-// skrivs i vanliga fält. Bara texten skickas tillbaka vid fel, poäng och
-// taggar finns kvar i formuläret.
+// Poäng, smakklockor och taggar väljs med knappar och skickas som dolda
+// fält, texten skrivs i vanliga fält. Bara texten skickas tillbaka vid fel,
+// det som valts med knappar finns kvar i formuläret.
 const ratingTextFields = ["note", "guess"] as const;
-export type RatingField = "score" | "tags" | (typeof ratingTextFields)[number];
+export type RatingField =
+  | "score"
+  | "tags"
+  | TasteClock
+  | (typeof ratingTextFields)[number];
+
+// Tomt fält betyder inget värde. Text som inte är ett tal blir NaN, så att
+// valideringen ger sitt felmeddelande.
+function numberFromForm(formData: FormData, field: string): number | undefined {
+  const value = formData.get(field);
+  return typeof value === "string" && value !== "" ? Number(value) : undefined;
+}
 
 export async function saveRatingAction(
   rawBlindNumber: string,
@@ -61,10 +77,12 @@ export async function saveRatingAction(
   if (!blindNumber.success) return { formError: wineNotFoundMessage };
 
   const values = formValues(formData, ratingTextFields);
-  const score = formData.get("score");
   const parsed = ratingInputSchema.safeParse({
     ...values,
-    score: typeof score === "string" && score !== "" ? Number(score) : undefined,
+    score: numberFromForm(formData, "score"),
+    ...Object.fromEntries(
+      TASTE_CLOCKS.map((clock) => [clock, numberFromForm(formData, clock)]),
+    ),
     tags: formData.getAll("tags").filter((tag) => typeof tag === "string"),
   });
   if (!parsed.success) {
@@ -75,7 +93,11 @@ export async function saveRatingAction(
   const wine = await findWineForParticipant(participant, blindNumber.data);
   if (!wine) return { formError: wineNotFoundMessage, values };
 
-  const result = await saveRating(participant, wine.id, parsed.data);
+  // Klockor som inte hör till vintypen sparas inte, även om de skickas.
+  const result = await saveRating(participant, wine.id, {
+    ...parsed.data,
+    ...keepTasteClocksForWineType(parsed.data, wine.type),
+  });
   if (!result.ok) {
     return {
       formError:

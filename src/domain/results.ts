@@ -1,8 +1,18 @@
+import {
+  type TasteClock,
+  type TasteClockValues,
+} from "./rating";
+
 export type ScoredRating = {
   wineId: string;
   participantId: string;
   score: number;
 };
+
+export type ClockRating = { wineId: string } & TasteClockValues;
+
+// null när ingen har angett klockan för vinet.
+export type TasteClockAverages = Record<TasteClock, number | null>;
 
 export type WineScoreSummary = {
   average: number;
@@ -148,4 +158,31 @@ export function calculateResults(
 ): TastingResults {
   const wines = rankWines(wineIds, groupScoresByWine(wineIds, ratings));
   return { wines, participants: rankParticipantsByCloseness(ratings, wines) };
+}
+
+// Snitt per smakklocka och vin. Betyg där klockan inte är angiven räknas
+// inte, och betyg på viner som inte finns i wineIds ignoreras.
+export function averageTasteClocksByWine(
+  wineIds: readonly string[],
+  ratings: readonly ClockRating[],
+): Map<string, TasteClockAverages> {
+  return new Map(
+    wineIds.map((wineId) => {
+      const wineRatings = ratings.filter((rating) => rating.wineId === wineId);
+      const averageOf = (clock: TasteClock): number | null => {
+        const values = wineRatings.flatMap((rating) => {
+          const value = rating[clock];
+          return value === null ? [] : [value];
+        });
+        return values.length > 0 ? mean(values) : null;
+      };
+      const averages: TasteClockAverages = {
+        sweetness: averageOf("sweetness"),
+        body: averageOf("body"),
+        astringency: averageOf("astringency"),
+        acidity: averageOf("acidity"),
+      };
+      return [wineId, averages];
+    }),
+  );
 }

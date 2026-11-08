@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { calculateResults, type ScoredRating } from "./results";
+import {
+  averageTasteClocksByWine,
+  calculateResults,
+  type ClockRating,
+  type ScoredRating,
+} from "./results";
 
 function rating(
   participantId: string,
@@ -119,5 +124,45 @@ describe("calculateResults", () => {
     );
     expect(wines.map((wine) => wine.wineId)).toEqual(["w1"]);
     expect(participants.map((p) => p.comparedWineCount)).toEqual([1, 1]);
+  });
+});
+
+describe("averageTasteClocksByWine", () => {
+  const empty = { sweetness: null, body: null, astringency: null, acidity: null };
+
+  function clocks(
+    wineId: string,
+    values: Partial<Omit<ClockRating, "wineId">>,
+  ): ClockRating {
+    return { wineId, ...empty, ...values };
+  }
+
+  it("räknar snitt per klocka och vin", () => {
+    const averages = averageTasteClocksByWine(
+      ["w1", "w2"],
+      [
+        clocks("w1", { body: 8, acidity: 6 }),
+        clocks("w1", { body: 11, acidity: 7 }),
+        clocks("w2", { sweetness: 3 }),
+      ],
+    );
+    expect(averages.get("w1")).toEqual({ ...empty, body: 9.5, acidity: 6.5 });
+    expect(averages.get("w2")).toEqual({ ...empty, sweetness: 3 });
+  });
+
+  it("räknar bara betyg där klockan är angiven", () => {
+    const averages = averageTasteClocksByWine(
+      ["w1"],
+      [clocks("w1", { body: 4 }), clocks("w1", {}), clocks("w1", { body: 8 })],
+    );
+    expect(averages.get("w1")?.body).toBe(6);
+  });
+
+  it("ger null för vin utan betyg och ignorerar okända viner", () => {
+    const averages = averageTasteClocksByWine(
+      ["w1"],
+      [clocks("other", { body: 10 })],
+    );
+    expect([...averages]).toEqual([["w1", empty]]);
   });
 });

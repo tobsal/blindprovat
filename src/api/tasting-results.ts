@@ -1,6 +1,9 @@
 import {
+  averageTasteClocksByWine,
   calculateResults,
+  type ClockRating,
   type ScoredRating,
+  type TasteClockAverages,
   type WineRating,
 } from "@/domain/results";
 import type { ParticipantName } from "@/repositories/participants";
@@ -13,6 +16,7 @@ export type ResultsWine = {
   rating: WineRating | null;
   // Den som tittar på resultatet. Alltid null för admin.
   ownScore: number | null;
+  tasteClocks: TasteClockAverages;
 };
 
 export type ResultsParticipant = {
@@ -45,13 +49,12 @@ export function buildResultsView({
 }: {
   wines: readonly ResultsWineInput[];
   participants: readonly ParticipantName[];
-  ratings: readonly ScoredRating[];
+  ratings: readonly (ScoredRating & ClockRating)[];
   ownParticipantId?: string;
 }): ResultsView {
-  const results = calculateResults(
-    wines.map((wine) => wine.id),
-    ratings,
-  );
+  const wineIds = wines.map((wine) => wine.id);
+  const results = calculateResults(wineIds, ratings);
+  const tasteClocksByWine = averageTasteClocksByWine(wineIds, ratings);
   const winesById = new Map(wines.map((wine) => [wine.id, wine]));
   const ownScoreByWine = new Map(
     ratings
@@ -61,13 +64,15 @@ export function buildResultsView({
 
   const resultWines = results.wines.flatMap(({ wineId, rating }) => {
     const wine = winesById.get(wineId);
-    if (!wine) return [];
+    const tasteClocks = tasteClocksByWine.get(wineId);
+    if (!wine || !tasteClocks) return [];
     return [
       {
         blindNumber: wine.blindNumber,
         details: wine.details,
         rating,
         ownScore: ownScoreByWine.get(wineId) ?? null,
+        tasteClocks,
       },
     ];
   });

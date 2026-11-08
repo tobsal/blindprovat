@@ -1,5 +1,9 @@
 import { afterAll, describe, expect, it } from "vitest";
-import { createLiveTasting, createTestOwners } from "@/test-support/fixtures";
+import {
+  createLiveTasting,
+  createTestOwners,
+  noTasteClocks,
+} from "@/test-support/fixtures";
 import { unwrap } from "@/test-support/unwrap";
 import { joinTasting } from "./participants";
 import { listOwnRatings, saveRating, type RatingValues } from "./ratings";
@@ -14,7 +18,13 @@ afterAll(() => owners.cleanUp());
 const ITERATIONS = 20;
 const TEST_TIMEOUT_MS = 60_000;
 
-const values: RatingValues = { score: 7, note: null, tags: [], guess: null };
+const values: RatingValues = {
+  score: 7,
+  note: null,
+  tags: [],
+  guess: null,
+  ...noTasteClocks,
+};
 
 async function createLiveTastingWithTwoParticipants() {
   const live = await createLiveTasting(owners);

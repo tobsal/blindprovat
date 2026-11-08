@@ -4,19 +4,28 @@ import { db } from "@/repositories/db";
 import { joinTasting } from "@/repositories/participants";
 import { tastings } from "@/repositories/schema";
 import { advanceTastingStatus, createTasting } from "@/repositories/tastings";
-import { addWine, setWineOpen, type WineDetails } from "@/repositories/wines";
+import { addWine, setWineOpen, type NewWine } from "@/repositories/wines";
 import { unwrap } from "./unwrap";
 
 // Används bara av databastesterna (*.db.test.ts) och e2e-testerna.
 
-export const sampleWine: WineDetails = {
+export const sampleWine: NewWine = {
   name: "Barolo Castiglione",
+  type: "red",
   producer: "Vietti",
   grape: "Nebbiolo",
   region: "Piemonte",
   country: "Italien",
   vintage: 2019,
   price: 450,
+};
+
+// Ett betyg utan smakklockor.
+export const noTasteClocks = {
+  sweetness: null,
+  body: null,
+  astringency: null,
+  acidity: null,
 };
 
 // Varje test får egna ägare och städar bara bort deras provningar, så

@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import type { ScoredRating } from "@/domain/results";
+import type { ClockRating, ScoredRating } from "@/domain/results";
 import { canRateWines, canShowResults } from "@/domain/tasting";
 import { db } from "./db";
 import { withSafeErrors } from "./errors";
@@ -10,7 +10,17 @@ import { participants, ratings, tastings, wines } from "./schema";
 
 type Rating = typeof ratings.$inferSelect;
 
-export type RatingValues = Pick<Rating, "score" | "note" | "tags" | "guess">;
+export type RatingValues = Pick<
+  Rating,
+  | "score"
+  | "note"
+  | "tags"
+  | "guess"
+  | "sweetness"
+  | "body"
+  | "astringency"
+  | "acidity"
+>;
 
 export type OwnRating = RatingValues & Pick<Rating, "wineId">;
 
@@ -20,7 +30,24 @@ const ownRatingColumns = {
   note: ratings.note,
   tags: ratings.tags,
   guess: ratings.guess,
+  sweetness: ratings.sweetness,
+  body: ratings.body,
+  astringency: ratings.astringency,
+  acidity: ratings.acidity,
 };
+
+// Betyg och smakklockor för resultatet, utan anteckningar och gissningar.
+const resultRatingColumns = {
+  wineId: ratings.wineId,
+  participantId: ratings.participantId,
+  score: ratings.score,
+  sweetness: ratings.sweetness,
+  body: ratings.body,
+  astringency: ratings.astringency,
+  acidity: ratings.acidity,
+};
+
+export type ResultRating = ScoredRating & ClockRating;
 
 export async function saveRating(
   participant: SessionParticipant,
@@ -79,7 +106,7 @@ export async function listOwnRatings(
 export async function listScoredRatingsForOwner(
   ownerId: string,
   tastingId: string,
-): Promise<ScoredRating[] | null> {
+): Promise<ResultRating[] | null> {
   return withSafeErrors("listScoredRatingsForOwner", async () => {
     const [tasting] = await db
       .select({ id: tastings.id })
@@ -88,11 +115,7 @@ export async function listScoredRatingsForOwner(
     if (!tasting) return null;
 
     return db
-      .select({
-        wineId: ratings.wineId,
-        participantId: ratings.participantId,
-        score: ratings.score,
-      })
+      .select(resultRatingColumns)
       .from(ratings)
       .innerJoin(wines, eq(ratings.wineId, wines.id))
       .where(eq(wines.tastingId, tastingId));
@@ -100,7 +123,7 @@ export async function listScoredRatingsForOwner(
 }
 
 export type ParticipantResultInputs = {
-  ratings: ScoredRating[];
+  ratings: ResultRating[];
   participants: ParticipantName[];
 };
 
@@ -121,11 +144,7 @@ export async function listResultInputsForParticipant(
 
     const [scoredRatings, names] = await Promise.all([
       db
-        .select({
-          wineId: ratings.wineId,
-          participantId: ratings.participantId,
-          score: ratings.score,
-        })
+        .select(resultRatingColumns)
         .from(ratings)
         .innerJoin(wines, eq(ratings.wineId, wines.id))
         .where(eq(wines.tastingId, tastingId)),

@@ -20,12 +20,15 @@ import {
   NOTE_MAX,
   SCORE_MAX,
   SCORE_MIN,
+  TASTE_CLOCK_MAX,
+  TASTE_CLOCK_MIN,
   type RatingTag,
 } from "@/domain/rating";
 import { TASTING_NAME_MAX, TASTING_STATUSES } from "@/domain/tasting";
-import { WINE_DETAIL_MAX, WINE_NAME_MAX } from "@/domain/wine";
+import { WINE_DETAIL_MAX, WINE_NAME_MAX, WINE_TYPES } from "@/domain/wine";
 
 export const tastingStatus = pgEnum("tasting_status", TASTING_STATUSES);
+export const wineType = pgEnum("wine_type", WINE_TYPES);
 
 // Namn på constraints som koden känner igen i databasfel (isUniqueViolation).
 // De namnges här så att de inte beror på vad Drizzle genererar.
@@ -60,6 +63,9 @@ export const wines = pgTable(
       .references(() => tastings.id, { onDelete: "cascade" }),
     blindNumber: integer().notNull(),
     name: varchar({ length: WINE_NAME_MAX }).notNull(),
+    // null för viner som lades till innan vintypen fanns. Nya viner kräver
+    // vintyp i formuläret.
+    type: wineType(),
     producer: varchar({ length: WINE_DETAIL_MAX }),
     grape: varchar({ length: WINE_DETAIL_MAX }),
     region: varchar({ length: WINE_DETAIL_MAX }),
@@ -111,6 +117,12 @@ export const ratings = pgTable(
       .notNull()
       .default(sql`'{}'::text[]`),
     guess: varchar({ length: GUESS_MAX }),
+    // Smakklockor. null betyder inte angivet eller att klockan inte hör till
+    // vintypen.
+    sweetness: smallint(),
+    body: smallint(),
+    astringency: smallint(),
+    acidity: smallint(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true })
       .notNull()
@@ -124,6 +136,19 @@ export const ratings = pgTable(
     check(
       "ratings_score_range",
       sql`${table.score} BETWEEN ${sql.raw(String(SCORE_MIN))} AND ${sql.raw(String(SCORE_MAX))}`,
+    ),
+    ...(
+      [
+        ["sweetness", table.sweetness],
+        ["body", table.body],
+        ["astringency", table.astringency],
+        ["acidity", table.acidity],
+      ] as const
+    ).map(([name, column]) =>
+      check(
+        `ratings_${name}_range`,
+        sql`${column} BETWEEN ${sql.raw(String(TASTE_CLOCK_MIN))} AND ${sql.raw(String(TASTE_CLOCK_MAX))}`,
+      ),
     ),
   ],
 );

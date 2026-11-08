@@ -17,9 +17,15 @@ afterAll(() => owners.cleanUp());
 const values: RatingValues = {
   score: 7,
   note: "Körsbär och tjära",
-  tags: ["fruity", "tannic"],
+  tags: ["fruity", "earthy"],
   guess: "Nebbiolo",
+  sweetness: null,
+  body: 9,
+  astringency: 11,
+  acidity: 8,
 };
+
+const resultClocks = { sweetness: null, body: 9, astringency: 11, acidity: 8 };
 
 describe("betyg", () => {
   it("sparar och ändrar betyget, högst ett per vin", async () => {
@@ -82,13 +88,31 @@ describe("betyg", () => {
     expect(logged).not.toContain(values.guess);
   });
 
+  it("nekar smakklocka utanför 1–12 i databasen", async () => {
+    const { participant, openWineId } = await createLiveTasting(owners);
+    const error = await saveRating(participant, openWineId, {
+      ...values,
+      body: 13,
+    }).catch((caught: unknown) => caught);
+
+    expect(error).toMatchObject({
+      code: "23514",
+      constraint_name: "ratings_body_range",
+    });
+  });
+
   it("ger ägaren poängen för resultatberäkningen", async () => {
     const { ownerId, tasting, participant, openWineId } =
       await createLiveTasting(owners);
     await saveRating(participant, openWineId, values);
 
     expect(await listScoredRatingsForOwner(ownerId, tasting.id)).toEqual([
-      { wineId: openWineId, participantId: participant.id, score: 7 },
+      {
+        wineId: openWineId,
+        participantId: participant.id,
+        score: 7,
+        ...resultClocks,
+      },
     ]);
     expect(
       await listScoredRatingsForOwner(owners.createOwnerId(), tasting.id),
@@ -105,7 +129,12 @@ describe("betyg", () => {
     await advanceTastingStatus(ownerId, tasting.id, "live");
     expect(await listResultInputsForParticipant(participant)).toEqual({
       ratings: [
-        { wineId: openWineId, participantId: participant.id, score: 7 },
+        {
+          wineId: openWineId,
+          participantId: participant.id,
+          score: 7,
+          ...resultClocks,
+        },
       ],
       participants: [{ id: participant.id, displayName: "Kim" }],
     });

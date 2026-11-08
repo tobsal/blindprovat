@@ -48,6 +48,7 @@ async function WineRating({
         <RatingForm
           blindNumber={wine.blindNumber}
           isOpen={wine.isOpen}
+          type={wine.type}
           initial={wine.rating}
         />
       </div>

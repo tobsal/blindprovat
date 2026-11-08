@@ -5,6 +5,7 @@ import type { FormState } from "@/api/form-state";
 import { saveRatingAction, type RatingField } from "@/api/participant-actions";
 import { FormError } from "@/app/_components/form-error";
 import { keepInputWhenOffline } from "@/app/_components/keep-input-when-offline";
+import { tasteClockLabels } from "@/app/_components/taste-clock-labels";
 import { TextArea } from "@/app/_components/text-area";
 import { TextField } from "@/app/_components/text-field";
 import {
@@ -13,8 +14,14 @@ import {
   RATING_TAGS,
   SCORE_MAX,
   SCORE_MIN,
+  TASTE_CLOCK_MAX,
+  TASTE_CLOCK_MIN,
+  tasteClocksForWineType,
   type RatingTag,
+  type TasteClock,
+  type TasteClockValues,
 } from "@/domain/rating";
+import type { WineType } from "@/domain/wine";
 import { ratingTagLabels } from "../../rating-tag-labels";
 
 const initialState: FormState<RatingField> = {};
@@ -22,16 +29,29 @@ const scores = Array.from(
   { length: SCORE_MAX - SCORE_MIN + 1 },
   (_, index) => SCORE_MIN + index,
 );
+const clockValues = Array.from(
+  { length: TASTE_CLOCK_MAX - TASTE_CLOCK_MIN + 1 },
+  (_, index) => TASTE_CLOCK_MIN + index,
+);
+const noClocks: TasteClockValues = {
+  sweetness: null,
+  body: null,
+  astringency: null,
+  acidity: null,
+};
 
 type Props = {
   blindNumber: number;
   isOpen: boolean;
-  initial: {
-    score: number | null;
-    note: string | null;
-    tags: RatingTag[];
-    guess: string | null;
-  } | null;
+  type: WineType | null;
+  initial:
+    | ({
+        score: number | null;
+        note: string | null;
+        tags: RatingTag[];
+        guess: string | null;
+      } & TasteClockValues)
+    | null;
 };
 
 function CheckIcon() {
@@ -52,9 +72,99 @@ function CheckIcon() {
   );
 }
 
-export function RatingForm({ blindNumber, isOpen, initial }: Props) {
+const selectedButtonClass =
+  "border-primary bg-primary text-on-primary hover:not-disabled:bg-primary-hover active:not-disabled:bg-primary-pressed";
+const unselectedButtonClass =
+  "border-outline text-on-surface hover:not-disabled:bg-surface-high active:not-disabled:bg-surface-highest";
+
+// En smakklocka som tolv knappar i två rader. Ett tryck till på det valda
+// värdet tar bort valet, eftersom klockorna är frivilliga.
+function TasteClockScale({
+  clock,
+  value,
+  onChange,
+  error,
+  firstButtonRef,
+}: {
+  clock: TasteClock;
+  value: number | null;
+  onChange: (value: number | null) => void;
+  error?: string;
+  firstButtonRef?: React.Ref<HTMLButtonElement>;
+}) {
+  const { name, low, high } = tasteClockLabels[clock];
+  const headingId = `clock-${clock}-heading`;
+  const scaleId = `clock-${clock}-scale`;
+  const errorId = `clock-${clock}-error`;
+  return (
+    <div
+      role="group"
+      aria-labelledby={headingId}
+      aria-describedby={[scaleId, error && errorId].filter(Boolean).join(" ")}
+      className="flex flex-col gap-2"
+    >
+      <h3 id={headingId} className="font-medium">
+        {name}
+      </h3>
+      <p
+        id={scaleId}
+        className="flex justify-between text-sm text-on-surface-variant"
+      >
+        <span>
+          {TASTE_CLOCK_MIN} = {low}
+        </span>
+        <span>
+          {TASTE_CLOCK_MAX} = {high}
+        </span>
+      </p>
+      <div className="grid grid-cols-6 gap-2">
+        {clockValues.map((option, index) => {
+          const selected = value === option;
+          return (
+            <button
+              key={option}
+              ref={index === 0 ? firstButtonRef : undefined}
+              type="button"
+              aria-pressed={selected}
+              aria-label={`${option} av ${TASTE_CLOCK_MAX}`}
+              onClick={() => onChange(selected ? null : option)}
+              className={`flex min-h-11 items-center justify-center rounded-lg border font-medium transition-colors motion-reduce:transition-none ${
+                selected ? selectedButtonClass : unselectedButtonClass
+              }`}
+            >
+              {option}
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-sm text-on-surface-variant">
+        {value === null
+          ? "Inget valt."
+          : `Du har valt ${value} av ${TASTE_CLOCK_MAX}.`}
+      </p>
+      {error && (
+        <p id={errorId} className="text-error">
+          <strong>Fel:</strong> {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export function RatingForm({ blindNumber, isOpen, type, initial }: Props) {
   const [score, setScore] = useState<number | null>(initial?.score ?? null);
+  const [clocks, setClocks] = useState<TasteClockValues>(() =>
+    initial
+      ? {
+          sweetness: initial.sweetness,
+          body: initial.body,
+          astringency: initial.astringency,
+          acidity: initial.acidity,
+        }
+      : noClocks,
+  );
   const [tags, setTags] = useState<RatingTag[]>(initial?.tags ?? []);
+  const visibleClocks = tasteClocksForWineType(type);
   // Har vinet varit öppet medan formuläret visats ska det ligga kvar, låst, när
   // vinet stängs. Annars skulle det som skrivits försvinna.
   const [seenOpen, setSeenOpen] = useState(isOpen);
@@ -74,16 +184,23 @@ export function RatingForm({ blindNumber, isOpen, initial }: Props) {
   const [state, formAction, isPending] = useActionState(action, initialState);
 
   const firstScoreButton = useRef<HTMLButtonElement>(null);
+  const firstClockButtons = useRef<
+    Partial<Record<TasteClock, HTMLButtonElement | null>>
+  >({});
   const guessInput = useRef<HTMLInputElement>(null);
   const noteInput = useRef<HTMLTextAreaElement>(null);
 
   // Vid fel hamnar fokus på första felaktiga fältet.
   useEffect(() => {
     if (state === initialState) return;
+    const invalidClock = visibleClocks.find(
+      (clock) => state.fieldErrors?.[clock],
+    );
     if (state.fieldErrors?.score) firstScoreButton.current?.focus();
+    else if (invalidClock) firstClockButtons.current[invalidClock]?.focus();
     else if (state.fieldErrors?.guess) guessInput.current?.focus();
     else if (state.fieldErrors?.note) noteInput.current?.focus();
-  }, [state]);
+  }, [state, visibleClocks]);
 
   function toggleTag(tag: RatingTag) {
     setTags((current) =>
@@ -122,6 +239,14 @@ export function RatingForm({ blindNumber, isOpen, initial }: Props) {
 
       <fieldset disabled={!isOpen} className="flex min-w-0 flex-col gap-6">
         <input type="hidden" name="score" value={score ?? ""} />
+        {visibleClocks.map((clock) => (
+          <input
+            key={clock}
+            type="hidden"
+            name={clock}
+            value={clocks[clock] ?? ""}
+          />
+        ))}
         {tags.map((tag) => (
           <input key={tag} type="hidden" name="tags" value={tag} />
         ))}
@@ -169,6 +294,35 @@ export function RatingForm({ blindNumber, isOpen, initial }: Props) {
             </p>
           )}
         </div>
+
+        <section
+          aria-labelledby="clocks-heading"
+          className="flex flex-col gap-4"
+        >
+          <div className="flex flex-col gap-1">
+            <h2 id="clocks-heading" className="font-medium">
+              Smakklockor (valfritt)
+            </h2>
+            <p className="text-sm text-on-surface-variant">
+              Som på Systembolaget. Tryck på det valda värdet igen för att ta
+              bort det.
+            </p>
+          </div>
+          {visibleClocks.map((clock) => (
+            <TasteClockScale
+              key={clock}
+              clock={clock}
+              value={clocks[clock]}
+              onChange={(value) =>
+                setClocks((current) => ({ ...current, [clock]: value }))
+              }
+              error={state.fieldErrors?.[clock]?.[0]}
+              firstButtonRef={(button) => {
+                firstClockButtons.current[clock] = button;
+              }}
+            />
+          ))}
+        </section>
 
         <div
           role="group"

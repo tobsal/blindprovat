@@ -20,11 +20,17 @@ const participants = [
   { id: "p2", displayName: "Kim" },
   { id: "p3", displayName: "Åsa" },
 ];
+const noClocks = {
+  sweetness: null,
+  body: null,
+  astringency: null,
+  acidity: null,
+};
 const ratings = [
-  { wineId: "w1", participantId: "p1", score: 4 },
-  { wineId: "w1", participantId: "p2", score: 6 },
-  { wineId: "w2", participantId: "p1", score: 9 },
-  { wineId: "w2", participantId: "p2", score: 9 },
+  { wineId: "w1", participantId: "p1", score: 4, ...noClocks, body: 6 },
+  { wineId: "w1", participantId: "p2", score: 6, ...noClocks, body: 9 },
+  { wineId: "w2", participantId: "p1", score: 9, ...noClocks },
+  { wineId: "w2", participantId: "p2", score: 9, ...noClocks },
 ];
 
 describe("buildResultsView", () => {
@@ -41,6 +47,18 @@ describe("buildResultsView", () => {
       count: 2,
     });
     expect(view.wines[2].rating).toBeNull();
+  });
+
+  it("visar gruppens snitt per smakklocka för varje vin", () => {
+    const view = buildResultsView({ wines, participants, ratings });
+    const byName = Object.fromEntries(
+      view.wines.map((wine) => [wine.details.name, wine.tasteClocks]),
+    );
+    expect(byName).toEqual({
+      Ett: { ...noClocks, body: 7.5 },
+      Två: noClocks,
+      Tre: noClocks,
+    });
   });
 
   it("kopplar rätt smeknamn till placeringen och lägger ojämförda sist", () => {

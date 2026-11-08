@@ -1,7 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { joinTasting } from "@/repositories/participants";
 import { saveRating, type RatingValues } from "@/repositories/ratings";
-import { createLiveTasting, createTestOwners } from "@/test-support/fixtures";
+import {
+  createLiveTasting,
+  createTestOwners,
+  noTasteClocks,
+} from "@/test-support/fixtures";
 import { advanceTastingStatus } from "@/repositories/tastings";
 import { unwrap } from "@/test-support/unwrap";
 import { logInAsAdmin } from "./auth";
@@ -13,6 +17,7 @@ const noText: Omit<RatingValues, "score"> = {
   note: null,
   tags: [],
   guess: null,
+  ...noTasteClocks,
 };
 
 test("admin ser resultatet med smeknamn efter avslöjandet", async ({
@@ -25,8 +30,13 @@ test("admin ser resultatet med smeknamn efter avslöjandet", async ({
     await joinTasting({ code: tasting.code, displayName: "Lisa" }),
     "Kunde inte gå med",
   );
-  await saveRating(participant, openWineId, { ...noText, score: 8 });
-  await saveRating(lisa.participant, openWineId, { ...noText, score: 6 });
+  await saveRating(participant, openWineId, { ...noText, score: 8, body: 8 });
+  await saveRating(lisa.participant, openWineId, {
+    ...noText,
+    score: 6,
+    body: 11,
+    acidity: 7,
+  });
 
   await logInAsAdmin(context, ownerId);
   await page.goto(`/admin/tastings/${tasting.id}`);
@@ -40,6 +50,9 @@ test("admin ser resultatet med smeknamn efter avslöjandet", async ({
   await expect(results).toBeVisible();
   await expect(results).toContainText("Barolo Castiglione");
   await expect(results).toContainText("Snitt 7 av 10 · lägst 6 · högst 8");
+  await expect(results).toContainText(
+    "Smakklockor (snitt av 12): Fyllighet 9,5 · Fruktsyra 7",
+  );
   await expect(results).toContainText("Kim");
   await expect(results).toContainText("Lisa");
 });

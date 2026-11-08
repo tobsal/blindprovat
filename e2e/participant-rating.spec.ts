@@ -33,8 +33,9 @@ test("deltagaren betygsätter ett öppet vin och ser betyget i listan", async ({
   context,
   page,
 }) => {
+  await page.setViewportSize({ width: 375, height: 800 });
   const { tasting } = await createLiveTasting(owners);
-  await joinWithCookie(context, tasting.code, "Lisa");
+  const participant = await joinWithCookie(context, tasting.code, "Lisa");
   await page.goto("/tasting");
 
   await page.getByRole("link", { name: "Betygsätt vin 1" }).click();
@@ -47,6 +48,18 @@ test("deltagaren betygsätter ett öppet vin och ser betyget i listan", async ({
     "true",
   );
   await expect(page.getByText("Du har valt 8 av 10.")).toBeVisible();
+
+  // Vinet är rött: fyllighet, strävhet och fruktsyra, men inte sötma.
+  await expect(page.getByRole("group", { name: "Sötma" })).toHaveCount(0);
+  const body = page.getByRole("group", { name: "Fyllighet" });
+  await body.getByRole("button", { name: "9 av 12" }).click();
+  await expect(body.getByText("Du har valt 9 av 12.")).toBeVisible();
+  const acidity = page.getByRole("group", { name: "Fruktsyra" });
+  await acidity.getByRole("button", { name: "4 av 12" }).click();
+  // Ett tryck till på det valda värdet tar bort valet.
+  await acidity.getByRole("button", { name: "4 av 12" }).click();
+  await expect(acidity.getByText("Inget valt.")).toBeVisible();
+
   await page.getByRole("button", { name: "Fruktigt" }).click();
   await page.getByRole("button", { name: "Ekfat" }).click();
   await page.getByLabel("Gissning (valfritt)").fill("Pinot noir");
@@ -77,6 +90,20 @@ test("deltagaren betygsätter ett öppet vin och ser betyget i listan", async ({
   await expect(page.getByLabel("Gissning (valfritt)")).toHaveValue(
     "Pinot noir",
   );
+  await expect(
+    page
+      .getByRole("group", { name: "Fyllighet" })
+      .getByRole("button", { name: "9 av 12" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  expect(await listOwnRatings(participant)).toEqual([
+    expect.objectContaining({
+      score: 8,
+      sweetness: null,
+      body: 9,
+      astringency: null,
+      acidity: null,
+    }),
+  ]);
 });
 
 test("betyg utan poäng ger ett fel vid poängen och behåller texten", async ({

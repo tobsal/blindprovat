@@ -22,6 +22,20 @@
       "when": 1792442518122,
       "tag": "0002_wild_gorilla_man",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794140987470,
+      "tag": "0003_smakklockor",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794140996221,
+      "tag": "0004_ta-bort-strukturtaggar",
+      "breakpoints": true
     }
   ]
 }

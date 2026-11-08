@@ -6,3 +6,8 @@ export const VINTAGE_MIN = 1900;
 // Pris i hela kronor.
 export const PRICE_MIN = 0;
 export const PRICE_MAX = 100_000;
+
+// Vintypen styr vilka smakklockor deltagaren fyller i.
+export const WINE_TYPES = ["red", "white", "rose", "sparkling"] as const;
+
+export type WineType = (typeof WINE_TYPES)[number];

@@ -5,6 +5,7 @@ import {
   VINTAGE_MIN,
   WINE_DETAIL_MAX,
   WINE_NAME_MAX,
+  WINE_TYPES,
 } from "@/domain/wine";
 import { optionalText } from "./optional-text";
 
@@ -12,6 +13,7 @@ const priceMessage = `Ange ett pris i hela kronor, mellan ${PRICE_MIN} och ${PRI
 
 const nameRequiredMessage = "Ange vinets namn";
 const vintageMessage = "Ange ett årtal eller lämna tomt";
+const typeMessage = "Välj vintyp";
 
 function optionalDetail(label: string) {
   return optionalText(
@@ -26,6 +28,7 @@ export const wineInputSchema = z.object({
     .trim()
     .min(1, nameRequiredMessage)
     .max(WINE_NAME_MAX, `Namnet får vara högst ${WINE_NAME_MAX} tecken`),
+  type: z.enum(WINE_TYPES, { error: typeMessage }),
   producer: optionalDetail("Producenten"),
   grape: optionalDetail("Druvan"),
   region: optionalDetail("Regionen"),

@@ -3,7 +3,8 @@ import type {
   ResultsView,
   ResultsWine,
 } from "@/api/tasting-results";
-import { SCORE_MAX } from "@/domain/rating";
+import { SCORE_MAX, TASTE_CLOCK_MAX, TASTE_CLOCKS } from "@/domain/rating";
+import { tasteClockLabels } from "./taste-clock-labels";
 
 const numberFormat = new Intl.NumberFormat("sv-SE", {
   maximumFractionDigits: 1,
@@ -15,8 +16,22 @@ function describeWine({ details }: ResultsWine): string {
     .join(", ");
 }
 
+// Bara klockor som någon har fyllt i visas.
+function describeTasteClocks({ tasteClocks }: ResultsWine): string | null {
+  const parts = TASTE_CLOCKS.flatMap((clock) => {
+    const average = tasteClocks[clock];
+    return average === null
+      ? []
+      : [`${tasteClockLabels[clock].name} ${numberFormat.format(average)}`];
+  });
+  return parts.length > 0
+    ? `Smakklockor (snitt av ${TASTE_CLOCK_MAX}): ${parts.join(" · ")}`
+    : null;
+}
+
 function WineRow({ wine }: { wine: ResultsWine }) {
   const { rating } = wine;
+  const tasteClocks = describeTasteClocks(wine);
   return (
     <li className="px-4 py-3">
       <p className="text-sm text-on-surface-variant">
@@ -30,6 +45,7 @@ function WineRow({ wine }: { wine: ResultsWine }) {
           ? `Snitt ${numberFormat.format(rating.average)} av ${SCORE_MAX} · lägst ${rating.lowest} · högst ${rating.highest} · ${rating.count} betyg`
           : "Inga betyg"}
       </p>
+      {tasteClocks && <p className="mt-1 text-sm">{tasteClocks}</p>}
       {wine.ownScore !== null && (
         <p className="mt-1 text-sm font-medium">
           Ditt betyg: {wine.ownScore} av {SCORE_MAX}

@@ -1,6 +1,52 @@
 # Blindprovat
 
-Webbapp för att arrangera blindprovningar av vin i grupp. Vad appen gör, teknikval, kommandon och regler för koden står i [CLAUDE.md](CLAUDE.md).
+Webbapp för att arrangera blindprovningar av vin i grupp.
+
+## Vad appen gör
+
+Vinprovningar sköts ofta med papper, Excel eller gruppchattar. Då är det svårt att hålla provningen blind, samla in allas betyg och räkna ut resultatet. Blindprovat driver hela provningstillfället:
+
+- **Den som håller i provningen (admin)** loggar in med GitHub, skapar en provning, lägger in vinerna och delar en kod. Under provningen öppnar och stänger admin varje vin för betygsättning. Till sist avslöjar admin vilka vinerna var och hur gruppen röstade.
+- **Deltagarna** går med från mobilen med koden, utan konto. De ser bara blindnummer (Vin 1, Vin 2 …), sätter poäng och skriver anteckningar per vin. De kan ändra sitt betyg så länge vinet är öppet.
+
+En provning går igenom tre steg, alltid i den här ordningen: **förbereds** (`draft`), **pågår** (`live`) och **avslöjad** (`revealed`).
+
+## Teknikstack
+
+| Del               | Val                                    |
+| ----------------- | -------------------------------------- |
+| Ramverk           | Next.js (App Router), React            |
+| Språk             | TypeScript (strict)                    |
+| Databas           | PostgreSQL, i produktion på Neon       |
+| ORM och migration | Drizzle ORM och drizzle-kit            |
+| Validering        | Zod                                    |
+| Admininloggning   | Auth.js med GitHub                     |
+| Styling           | Tailwind CSS                           |
+| Tester            | Vitest (enhet och databas), Playwright |
+| Formatering       | Prettier, ESLint                       |
+| Hosting och CI    | Vercel, GitHub Actions                 |
+
+## Arkitektur
+
+Koden under `src/` är indelad i lager. Varje lager får bara bero på lagren under sig, och gränserna upprätthålls av lintregler.
+
+| Lager             | Mapp                | Ansvar                                                                                                                                 |
+| ----------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Presentation      | `src/app/`          | Sidor och komponenter. Admin (`admin/`) och deltagare (`tasting/`) har egna layouts, felsidor och behörighetskontroll.                 |
+| Serveranrop       | `src/api/`          | Tunna server actions och läsfunktioner som validerar input, kontrollerar behörighet och delegerar.                                     |
+| Dataåtkomst       | `src/repositories/` | Enda stället som pratar med databasen. Här finns också schemat. Admin och deltagare har separata funktioner och returtyper.            |
+| Domän             | `src/domain/`       | Ren affärslogik utan I/O, till exempel statusövergångar och resultatberäkning (snitt, rankning, spridning). Testas med vanliga objekt. |
+| Valideringsregler | `src/validation/`   | Zod-scheman som delas mellan formulär och server.                                                                                      |
+
+Några principer som styr designen:
+
+- **Blindheten skyddas på servern.** Vinets namn, producent och andra detaljer skickas aldrig till deltagarna förrän provningen är avslöjad. Det räcker inte att dölja dem i gränssnittet, så deltagarvarianterna i dataåtkomstlagret returnerar dem inte ens.
+- **Behörighet kontrolleras vid varje anrop.** En admin ser bara sina egna provningar. En deltagare identifieras av en sessionscookie som bara gäller en provning.
+- **Realtid via polling.** Admin och deltagare hämtar status var 3–5 sekund. Det behövs ingen push-tjänst.
+- **Rendering på servern som standard.** Klientkod används bara där det krävs interaktivitet.
+- **Mobil först och tillgängligt.** Deltagarvyn är byggd för en hand och dålig uppkoppling. Målet är WCAG 2.2 AA i hela appen.
+
+De fullständiga reglerna för koden, och för agenter som arbetar i repot, står i [CLAUDE.md](CLAUDE.md).
 
 ## Förutsättningar
 

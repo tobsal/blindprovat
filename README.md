@@ -50,7 +50,7 @@ De fullständiga reglerna för koden, och för agenter som arbetar i repot, stå
 
 ## Förutsättningar
 
-- **Node.js 26.13** eller senare (samma version som i CI). npm följer med Node.
+- **Node.js 26** (CI kör 26.13). npm följer med Node.
 - **PostgreSQL**, antingen lokalt eller på Neon:
   - Lokalt: installera PostgreSQL 17 eller kör det i Docker och skapa databasen `blindprovat`. Med Docker:
     ```bash

@@ -18,6 +18,7 @@ import {
 import { tastingIdSchema, tastingInputSchema } from "@/validation/tasting";
 import { wineFormSchema, wineIdSchema } from "@/validation/wine";
 import { requireAdminOwnerId } from "./admin-session";
+import { getMyTastingProgress, type TastingProgress } from "./admin-tastings";
 import {
   messageForRepositoryError,
   tastingNotFoundMessage,
@@ -219,4 +220,12 @@ export async function deleteWineAction(
   return {
     message: `Vin ${blindNumber} är borttaget. Vinerna efter har fått nya nummer.`,
   };
+}
+
+// Det enkla läsanrop som adminsidan pollar (princip 8). Sidan renderas inte
+// om, så ett fel här kan inte ta bort det som skrivits i vinformulären.
+export async function getTastingProgressAction(
+  rawTastingId: string,
+): Promise<TastingProgress | null> {
+  return getMyTastingProgress(rawTastingId);
 }

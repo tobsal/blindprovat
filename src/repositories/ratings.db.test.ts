@@ -3,12 +3,14 @@ import { afterAll, describe, expect, it } from "vitest";
 import { createLiveTasting, createTestOwners } from "@/test-support/fixtures";
 import { DatabaseError } from "./errors";
 import {
+  countProgressForOwner,
   listOwnRatings,
   listResultInputsForParticipant,
   listScoredRatingsForOwner,
   saveRating,
   type RatingValues,
 } from "./ratings";
+import { joinTasting } from "./participants";
 import { advanceTastingStatus } from "./tastings";
 
 const owners = createTestOwners();
@@ -151,5 +153,39 @@ describe("betyg", () => {
       ratings: [],
       participants: [{ id: first.participant.id, displayName: "Kim" }],
     });
+  });
+});
+
+describe("förlopp för admin", () => {
+  it("räknar deltagare och betyg per vin", async () => {
+    const { ownerId, tasting, participant, openWineId } =
+      await createLiveTasting(owners);
+    const second = await joinTasting({
+      code: tasting.code,
+      displayName: "Lisa",
+    });
+    if (!second.ok) throw new Error("Kunde inte gå med");
+
+    expect(await countProgressForOwner(ownerId, tasting.id)).toEqual({
+      participantCount: 2,
+      ratingCounts: [],
+    });
+
+    await saveRating(participant, openWineId, values);
+    await saveRating(second.participant, openWineId, values);
+    // Ett ändrat betyg räknas inte två gånger.
+    await saveRating(participant, openWineId, { ...values, score: 3 });
+
+    expect(await countProgressForOwner(ownerId, tasting.id)).toEqual({
+      participantCount: 2,
+      ratingCounts: [{ wineId: openWineId, ratingCount: 2 }],
+    });
+  });
+
+  it("ger null för någon annans provning", async () => {
+    const { tasting } = await createLiveTasting(owners);
+    expect(
+      await countProgressForOwner(owners.createOwnerId(), tasting.id),
+    ).toBeNull();
   });
 });

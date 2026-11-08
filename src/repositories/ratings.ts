@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import type { ClockRating, ScoredRating } from "@/domain/results";
 import { canRateWines, canShowResults } from "@/domain/tasting";
 import { db } from "./db";
@@ -119,6 +119,42 @@ export async function listScoredRatingsForOwner(
       .from(ratings)
       .innerJoin(wines, eq(ratings.wineId, wines.id))
       .where(eq(wines.tastingId, tastingId));
+  });
+}
+
+// Hur långt provningen har kommit, för admin medan den pågår. Bara antal,
+// inga betyg eller namn.
+export type TastingProgress = {
+  participantCount: number;
+  // Viner utan betyg saknas i listan.
+  ratingCounts: { wineId: string; ratingCount: number }[];
+};
+
+// null om provningen inte finns eller ägs av någon annan.
+export async function countProgressForOwner(
+  ownerId: string,
+  tastingId: string,
+): Promise<TastingProgress | null> {
+  return withSafeErrors("countProgressForOwner", async () => {
+    const [tasting] = await db
+      .select({ id: tastings.id })
+      .from(tastings)
+      .where(tastingOwnedBy(ownerId, tastingId));
+    if (!tasting) return null;
+
+    const [[{ participantCount }], ratingCounts] = await Promise.all([
+      db
+        .select({ participantCount: count() })
+        .from(participants)
+        .where(eq(participants.tastingId, tastingId)),
+      db
+        .select({ wineId: ratings.wineId, ratingCount: count() })
+        .from(ratings)
+        .innerJoin(wines, eq(ratings.wineId, wines.id))
+        .where(eq(wines.tastingId, tastingId))
+        .groupBy(ratings.wineId),
+    ]);
+    return { participantCount, ratingCounts };
   });
 }
 

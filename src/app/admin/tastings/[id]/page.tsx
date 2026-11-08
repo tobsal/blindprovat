@@ -5,15 +5,21 @@ import { LoadingStatus } from "@/app/_components/loading-status";
 import { TastingResults } from "@/app/_components/tasting-results";
 import {
   getMyTasting,
+  getMyTastingProgress,
   getMyTastingResults,
   type AdminWine,
 } from "@/api/admin-tastings";
-import { canEditWines, canOpenWines } from "@/domain/tasting";
+import { canEditWines, canOpenWines, canShowResults } from "@/domain/tasting";
 import { tastingStatusLabels } from "../../tasting-status";
 import { AddWineForm } from "./add-wine-form";
 import { DeleteTastingButton } from "./delete-tasting-button";
 import { DeleteWineButton } from "./delete-wine-button";
 import { EditWine } from "./edit-wine";
+import {
+  ParticipantCount,
+  TastingProgressProvider,
+  WineRatingCount,
+} from "./tasting-progress";
 import { TastingStatusControl } from "./tasting-status-control";
 import { WineOpenToggle } from "./wine-open-toggle";
 import { WinesSection } from "./wines-section";
@@ -28,10 +34,20 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const tasting = await getMyTasting(id);
   if (!tasting) notFound();
-  const results = await getMyTastingResults(tasting.id);
+  const [results, progress] = await Promise.all([
+    getMyTastingResults(tasting.id),
+    getMyTastingProgress(tasting.id),
+  ]);
+  // Provningen kan ha tagits bort i en annan flik mellan läsningarna.
+  if (!progress) notFound();
 
   return (
-    <>
+    // Efter avslöjandet kan ingen gå med eller betygsätta, så pollingen upphör.
+    <TastingProgressProvider
+      tastingId={tasting.id}
+      initial={progress}
+      poll={!canShowResults(tasting.status)}
+    >
       <h1 className="text-2xl font-semibold">{tasting.name}</h1>
       <p className="mt-2">Status: {tastingStatusLabels[tasting.status]}</p>
       <TastingStatusControl
@@ -62,6 +78,7 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
         >
           {tasting.code}
         </p>
+        <ParticipantCount />
       </section>
 
       <WinesSection>
@@ -73,6 +90,9 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
               <li key={wine.id} className="px-4 py-3">
                 <span className="font-medium">Vin {wine.blindNumber}</span> –{" "}
                 {describeWine(wine)}
+                {canOpenWines(tasting.status) && (
+                  <WineRatingCount wineId={wine.id} />
+                )}
                 {canOpenWines(tasting.status) && (
                   <WineOpenToggle
                     wineId={wine.id}
@@ -113,7 +133,7 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
         <p>Tar bort provningen med alla viner, deltagare och betyg.</p>
         <DeleteTastingButton tastingId={tasting.id} status={tasting.status} />
       </section>
-    </>
+    </TastingProgressProvider>
   );
 }
 

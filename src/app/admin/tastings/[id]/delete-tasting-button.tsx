@@ -2,7 +2,7 @@
 
 import { useActionState, useRef } from "react";
 import { FormError } from "@/app/_components/form-error";
-import { keepInputWhenOffline } from "@/app/_components/keep-input-when-offline";
+import { keepInputOnFailure } from "@/app/_components/keep-input-on-failure";
 import {
   deleteTastingAction,
   type StatusFormState,
@@ -21,7 +21,7 @@ export function DeleteTastingButton({
   status: TastingStatus;
 }) {
   const [state, formAction, isDeleting] = useActionState(
-    keepInputWhenOffline(deleteTastingAction.bind(null, tastingId), []),
+    keepInputOnFailure(deleteTastingAction.bind(null, tastingId), []),
     initialState,
   );
   const dialog = useRef<HTMLDialogElement>(null);

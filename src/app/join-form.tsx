@@ -4,20 +4,14 @@ import { useActionState, useEffect, useRef } from "react";
 import { joinTastingAction, type JoinField } from "@/api/participant-actions";
 import type { FormState } from "@/api/form-state";
 import { FormError } from "@/app/_components/form-error";
-import { keepInputWhenOffline } from "@/app/_components/keep-input-when-offline";
+import { keepInputOnFailure } from "@/app/_components/keep-input-on-failure";
 import { TextField } from "@/app/_components/text-field";
 
 const initialState: FormState<JoinField> = {};
-const offlineSafeJoin = keepInputWhenOffline(joinTastingAction, [
-  "code",
-  "displayName",
-]);
+const safeJoin = keepInputOnFailure(joinTastingAction, ["code", "displayName"]);
 
 export function JoinForm() {
-  const [state, formAction, isPending] = useActionState(
-    offlineSafeJoin,
-    initialState,
-  );
+  const [state, formAction, isPending] = useActionState(safeJoin, initialState);
   const codeInput = useRef<HTMLInputElement>(null);
   const nameInput = useRef<HTMLInputElement>(null);
 

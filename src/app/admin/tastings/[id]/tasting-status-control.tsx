@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { FormError } from "@/app/_components/form-error";
-import { keepInputWhenOffline } from "@/app/_components/keep-input-when-offline";
+import { keepInputOnFailure } from "@/app/_components/keep-input-on-failure";
 import {
   revealTastingAction,
   startTastingAction,
@@ -22,11 +22,11 @@ export function TastingStatusControl({
   wineCount: number;
 }) {
   const [startState, startAction, isStarting] = useActionState(
-    keepInputWhenOffline(startTastingAction.bind(null, tastingId), []),
+    keepInputOnFailure(startTastingAction.bind(null, tastingId), []),
     initialState,
   );
   const [revealState, revealAction, isRevealing] = useActionState(
-    keepInputWhenOffline(revealTastingAction.bind(null, tastingId), []),
+    keepInputOnFailure(revealTastingAction.bind(null, tastingId), []),
     initialState,
   );
   const [isConfirming, setIsConfirming] = useState(false);

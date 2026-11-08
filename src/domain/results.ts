@@ -1,7 +1,4 @@
-import {
-  type TasteClock,
-  type TasteClockValues,
-} from "./rating";
+import { type TasteClock, type TasteClockValues } from "./rating";
 
 export type ScoredRating = {
   wineId: string;
@@ -68,8 +65,7 @@ function competitionRanks(sortedValues: readonly number[]): number[] {
   const ranks: number[] = [];
   sortedValues.forEach((value, index) => {
     const tiesPrevious =
-      index > 0 &&
-      Math.abs(value - sortedValues[index - 1]) < TIE_TOLERANCE;
+      index > 0 && Math.abs(value - sortedValues[index - 1]) < TIE_TOLERANCE;
     ranks.push(tiesPrevious ? ranks[index - 1] : index + 1);
   });
   return ranks;
@@ -80,7 +76,9 @@ function groupScoresByWine(
   wineIds: readonly string[],
   ratings: readonly ScoredRating[],
 ): Map<string, number[]> {
-  const scoresByWine = new Map(wineIds.map((wineId) => [wineId, [] as number[]]));
+  const scoresByWine = new Map(
+    wineIds.map((wineId) => [wineId, [] as number[]]),
+  );
   for (const rating of ratings) {
     scoresByWine.get(rating.wineId)?.push(rating.score);
   }
@@ -105,12 +103,10 @@ function rankWines(
   const ranks = competitionRanks(rated.map(({ summary }) => summary.average));
 
   return [
-    ...rated.map(
-      ({ wineId, summary }, index): WineResult => ({
-        wineId,
-        rating: { ...summary, rank: ranks[index] },
-      }),
-    ),
+    ...rated.map(({ wineId, summary }, index): WineResult => ({
+      wineId,
+      rating: { ...summary, rank: ranks[index] },
+    })),
     ...unrated,
   ];
 }

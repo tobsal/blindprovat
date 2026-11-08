@@ -78,7 +78,10 @@ export function buildResultsView({
   });
 
   const namesById = new Map(
-    participants.map((participant) => [participant.id, participant.displayName]),
+    participants.map((participant) => [
+      participant.id,
+      participant.displayName,
+    ]),
   );
   const compared = results.participants.flatMap(
     (result): ResultsParticipant[] => {
@@ -101,15 +104,13 @@ export function buildResultsView({
   // Alla som var med syns, också de som inte gick att jämföra.
   const notCompared = participants
     .filter((participant) => !comparedIds.has(participant.id))
-    .map(
-      (participant): ResultsParticipant => ({
-        displayName: participant.displayName,
-        rank: null,
-        meanDeviation: null,
-        comparedWineCount: 0,
-        isSelf: participant.id === ownParticipantId,
-      }),
-    )
+    .map((participant): ResultsParticipant => ({
+      displayName: participant.displayName,
+      rank: null,
+      meanDeviation: null,
+      comparedWineCount: 0,
+      isSelf: participant.id === ownParticipantId,
+    }))
     .sort((a, b) => a.displayName.localeCompare(b.displayName, "sv"));
 
   return {

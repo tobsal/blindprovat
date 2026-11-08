@@ -92,10 +92,7 @@ test("ogiltig årgång ger fel och behåller det som skrivits", async ({
   await expect(page.getByText("Inga viner tillagda än.")).toBeVisible();
 });
 
-test("vin utan vintyp ger ett fel vid vintypen", async ({
-  context,
-  page,
-}) => {
+test("vin utan vintyp ger ett fel vid vintypen", async ({ context, page }) => {
   await logInAsAdmin(context, owners.createOwnerId());
   await page.goto("/admin/tastings/new");
   await page.getByLabel("Namn på provningen").fill("Vintypsprovning");

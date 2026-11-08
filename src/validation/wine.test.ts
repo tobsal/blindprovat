@@ -33,9 +33,7 @@ describe("wineInputSchema", () => {
     ).toBe(true);
     expect(
       messagesFor(wineInputSchema, { ...valid, name: "a".repeat(121) }),
-    ).toEqual([
-      "Namnet får vara högst 120 tecken",
-    ]);
+    ).toEqual(["Namnet får vara högst 120 tecken"]);
   });
 
   it("trimmar valfria textfält och gör tomma till null", () => {
@@ -51,9 +49,9 @@ describe("wineInputSchema", () => {
   });
 
   it("avvisar valfria textfält över 100 tecken", () => {
-    expect(messagesFor(wineInputSchema, { ...valid, country: "a".repeat(101) })).toEqual([
-      "Landet får vara högst 100 tecken",
-    ]);
+    expect(
+      messagesFor(wineInputSchema, { ...valid, country: "a".repeat(101) }),
+    ).toEqual(["Landet får vara högst 100 tecken"]);
   });
 
   describe("vintyp", () => {
@@ -72,11 +70,15 @@ describe("wineInputSchema", () => {
     const thisYear = new Date().getFullYear();
 
     it.each([1900, thisYear])("godtar %i", (vintage) => {
-      expect(wineInputSchema.parse({ ...valid, vintage }).vintage).toBe(vintage);
+      expect(wineInputSchema.parse({ ...valid, vintage }).vintage).toBe(
+        vintage,
+      );
     });
 
     it("godtar null som årgångslöst", () => {
-      expect(wineInputSchema.parse({ ...valid, vintage: null }).vintage).toBeNull();
+      expect(
+        wineInputSchema.parse({ ...valid, vintage: null }).vintage,
+      ).toBeNull();
     });
 
     it.each([1899, thisYear + 1])("avvisar %i", (vintage) => {
@@ -86,12 +88,12 @@ describe("wineInputSchema", () => {
     });
 
     it("avvisar decimaltal och text", () => {
-      expect(messagesFor(wineInputSchema, { ...valid, vintage: 2019.5 })).toEqual([
-        "Ange ett årtal eller lämna tomt",
-      ]);
-      expect(messagesFor(wineInputSchema, { ...valid, vintage: "2019" })).toEqual([
-        "Ange ett årtal eller lämna tomt",
-      ]);
+      expect(
+        messagesFor(wineInputSchema, { ...valid, vintage: 2019.5 }),
+      ).toEqual(["Ange ett årtal eller lämna tomt"]);
+      expect(
+        messagesFor(wineInputSchema, { ...valid, vintage: "2019" }),
+      ).toEqual(["Ange ett årtal eller lämna tomt"]);
     });
   });
 
@@ -123,13 +125,15 @@ describe("wineFormSchema", () => {
     const result = wineFormSchema.parse({ ...valid, vintage: "", price: "  " });
     expect(result.vintage).toBeNull();
     expect(result.price).toBeNull();
-    expect(wineFormSchema.parse({ ...valid, vintage: null }).vintage).toBeNull();
+    expect(
+      wineFormSchema.parse({ ...valid, vintage: null }).vintage,
+    ).toBeNull();
   });
 
   it("ger samma felmeddelanden som för tal", () => {
-    expect(messagesFor(wineFormSchema, { ...valid, vintage: "nittonhundra" })).toEqual([
-      "Ange ett årtal eller lämna tomt",
-    ]);
+    expect(
+      messagesFor(wineFormSchema, { ...valid, vintage: "nittonhundra" }),
+    ).toEqual(["Ange ett årtal eller lämna tomt"]);
     expect(messagesFor(wineFormSchema, { ...valid, vintage: "1899" })).toEqual([
       "Årgången måste vara mellan 1900 och i år",
     ]);

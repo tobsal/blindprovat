@@ -89,9 +89,9 @@ describe("formatTastingCode", () => {
     const bytes = Uint8Array.from({ length: 16 }, (_, i) => i * 17);
     const code = formatTastingCode(bytes);
     expect(code).toHaveLength(TASTING_CODE_LENGTH);
-    expect([...code].every((char) => TASTING_CODE_ALPHABET.includes(char))).toBe(
-      true,
-    );
+    expect(
+      [...code].every((char) => TASTING_CODE_ALPHABET.includes(char)),
+    ).toBe(true);
   });
 
   it("ger samma kod för samma slump", () => {

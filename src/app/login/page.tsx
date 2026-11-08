@@ -27,10 +27,7 @@ async function LoginContent({
     <>
       {error && <FormError>{errorMessages[error]}</FormError>}
       <form action={logIn}>
-        <button
-          type="submit"
-          className="btn-primary"
-        >
+        <button type="submit" className="btn-primary">
           Logga in med GitHub
         </button>
       </form>
@@ -47,17 +44,10 @@ export default function LoginPage({
     <main className="mx-auto flex min-h-full w-full max-w-md flex-col justify-center gap-4 p-6">
       <h1 className="text-2xl font-semibold">Logga in</h1>
       <p>Logga in med ditt GitHub-konto för att skapa och leda provningar.</p>
-      <Suspense
-        fallback={
-          <LoadingStatus className="min-h-11" />
-        }
-      >
+      <Suspense fallback={<LoadingStatus className="min-h-11" />}>
         <LoginContent searchParams={searchParams} />
       </Suspense>
-      <Link
-        href="/"
-        className="link-action"
-      >
+      <Link href="/" className="link-action">
         Till startsidan
       </Link>
     </main>

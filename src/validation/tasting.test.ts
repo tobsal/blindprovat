@@ -10,14 +10,18 @@ describe("tastingInputSchema", () => {
   });
 
   it("kräver namn", () => {
-    expect(messagesFor(tastingInputSchema, { name: "  " })).toEqual(["Ange provningens namn"]);
-    expect(messagesFor(tastingInputSchema, {})).toEqual(["Ange provningens namn"]);
+    expect(messagesFor(tastingInputSchema, { name: "  " })).toEqual([
+      "Ange provningens namn",
+    ]);
+    expect(messagesFor(tastingInputSchema, {})).toEqual([
+      "Ange provningens namn",
+    ]);
   });
 
   it("godtar 80 tecken men inte 81", () => {
-    expect(
-      tastingInputSchema.safeParse({ name: "a".repeat(80) }).success,
-    ).toBe(true);
+    expect(tastingInputSchema.safeParse({ name: "a".repeat(80) }).success).toBe(
+      true,
+    );
     expect(messagesFor(tastingInputSchema, { name: "a".repeat(81) })).toEqual([
       "Namnet får vara högst 80 tecken",
     ]);

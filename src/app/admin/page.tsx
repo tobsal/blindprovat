@@ -33,10 +33,7 @@ export default function AdminPage() {
     <main className="mx-auto w-full max-w-3xl flex-1 p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Dina provningar</h1>
-        <Link
-          href="/admin/tastings/new"
-          className="btn-primary"
-        >
+        <Link href="/admin/tastings/new" className="btn-primary">
           Ny provning
         </Link>
       </div>

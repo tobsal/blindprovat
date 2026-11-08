@@ -149,7 +149,9 @@ export default function TastingPage() {
     <main className="mx-auto w-full max-w-md flex-1 p-4">
       <Suspense
         fallback={
-          <LoadingStatus className="min-h-11">Laddar provningen …</LoadingStatus>
+          <LoadingStatus className="min-h-11">
+            Laddar provningen …
+          </LoadingStatus>
         }
       >
         <TastingOverview />

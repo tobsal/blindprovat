@@ -76,7 +76,9 @@ test("ett betygsatt vin visar det egna betyget", async ({ context, page }) => {
     "Betygsatt · 8 av 10 · öppet",
   );
   // Ett vin som redan är betygsatt får ingen uppmaning att betygsätta.
-  await expect(page.getByRole("heading", { level: 2, name: /öppet för betyg/ })).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { level: 2, name: /öppet för betyg/ }),
+  ).toHaveCount(0);
 });
 
 test("ett vin som öppnas visas utan omladdning av sidan", async ({
@@ -101,9 +103,7 @@ test("ett vin som öppnas visas utan omladdning av sidan", async ({
   await expect(
     page.getByRole("heading", { name: "Vin 2 är öppet för betyg" }),
   ).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByRole("listitem").first()).toContainText(
-    "Inte öppet",
-  );
+  await expect(page.getByRole("listitem").first()).toContainText("Inte öppet");
   expect(
     await page.evaluate(
       () => (window as unknown as { pollMarker?: boolean }).pollMarker,

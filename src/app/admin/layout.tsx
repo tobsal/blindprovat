@@ -22,11 +22,7 @@ export default function AdminLayout({
           <UserMenu />
         </Suspense>
       </header>
-      <Suspense
-        fallback={
-          <LoadingStatus className="p-6" />
-        }
-      >
+      <Suspense fallback={<LoadingStatus className="p-6" />}>
         <AdminGuard>{children}</AdminGuard>
       </Suspense>
     </div>

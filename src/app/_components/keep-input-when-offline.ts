@@ -20,7 +20,10 @@ export function keepInputWhenOffline<Field extends string>(
       return await action(previous, formData);
     } catch (error) {
       if (!(error instanceof TypeError)) throw error;
-      return { formError: offlineMessage, values: stringValues(formData, fields) };
+      return {
+        formError: offlineMessage,
+        values: stringValues(formData, fields),
+      };
     }
   };
 }

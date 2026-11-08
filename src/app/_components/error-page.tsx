@@ -10,19 +10,12 @@ export function ErrorPage({ reset }: { reset: () => void }) {
         Vi kunde inte visa sidan just nu. Försök igen om en stund.
       </p>
       <div className="flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={reset}
-          className="btn-primary"
-        >
+        <button type="button" onClick={reset} className="btn-primary">
           Försök igen
         </button>
         {/* En vanlig länk ger en fullständig sidladdning. Efter ett fel kan routern vara trasig. */}
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- routern kan vara trasig efter ett fel */}
-        <a
-          href="/"
-          className="btn-secondary"
-        >
+        <a href="/" className="btn-secondary">
           Till startsidan
         </a>
       </div>

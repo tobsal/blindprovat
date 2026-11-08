@@ -8,10 +8,7 @@ export default function NotFound() {
         Vi hittar ingen sida på den här adressen. Kontrollera adressen eller gå
         till startsidan.
       </p>
-      <Link
-        href="/"
-        className="btn-secondary self-start"
-      >
+      <Link href="/" className="btn-secondary self-start">
         Till startsidan
       </Link>
     </main>

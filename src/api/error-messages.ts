@@ -17,8 +17,7 @@ export function messageForRepositoryError(
 export const joinNotFoundMessage =
   "Vi hittar ingen provning med den koden. Kontrollera koden eller fråga den som håller i provningen.";
 
-export const wineNotFoundMessage =
-  "Vinet finns inte i den här provningen.";
+export const wineNotFoundMessage = "Vinet finns inte i den här provningen.";
 
 export const wineClosedMessage =
   "Vinet är stängt för betyg. Det du skrivit har inte sparats.";

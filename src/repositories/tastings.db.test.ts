@@ -61,11 +61,13 @@ describe("provningar", () => {
     const tasting = await createTasting(ownerId, { name: "Min" });
     await createTasting(otherOwnerId, { name: "Någon annans" });
 
-    expect(
-      (await listTastingsForOwner(ownerId)).map((own) => own.id),
-    ).toEqual([tasting.id]);
+    expect((await listTastingsForOwner(ownerId)).map((own) => own.id)).toEqual([
+      tasting.id,
+    ]);
     expect(await getTastingForOwner(otherOwnerId, tasting.id)).toBeNull();
-    expect(await advanceTastingStatus(otherOwnerId, tasting.id, "draft")).toEqual({
+    expect(
+      await advanceTastingStatus(otherOwnerId, tasting.id, "draft"),
+    ).toEqual({
       ok: false,
       error: "not_found",
     });
@@ -84,9 +86,9 @@ describe("provningar", () => {
     expect(toLive.ok && toLive.tasting.status).toBe("live");
     const toRevealed = await advanceTastingStatus(ownerId, tasting.id, "live");
     expect(toRevealed.ok && toRevealed.tasting.status).toBe("revealed");
-    expect(
-      await advanceTastingStatus(ownerId, tasting.id, "revealed"),
-    ).toEqual({ ok: false, error: "invalid_state" });
+    expect(await advanceTastingStatus(ownerId, tasting.id, "revealed")).toEqual(
+      { ok: false, error: "invalid_state" },
+    );
   });
 
   it("hoppar inte över ett steg när samma start skickas två gånger", async () => {

@@ -8,10 +8,7 @@ export const tastingInputSchema = z.object({
     .string({ error: nameRequiredMessage })
     .trim()
     .min(1, nameRequiredMessage)
-    .max(
-      TASTING_NAME_MAX,
-      `Namnet får vara högst ${TASTING_NAME_MAX} tecken`,
-    ),
+    .max(TASTING_NAME_MAX, `Namnet får vara högst ${TASTING_NAME_MAX} tecken`),
 });
 
 export type TastingInput = z.infer<typeof tastingInputSchema>;

@@ -3,5 +3,4 @@
 export type RepositoryError = "not_found" | "invalid_state";
 
 export type RepositoryResult<Success extends object> =
-  | ({ ok: true } & Success)
-  | { ok: false; error: RepositoryError };
+  ({ ok: true } & Success) | { ok: false; error: RepositoryError };

@@ -3,7 +3,11 @@ import { afterAll, describe, expect, it } from "vitest";
 import { createLiveTasting, createTestOwners } from "@/test-support/fixtures";
 import { unwrap } from "@/test-support/unwrap";
 import { db } from "./db";
-import { findParticipantBySessionToken, joinTasting } from "./participants";
+import {
+  findParticipantBySessionToken,
+  joinTasting,
+  listParticipantNamesForOwner,
+} from "./participants";
 import { participants } from "./schema";
 import { advanceTastingStatus, createTasting } from "./tastings";
 
@@ -77,5 +81,26 @@ describe("deltagare", () => {
 
   it("hittar ingen deltagare för okänd token", async () => {
     expect(await findParticipantBySessionToken("okänd")).toBeNull();
+  });
+
+  it("ger ägaren deltagarnas smeknamn i bokstavsordning", async () => {
+    const { ownerId, tasting, participant } = await createLiveTasting(owners);
+    const other = unwrap(
+      await joinTasting({ code: tasting.code, displayName: "Alva" }),
+      "Kunde inte gå med",
+    );
+
+    expect(await listParticipantNamesForOwner(ownerId, tasting.id)).toEqual([
+      { id: other.participant.id, displayName: "Alva" },
+      { id: participant.id, displayName: "Kim" },
+    ]);
+  });
+
+  it("ger ingen deltagarlista till en annan ägare", async () => {
+    const { tasting } = await createLiveTasting(owners);
+
+    expect(
+      await listParticipantNamesForOwner(owners.createOwnerId(), tasting.id),
+    ).toBeNull();
   });
 });

@@ -6,6 +6,7 @@ import {
   canOpenWines,
   canRateWines,
   canRevealWineDetails,
+  canShowResults,
   formatTastingCode,
   nextTastingStatus,
   TASTING_CODE_ALPHABET,
@@ -67,6 +68,14 @@ describe("statusregler", () => {
     expect(canRevealWineDetails("draft")).toBe(false);
     expect(canRevealWineDetails("live")).toBe(false);
     expect(canRevealWineDetails("revealed")).toBe(true);
+  });
+});
+
+describe("canShowResults", () => {
+  it("visar resultatet först när provningen är avslöjad", () => {
+    expect(canShowResults("draft")).toBe(false);
+    expect(canShowResults("live")).toBe(false);
+    expect(canShowResults("revealed")).toBe(true);
   });
 });
 

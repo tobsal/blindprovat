@@ -1,9 +1,10 @@
 import { createHash, randomBytes } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { SESSION_TOKEN_BYTES } from "@/domain/participant";
 import { canJoinTasting } from "@/domain/tasting";
 import { db } from "./db";
 import { isUniqueViolation, withSafeErrors } from "./errors";
+import { tastingOwnedBy } from "./ownership";
 import { constraintNames, participants, tastings } from "./schema";
 
 export type SessionParticipant = {
@@ -78,5 +79,27 @@ export async function findParticipantBySessionToken(
       .from(participants)
       .where(eq(participants.sessionTokenHash, hashSessionToken(sessionToken)));
     return participant ?? null;
+  });
+}
+
+export type ParticipantName = Pick<SessionParticipant, "id" | "displayName">;
+
+// null om provningen inte finns eller ägs av någon annan.
+export async function listParticipantNamesForOwner(
+  ownerId: string,
+  tastingId: string,
+): Promise<ParticipantName[] | null> {
+  return withSafeErrors("listParticipantNamesForOwner", async () => {
+    const [tasting] = await db
+      .select({ id: tastings.id })
+      .from(tastings)
+      .where(tastingOwnedBy(ownerId, tastingId));
+    if (!tasting) return null;
+
+    return db
+      .select({ id: participants.id, displayName: participants.displayName })
+      .from(participants)
+      .where(eq(participants.tastingId, tastingId))
+      .orderBy(asc(participants.displayName));
   });
 }

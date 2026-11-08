@@ -2,7 +2,12 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LoadingStatus } from "@/app/_components/loading-status";
-import { getMyTasting, type AdminWine } from "@/api/admin-tastings";
+import { TastingResults } from "@/app/_components/tasting-results";
+import {
+  getMyTasting,
+  getMyTastingResults,
+  type AdminWine,
+} from "@/api/admin-tastings";
 import { canAddWines, canOpenWines } from "@/domain/tasting";
 import { tastingStatusLabels } from "../../tasting-status";
 import { AddWineForm } from "./add-wine-form";
@@ -19,6 +24,7 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const tasting = await getMyTasting(id);
   if (!tasting) notFound();
+  const results = await getMyTastingResults(tasting.id);
 
   return (
     <>
@@ -29,6 +35,17 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
         status={tasting.status}
         wineCount={tasting.wines.length}
       />
+
+      {results && (
+        <section aria-labelledby="results-heading" className="mt-6">
+          <h2 id="results-heading" className="text-lg font-semibold">
+            Resultat
+          </h2>
+          <div className="mt-2">
+            <TastingResults results={results} />
+          </div>
+        </section>
+      )}
 
       <section aria-labelledby="code-heading" className="mt-6">
         <h2 id="code-heading" className="text-lg font-semibold">

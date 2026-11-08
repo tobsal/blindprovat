@@ -42,6 +42,11 @@ export function canRevealWineDetails(status: TastingStatus): boolean {
   return status === "revealed";
 }
 
+// Resultatet visas för admin och deltagare först när provningen är avslöjad.
+export function canShowResults(status: TastingStatus): boolean {
+  return status === "revealed";
+}
+
 // 32 tecken utan de lättförväxlade 0, O, 1 och I. Med 10 tecken blir det
 // 50 bitar slump, vilket inte går att gissa fram.
 export const TASTING_CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";

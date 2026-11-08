@@ -20,7 +20,9 @@ export function canAdvanceTasting(
   return nextTastingStatus(status) !== null;
 }
 
-export function canAddWines(status: TastingStatus): boolean {
+// Viner läggs till, ändras och tas bort bara medan provningen förbereds.
+// Då finns inga betyg, så blindnumren kan numreras om utan att något tappas.
+export function canEditWines(status: TastingStatus): boolean {
   return status === "draft";
 }
 

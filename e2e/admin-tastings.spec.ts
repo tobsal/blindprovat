@@ -37,7 +37,7 @@ test("admin skapar en provning och ser den i listan", async ({
   await expect(
     page.getByRole("form", { name: "Lägg till vin" }).getByRole("status"),
   ).toHaveText("Vin 1 är tillagt.");
-  await expect(page.getByRole("listitem")).toHaveText(
+  await expect(page.getByRole("listitem")).toContainText(
     "Vin 1 – Barolo, Vietti, 2019",
   );
   await expect(page.getByLabel("Namn", { exact: true })).toBeFocused();
@@ -46,7 +46,7 @@ test("admin skapar en provning och ser den i listan", async ({
   await page.getByLabel("Namn", { exact: true }).fill("Chianti");
   await page.getByLabel("Rött", { exact: true }).check();
   await page.getByRole("button", { name: "Lägg till vin" }).click();
-  await expect(page.getByRole("listitem")).toHaveText([
+  await expect(page.getByRole("listitem")).toContainText([
     "Vin 1 – Barolo, Vietti, 2019",
     "Vin 2 – Chianti, Årgångslöst",
   ]);
@@ -139,6 +139,71 @@ test("utan uppkoppling finns inmatningen kvar och går att skicka igen", async (
   await expect(
     page.getByRole("form", { name: "Lägg till vin" }).getByRole("status"),
   ).toHaveText("Vin 1 är tillagt.");
+});
+
+test("admin ändrar och tar bort viner innan provningen startar", async ({
+  context,
+  page,
+}) => {
+  await logInAsAdmin(context, owners.createOwnerId());
+  await page.goto("/admin/tastings/new");
+  await page.getByLabel("Namn på provningen").fill("Ändra och ta bort");
+  await page.getByRole("button", { name: "Skapa provning" }).click();
+  const addForm = page.getByRole("form", { name: "Lägg till vin" });
+  for (const name of ["Barolo", "Chianti", "Rioja"]) {
+    await addForm.getByLabel("Namn", { exact: true }).fill(name);
+    await addForm.getByLabel("Rött", { exact: true }).check();
+    await addForm.getByRole("button", { name: "Lägg till vin" }).click();
+    await expect(page.getByRole("listitem").getByText(name)).toBeVisible();
+  }
+
+  const edit = page.getByRole("button", { name: "Ändra Vin 2" });
+  await edit.click();
+  await expect(edit).toHaveAttribute("aria-expanded", "true");
+  const editForm = page.getByRole("form", { name: "Ändra Vin 2" });
+  const nameField = editForm.getByLabel("Namn", { exact: true });
+  await expect(nameField).toBeFocused();
+  await expect(nameField).toHaveValue("Chianti");
+  await expect(editForm.getByLabel("Rött", { exact: true })).toBeChecked();
+
+  await nameField.fill("");
+  await editForm.getByRole("button", { name: "Spara" }).click();
+  await expect(nameField).toBeFocused();
+  await expect(nameField).toHaveAccessibleDescription("Fel: Ange vinets namn");
+
+  await nameField.fill("Chianti Classico");
+  await editForm.getByLabel("Årgång (valfritt)").fill("2020");
+  await editForm.getByRole("button", { name: "Spara" }).click();
+  await expect(editForm).toHaveCount(0);
+  await expect(edit).toBeFocused();
+  await expect(
+    page.getByRole("listitem").nth(1).getByRole("status"),
+  ).toHaveText("Vin 2 är ändrat.");
+  await expect(page.getByRole("listitem").nth(1)).toContainText(
+    "Vin 2 – Chianti Classico, 2020",
+  );
+
+  await page.getByRole("button", { name: "Ta bort Vin 1" }).click();
+  const dialog = page.getByRole("dialog", { name: "Ta bort Vin 1?" });
+  await expect(dialog.getByRole("button", { name: "Avbryt" })).toBeFocused();
+  await dialog.getByRole("button", { name: "Ja, ta bort" }).click();
+
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Viner" })).toBeFocused();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Vin 1 är borttaget" }),
+  ).toBeVisible();
+  await expect(page.getByRole("listitem")).toContainText([
+    "Vin 1 – Chianti Classico, 2020",
+    "Vin 2 – Rioja, Årgångslöst",
+  ]);
+  await expect(page.getByRole("listitem")).toHaveCount(2);
+
+  await page.getByRole("button", { name: "Starta provningen" }).click();
+  await expect(page.getByText("Status: Pågår")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /^(Ändra|Ta bort) Vin/ }),
+  ).toHaveCount(0);
 });
 
 test("okänd eller ogiltig provning ger samma sida", async ({

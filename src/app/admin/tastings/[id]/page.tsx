@@ -8,12 +8,15 @@ import {
   getMyTastingResults,
   type AdminWine,
 } from "@/api/admin-tastings";
-import { canAddWines, canOpenWines } from "@/domain/tasting";
+import { canEditWines, canOpenWines } from "@/domain/tasting";
 import { tastingStatusLabels } from "../../tasting-status";
 import { AddWineForm } from "./add-wine-form";
 import { DeleteTastingButton } from "./delete-tasting-button";
+import { DeleteWineButton } from "./delete-wine-button";
+import { EditWine } from "./edit-wine";
 import { TastingStatusControl } from "./tasting-status-control";
 import { WineOpenToggle } from "./wine-open-toggle";
+import { WinesSection } from "./wines-section";
 
 function describeWine(wine: AdminWine): string {
   return [wine.name, wine.producer, wine.vintage ?? "Årgångslöst"]
@@ -61,10 +64,7 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
         </p>
       </section>
 
-      <section aria-labelledby="wines-heading" className="mt-8">
-        <h2 id="wines-heading" className="text-lg font-semibold">
-          Viner
-        </h2>
+      <WinesSection>
         {tasting.wines.length === 0 ? (
           <p className="mt-2">Inga viner tillagda än.</p>
         ) : (
@@ -80,18 +80,28 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
                     isOpen={wine.isOpen}
                   />
                 )}
+                {canEditWines(tasting.status) && (
+                  <div className="mt-2 flex flex-col gap-2">
+                    <EditWine wine={wine} />
+                    <DeleteWineButton
+                      wineId={wine.id}
+                      blindNumber={wine.blindNumber}
+                    />
+                  </div>
+                )}
               </li>
             ))}
           </ol>
         )}
-        {canAddWines(tasting.status) ? (
+        {canEditWines(tasting.status) ? (
           <AddWineForm tastingId={tasting.id} />
         ) : (
           <p className="mt-4">
-            Viner kan bara läggas till innan provningen startar.
+            Viner kan bara läggas till, ändras och tas bort innan provningen
+            startar.
           </p>
         )}
-      </section>
+      </WinesSection>
 
       <section
         aria-labelledby="delete-heading"

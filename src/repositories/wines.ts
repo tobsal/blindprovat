@@ -1,10 +1,10 @@
-import { asc, eq, max } from "drizzle-orm";
+import { and, asc, eq, gt, lt, max, sql } from "drizzle-orm";
 import {
-  canAddWines,
+  canEditWines,
   canOpenWines,
   canRevealWineDetails,
 } from "@/domain/tasting";
-import { db } from "./db";
+import { db, type Db } from "./db";
 import { withSafeErrors } from "./errors";
 import { tastingOwnedBy } from "./ownership";
 import type { SessionParticipant } from "./participants";
@@ -50,7 +50,7 @@ export async function addWine(
         .where(tastingOwnedBy(ownerId, tastingId))
         .for("update");
       if (!tasting) return { ok: false, error: "not_found" };
-      if (!canAddWines(tasting.status)) {
+      if (!canEditWines(tasting.status)) {
         return { ok: false, error: "invalid_state" };
       }
 
@@ -67,6 +67,94 @@ export async function addWine(
   );
 }
 
+type Transaction = Parameters<Parameters<Db["transaction"]>[0]>[0];
+
+// Låser provningen som vinet tillhör, exklusivt enligt låsregeln ovan. Ett
+// vin byter aldrig provning, så den kan slås upp utan lås. Ett vin i någon
+// annans provning ger null, precis som ett som inte finns.
+async function lockTastingOfWine(
+  tx: Transaction,
+  ownerId: string,
+  wineId: string,
+) {
+  const [found] = await tx
+    .select({ tastingId: wines.tastingId })
+    .from(wines)
+    .where(eq(wines.id, wineId));
+  if (!found) return null;
+
+  const [tasting] = await tx
+    .select({ id: tastings.id, status: tastings.status })
+    .from(tastings)
+    .where(tastingOwnedBy(ownerId, found.tastingId))
+    .for("update");
+  return tasting ?? null;
+}
+
+export async function updateWine(
+  ownerId: string,
+  wineId: string,
+  details: NewWine,
+): Promise<RepositoryResult<{ wine: AdminWine }>> {
+  return withSafeErrors("updateWine", () =>
+    db.transaction(async (tx) => {
+      const tasting = await lockTastingOfWine(tx, ownerId, wineId);
+      if (!tasting) return { ok: false, error: "not_found" };
+      if (!canEditWines(tasting.status)) {
+        return { ok: false, error: "invalid_state" };
+      }
+
+      const [wine] = await tx
+        .update(wines)
+        .set(details)
+        .where(eq(wines.id, wineId))
+        .returning();
+      // Vinet kan ha tagits bort medan vi väntade på låset.
+      if (!wine) return { ok: false, error: "not_found" };
+      return { ok: true, wine };
+    }),
+  );
+}
+
+// Vinerna efter det borttagna flyttas ner ett steg, så att blindnumren är
+// 1, 2, 3 … utan luckor. Den unika regeln på (provning, blindnummer) prövas
+// rad för rad, så numren flyttas via negativa tal för att inte krocka.
+export async function deleteWine(
+  ownerId: string,
+  wineId: string,
+): Promise<RepositoryResult<{ wine: AdminWine }>> {
+  return withSafeErrors("deleteWine", () =>
+    db.transaction(async (tx) => {
+      const tasting = await lockTastingOfWine(tx, ownerId, wineId);
+      if (!tasting) return { ok: false, error: "not_found" };
+      if (!canEditWines(tasting.status)) {
+        return { ok: false, error: "invalid_state" };
+      }
+
+      const [wine] = await tx
+        .delete(wines)
+        .where(eq(wines.id, wineId))
+        .returning();
+      if (!wine) return { ok: false, error: "not_found" };
+
+      await tx
+        .update(wines)
+        .set({ blindNumber: sql`-(${wines.blindNumber} - 1)` })
+        .where(
+          and(
+            eq(wines.tastingId, tasting.id),
+            gt(wines.blindNumber, wine.blindNumber),
+          ),
+        );
+      await tx
+        .update(wines)
+        .set({ blindNumber: sql`-${wines.blindNumber}` })
+        .where(and(eq(wines.tastingId, tasting.id), lt(wines.blindNumber, 0)));
+      return { ok: true, wine };
+    }),
+  );
+}
+
 export async function setWineOpen(
   ownerId: string,
   wineId: string,
@@ -74,18 +162,7 @@ export async function setWineOpen(
 ): Promise<RepositoryResult<{ wine: AdminWine }>> {
   return withSafeErrors("setWineOpen", () =>
     db.transaction(async (tx) => {
-      // Ett vin byter aldrig provning, så den kan slås upp utan lås.
-      const [found] = await tx
-        .select({ tastingId: wines.tastingId })
-        .from(wines)
-        .where(eq(wines.id, wineId));
-      if (!found) return { ok: false, error: "not_found" };
-
-      const [tasting] = await tx
-        .select({ status: tastings.status })
-        .from(tastings)
-        .where(tastingOwnedBy(ownerId, found.tastingId))
-        .for("update");
+      const tasting = await lockTastingOfWine(tx, ownerId, wineId);
       if (!tasting) return { ok: false, error: "not_found" };
       if (!canOpenWines(tasting.status)) {
         return { ok: false, error: "invalid_state" };

@@ -9,7 +9,12 @@ import {
   createTasting,
   deleteTasting,
 } from "@/repositories/tastings";
-import { addWine, setWineOpen } from "@/repositories/wines";
+import {
+  addWine,
+  deleteWine,
+  setWineOpen,
+  updateWine,
+} from "@/repositories/wines";
 import { tastingIdSchema, tastingInputSchema } from "@/validation/tasting";
 import { wineFormSchema, wineIdSchema } from "@/validation/wine";
 import { requireAdminOwnerId } from "./admin-session";
@@ -70,6 +75,36 @@ export async function addWineAction(
 
   revalidatePath(`/admin/tastings/${tastingId.data}`);
   return { message: `Vin ${result.wine.blindNumber} är tillagt.` };
+}
+
+export async function updateWineAction(
+  rawWineId: string,
+  _previous: FormState<WineField>,
+  formData: FormData,
+): Promise<FormState<WineField>> {
+  const ownerId = await requireAdminOwnerId();
+  const wineId = wineIdSchema.safeParse(rawWineId);
+  if (!wineId.success) return { formError: tastingNotFoundMessage };
+
+  const values = formValues(formData, wineFields);
+  const parsed = wineFormSchema.safeParse(values);
+  if (!parsed.success) {
+    return { fieldErrors: z.flattenError(parsed.error).fieldErrors, values };
+  }
+
+  const result = await updateWine(ownerId, wineId.data, parsed.data);
+  if (!result.ok) {
+    return {
+      formError: messageForRepositoryError(
+        result.error,
+        "Viner kan bara ändras innan provningen har startat.",
+      ),
+      values,
+    };
+  }
+
+  revalidatePath(`/admin/tastings/${result.wine.tastingId}`);
+  return { message: `Vin ${result.wine.blindNumber} är ändrat.` };
 }
 
 // Statusknapparna har inga fält, bara fel och kvitto. Föregående tillstånd
@@ -159,5 +194,29 @@ export async function setWineOpenAction(
     message: isOpen
       ? `Vin ${blindNumber} är öppet för betyg.`
       : `Vin ${blindNumber} är stängt för betyg.`,
+  };
+}
+
+export async function deleteWineAction(
+  rawWineId: string,
+): Promise<StatusFormState> {
+  const ownerId = await requireAdminOwnerId();
+  const wineId = wineIdSchema.safeParse(rawWineId);
+  if (!wineId.success) return { formError: tastingNotFoundMessage };
+
+  const result = await deleteWine(ownerId, wineId.data);
+  if (!result.ok) {
+    return {
+      formError: messageForRepositoryError(
+        result.error,
+        "Viner kan bara tas bort innan provningen har startat.",
+      ),
+    };
+  }
+
+  const { blindNumber, tastingId } = result.wine;
+  revalidatePath(`/admin/tastings/${tastingId}`);
+  return {
+    message: `Vin ${blindNumber} är borttaget. Vinerna efter har fått nya nummer.`,
   };
 }

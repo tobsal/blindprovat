@@ -22,7 +22,13 @@ import {
   getTastingForOwner,
   listTastingsForOwner,
 } from "./tastings";
-import { addWine, listWinesForParticipant, setWineOpen } from "./wines";
+import {
+  addWine,
+  deleteWine,
+  listWinesForParticipant,
+  setWineOpen,
+  updateWine,
+} from "./wines";
 
 const owners = createTestOwners();
 afterAll(() => owners.cleanUp());
@@ -217,6 +223,114 @@ describe("viner", () => {
     expect(
       await setWineOpen(owners.createOwnerId(), added.wine.id, false),
     ).toEqual({ ok: false, error: "not_found" });
+  });
+
+  it("ändrar ett vin bara i draft och bara i ägarens provning", async () => {
+    const ownerId = owners.createOwnerId();
+    const tasting = await createTasting(ownerId, { name: "Ändra" });
+    const added = unwrap(
+      await addWine(ownerId, tasting.id, sampleWine),
+      "Kunde inte lägga till vin",
+    );
+    const changes = { ...sampleWine, name: "Barbaresco", vintage: null };
+
+    expect(
+      await updateWine(owners.createOwnerId(), added.wine.id, changes),
+    ).toEqual({ ok: false, error: "not_found" });
+
+    const updated = await updateWine(ownerId, added.wine.id, changes);
+    expect(updated.ok && updated.wine).toMatchObject({
+      ...changes,
+      blindNumber: 1,
+    });
+
+    await advanceTastingStatus(ownerId, tasting.id, "draft");
+    expect(await updateWine(ownerId, added.wine.id, sampleWine)).toEqual({
+      ok: false,
+      error: "invalid_state",
+    });
+    const loaded = await getTastingForOwner(ownerId, tasting.id);
+    expect(loaded?.wines[0].name).toBe("Barbaresco");
+  });
+
+  it("numrerar om vinerna när ett tas bort", async () => {
+    const ownerId = owners.createOwnerId();
+    const tasting = await createTasting(ownerId, { name: "Ta bort vin" });
+    const added = [];
+    for (const name of ["Ett", "Två", "Tre", "Fyra"]) {
+      added.push(
+        unwrap(
+          await addWine(ownerId, tasting.id, { ...sampleWine, name }),
+          "Kunde inte lägga till vin",
+        ).wine,
+      );
+    }
+
+    expect(await deleteWine(owners.createOwnerId(), added[1].id)).toEqual({
+      ok: false,
+      error: "not_found",
+    });
+    const deleted = await deleteWine(ownerId, added[1].id);
+    expect(deleted.ok && deleted.wine.blindNumber).toBe(2);
+    expect(await deleteWine(ownerId, added[1].id)).toEqual({
+      ok: false,
+      error: "not_found",
+    });
+
+    const loaded = await getTastingForOwner(ownerId, tasting.id);
+    expect(
+      loaded?.wines.map(({ blindNumber, name }) => [blindNumber, name]),
+    ).toEqual([
+      [1, "Ett"],
+      [2, "Tre"],
+      [3, "Fyra"],
+    ]);
+
+    const next = await addWine(ownerId, tasting.id, sampleWine);
+    expect(next.ok && next.wine.blindNumber).toBe(4);
+  });
+
+  it("numrerar rätt när två viner tas bort samtidigt", async () => {
+    const ownerId = owners.createOwnerId();
+    const tasting = await createTasting(ownerId, { name: "Samtidigt" });
+    const added = [];
+    for (const name of ["Ett", "Två", "Tre"]) {
+      added.push(
+        unwrap(
+          await addWine(ownerId, tasting.id, { ...sampleWine, name }),
+          "Kunde inte lägga till vin",
+        ).wine,
+      );
+    }
+
+    const results = await Promise.all([
+      deleteWine(ownerId, added[0].id),
+      deleteWine(ownerId, added[1].id),
+    ]);
+    expect(results.map((result) => result.ok)).toEqual([true, true]);
+
+    const loaded = await getTastingForOwner(ownerId, tasting.id);
+    expect(
+      loaded?.wines.map(({ blindNumber, name }) => [blindNumber, name]),
+    ).toEqual([[1, "Tre"]]);
+  });
+
+  it("tar inte bort viner när provningen har startat", async () => {
+    const ownerId = owners.createOwnerId();
+    const tasting = await createTasting(ownerId, { name: "Startad" });
+    const added = unwrap(
+      await addWine(ownerId, tasting.id, sampleWine),
+      "Kunde inte lägga till vin",
+    );
+    await advanceTastingStatus(ownerId, tasting.id, "draft");
+
+    expect(await deleteWine(ownerId, added.wine.id)).toEqual({
+      ok: false,
+      error: "invalid_state",
+    });
+    expect(
+      (await getTastingForOwner(ownerId, tasting.id))?.wines,
+    ).toHaveLength(1);
   });
 
   it("skickar ingen vininformation till deltagare före avslöjandet", async () => {

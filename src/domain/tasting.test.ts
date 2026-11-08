@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  canAddWines,
+  canEditWines,
   canAdvanceTasting,
   canJoinTasting,
   canOpenWines,
@@ -40,10 +40,10 @@ describe("canAdvanceTasting", () => {
 });
 
 describe("statusregler", () => {
-  it("tillåter att lägga till viner bara medan provningen förbereds", () => {
-    expect(canAddWines("draft")).toBe(true);
-    expect(canAddWines("live")).toBe(false);
-    expect(canAddWines("revealed")).toBe(false);
+  it("tillåter att lägga till, ändra och ta bort viner bara medan provningen förbereds", () => {
+    expect(canEditWines("draft")).toBe(true);
+    expect(canEditWines("live")).toBe(false);
+    expect(canEditWines("revealed")).toBe(false);
   });
 
   it("tillåter att öppna och stänga viner bara medan provningen pågår", () => {

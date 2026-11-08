@@ -5,6 +5,7 @@ import {
   type ParticipantWineView,
 } from "@/api/participant-tasting";
 import { LoadingStatus } from "@/app/_components/loading-status";
+import { TastingResults } from "@/app/_components/tasting-results";
 import { SCORE_MAX } from "@/domain/rating";
 import { PollRefresh } from "./poll-refresh";
 import { WineStateIcon } from "./wine-state-icon";
@@ -24,7 +25,7 @@ function statusText(wine: ParticipantWineView): string {
 }
 
 async function TastingOverview() {
-  const { displayName, tastingName, status, wines } =
+  const { displayName, tastingName, status, wines, results } =
     await getParticipantView();
   const wineToRate = wines.find((wine) => wine.state === "open");
 
@@ -37,6 +38,11 @@ async function TastingOverview() {
 
       {/* Regionen finns alltid, så att skärmläsare annonserar när ett vin öppnas. */}
       <div aria-live="polite" className="mt-4">
+        {results && (
+          <p className="font-medium">
+            Provningen är avslöjad. Resultatet visas nedan.
+          </p>
+        )}
         {wineToRate && (
           <section className="rounded-xl bg-primary p-4 text-on-primary">
             <h2 className="text-base font-medium">
@@ -60,9 +66,22 @@ async function TastingOverview() {
           Provningen har inte startat än. Vinerna visas när den startar.
         </p>
       )}
-      {status === "revealed" && <p className="mt-4">Provningen är avslöjad.</p>}
+      {status === "revealed" && !results && (
+        <p className="mt-4">Provningen är avslöjad.</p>
+      )}
 
-      {wines.length > 0 && (
+      {results && (
+        <section aria-labelledby="results-heading" className="mt-6">
+          <h2 id="results-heading" className="text-lg font-semibold">
+            Resultat
+          </h2>
+          <div className="mt-2">
+            <TastingResults results={results} />
+          </div>
+        </section>
+      )}
+
+      {!results && wines.length > 0 && (
         <>
           <h2 className="mt-6 text-sm font-medium text-on-surface-variant">
             Alla viner
@@ -112,10 +131,15 @@ async function TastingOverview() {
         </>
       )}
 
-      <p className="mt-6 text-xs text-on-surface-variant">
-        Sidan uppdateras automatiskt.
-      </p>
-      <PollRefresh />
+      {/* Efter avslöjandet ändras inget mer, så pollingen upphör. */}
+      {status !== "revealed" && (
+        <>
+          <p className="mt-6 text-xs text-on-surface-variant">
+            Sidan uppdateras automatiskt.
+          </p>
+          <PollRefresh />
+        </>
+      )}
     </>
   );
 }

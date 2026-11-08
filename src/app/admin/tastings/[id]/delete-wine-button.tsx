@@ -2,7 +2,7 @@
 
 import { useActionState, useRef } from "react";
 import { FormError } from "@/app/_components/form-error";
-import { keepInputWhenOffline } from "@/app/_components/keep-input-when-offline";
+import { keepInputOnFailure } from "@/app/_components/keep-input-on-failure";
 import {
   deleteWineAction,
   type StatusFormState,
@@ -27,7 +27,7 @@ export function DeleteWineButton({
   const headingId = `${dialogId}-heading`;
   const descriptionId = `${dialogId}-description`;
   const [state, formAction, isDeleting] = useActionState(
-    keepInputWhenOffline(async () => {
+    keepInputOnFailure(async () => {
       const result = await deleteWineAction(wineId);
       if (result.message) {
         // Dialogen stängs innan fokus flyttas till rubriken, annars hindrar

@@ -196,3 +196,45 @@ test("okänt eller ogiltigt vin ger samma sida", async ({ context, page }) => {
     ).toBeVisible();
   }
 });
+
+test("ett serverfel vid sparning visar ett fel och behåller det som skrivits", async ({
+  context,
+  page,
+}) => {
+  const { tasting } = await createLiveTasting(owners);
+  const participant = await joinWithCookie(context, tasting.code, "Lisa");
+  await page.goto("/tasting/wines/1");
+
+  // Serveranrop skickas som POST med huvudet next-action. Det första får ett
+  // fel från servern, som när databasen inte svarar.
+  await page.route("**/tasting/wines/1", async (route) => {
+    const request = route.request();
+    if (request.method() === "POST" && request.headers()["next-action"]) {
+      await route.fulfill({ status: 500, body: "Internal Server Error" });
+    } else {
+      await route.continue();
+    }
+  });
+
+  await page.getByRole("button", { name: "7 av 10" }).click();
+  await page.getByLabel("Anteckning (valfritt)").fill("Fat och vanilj.");
+  await page.getByRole("button", { name: "Spara betyg" }).click();
+
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Något gick fel hos oss" }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Anteckning (valfritt)")).toHaveValue(
+    "Fat och vanilj.",
+  );
+  await expect(page.getByRole("button", { name: "7 av 10" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+
+  await page.unrouteAll();
+  await page.getByRole("button", { name: "Spara betyg" }).click();
+  await expect(page.getByRole("status")).toHaveText("Betyget är sparat.");
+  expect(await listOwnRatings(participant)).toEqual([
+    expect.objectContaining({ score: 7, note: "Fat och vanilj." }),
+  ]);
+});

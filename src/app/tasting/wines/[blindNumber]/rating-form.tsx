@@ -4,7 +4,7 @@ import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import type { FormState } from "@/api/form-state";
 import { saveRatingAction, type RatingField } from "@/api/participant-actions";
 import { FormError } from "@/app/_components/form-error";
-import { keepInputWhenOffline } from "@/app/_components/keep-input-when-offline";
+import { keepInputOnFailure } from "@/app/_components/keep-input-on-failure";
 import { tasteClockLabels } from "@/app/_components/taste-clock-labels";
 import { TextArea } from "@/app/_components/text-area";
 import { TextField } from "@/app/_components/text-field";
@@ -175,7 +175,7 @@ export function RatingForm({ blindNumber, isOpen, type, initial }: Props) {
 
   const action = useMemo(
     () =>
-      keepInputWhenOffline(saveRatingAction.bind(null, String(blindNumber)), [
+      keepInputOnFailure(saveRatingAction.bind(null, String(blindNumber)), [
         "note",
         "guess",
       ]),

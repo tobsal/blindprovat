@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { FormError } from "@/app/_components/form-error";
-import { keepInputWhenOffline } from "@/app/_components/keep-input-when-offline";
+import { keepInputOnFailure } from "@/app/_components/keep-input-on-failure";
 import {
   setWineOpenAction,
   type StatusFormState,
@@ -22,7 +22,7 @@ export function WineOpenToggle({
   isOpen: boolean;
 }) {
   const [state, formAction, isPending] = useActionState(
-    keepInputWhenOffline(() => setWineOpenAction(wineId, !isOpen), []),
+    keepInputOnFailure(() => setWineOpenAction(wineId, !isOpen), []),
     initialState,
   );
 

@@ -1,17 +1,23 @@
+import { unstable_rethrow } from "next/navigation";
 import type { FormState } from "@/api/form-state";
 
 export const offlineMessage =
   "Ingen uppkoppling. Det du skrivit finns kvar. Försök igen när du är uppkopplad.";
+
+export const serverErrorMessage =
+  "Något gick fel hos oss. Det du skrivit finns kvar. Försök igen om en stund.";
 
 type FormAction<Field extends string> = (
   previous: FormState<Field>,
   formData: FormData,
 ) => Promise<FormState<Field>>;
 
-// Utan uppkoppling avvisar fetch anropet med ett TypeError. Serverfel och
-// omdirigeringar är andra fel och kastas vidare, så att error.tsx och
-// redirect fungerar som vanligt (princip 14).
-export function keepInputWhenOffline<Field extends string>(
+// Ett anrop som misslyckas ska inte ta bort det som skrivits in (princip 14).
+// Utan uppkoppling avvisar fetch anropet med ett TypeError. Alla andra fel
+// räknas som fel hos oss. Felet loggas redan på servern med ett digest, så
+// det loggas inte här. Next.js egna styrfel (redirect, notFound) kastas
+// vidare med unstable_rethrow, så att omdirigeringar fungerar som vanligt.
+export function keepInputOnFailure<Field extends string>(
   action: FormAction<Field>,
   fields: readonly Field[],
 ): FormAction<Field> {
@@ -19,9 +25,10 @@ export function keepInputWhenOffline<Field extends string>(
     try {
       return await action(previous, formData);
     } catch (error) {
-      if (!(error instanceof TypeError)) throw error;
+      unstable_rethrow(error);
       return {
-        formError: offlineMessage,
+        formError:
+          error instanceof TypeError ? offlineMessage : serverErrorMessage,
         values: stringValues(formData, fields),
       };
     }

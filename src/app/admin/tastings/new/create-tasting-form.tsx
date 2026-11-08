@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { FormError } from "@/app/_components/form-error";
-import { keepInputWhenOffline } from "@/app/_components/keep-input-when-offline";
+import { keepInputOnFailure } from "@/app/_components/keep-input-on-failure";
 import { TextField } from "@/app/_components/text-field";
 import {
   createTastingAction,
@@ -11,13 +11,11 @@ import {
 import type { FormState } from "@/api/form-state";
 
 const initialState: FormState<TastingField> = {};
-const offlineSafeCreateTasting = keepInputWhenOffline(createTastingAction, [
-  "name",
-]);
+const safeCreateTasting = keepInputOnFailure(createTastingAction, ["name"]);
 
 export function CreateTastingForm() {
   const [state, formAction, isPending] = useActionState(
-    offlineSafeCreateTasting,
+    safeCreateTasting,
     initialState,
   );
   const nameInput = useRef<HTMLInputElement>(null);

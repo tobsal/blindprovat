@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { FormError } from "@/app/_components/form-error";
-import { keepInputWhenOffline } from "@/app/_components/keep-input-when-offline";
+import { keepInputOnFailure } from "@/app/_components/keep-input-on-failure";
 import { updateWineAction, type WineField } from "@/api/admin-tasting-actions";
 import type { AdminWine } from "@/api/admin-tastings";
 import type { FormState } from "@/api/form-state";
@@ -74,7 +74,7 @@ function EditWineForm({
   onClose: (savedMessage?: string) => void;
 }) {
   const [state, formAction, isPending] = useActionState(
-    keepInputWhenOffline(async (previous, formData) => {
+    keepInputOnFailure(async (previous, formData) => {
       const result = await updateWineAction(wine.id, previous, formData);
       if (result.message) onClose(result.message);
       return result;

@@ -364,6 +364,26 @@ describe("viner", () => {
     expect(revealed[0]).toMatchObject({ type, details });
   });
 
+  it("ett vin som var öppet vid avslöjandet är stängt för deltagaren", async () => {
+    const ownerId = owners.createOwnerId();
+    const tasting = await createTasting(ownerId, { name: "Avslöjas öppen" });
+    const { wine } = unwrap(
+      await addWine(ownerId, tasting.id, sampleWine),
+      "Kunde inte lägga till vin",
+    );
+    const { participant } = unwrap(
+      await joinTasting({ code: tasting.code, displayName: "Kim" }),
+      "Kunde inte gå med",
+    );
+    await advanceTastingStatus(ownerId, tasting.id, "draft");
+    await setWineOpen(ownerId, wine.id, true);
+    expect((await listWinesForParticipant(participant))[0].isOpen).toBe(true);
+
+    await advanceTastingStatus(ownerId, tasting.id, "live");
+
+    expect((await listWinesForParticipant(participant))[0].isOpen).toBe(false);
+  });
+
   it("låter en deltagare bara läsa sin egen provnings viner", async () => {
     const ownerId = owners.createOwnerId();
     const own = await createTasting(ownerId, { name: "Egen" });

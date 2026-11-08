@@ -1,6 +1,7 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
 import { joinTasting } from "@/repositories/participants";
 import { listOwnRatings } from "@/repositories/ratings";
+import { advanceTastingStatus } from "@/repositories/tastings";
 import { setWineOpen } from "@/repositories/wines";
 import { createLiveTasting, createTestOwners } from "@/test-support/fixtures";
 import { unwrap } from "@/test-support/unwrap";
@@ -140,6 +141,30 @@ test("ett vin som stängs medan deltagaren skriver låser formuläret men behål
   ).toBeVisible({ timeout: 15_000 });
   await expect(page.getByLabel("Anteckning (valfritt)")).toHaveValue(
     "Halvfärdig anteckning",
+  );
+  await expect(
+    page.getByRole("button", { name: "Spara betyg" }),
+  ).toBeDisabled();
+  expect(await listOwnRatings(participant)).toEqual([]);
+});
+
+test("ett öppet vin låses när provningen avslöjas medan deltagaren skriver", async ({
+  context,
+  page,
+}) => {
+  const { ownerId, tasting } = await createLiveTasting(owners);
+  const participant = await joinWithCookie(context, tasting.code, "Lisa");
+  await page.goto("/tasting/wines/1");
+  await page.getByLabel("Anteckning (valfritt)").fill("Hann inte spara");
+
+  await advanceTastingStatus(ownerId, tasting.id, "live");
+
+  await expect(
+    page.getByText("Vinet har stängts för betyg.").first(),
+  ).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("Stängt", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Anteckning (valfritt)")).toHaveValue(
+    "Hann inte spara",
   );
   await expect(
     page.getByRole("button", { name: "Spara betyg" }),

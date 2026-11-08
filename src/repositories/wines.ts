@@ -2,6 +2,7 @@ import { and, asc, eq, gt, lt, max, sql } from "drizzle-orm";
 import {
   canEditWines,
   canOpenWines,
+  canRateWines,
   canRevealWineDetails,
 } from "@/domain/tasting";
 import { db, type Db } from "./db";
@@ -29,6 +30,8 @@ export type NewWine = WineDetails & Pick<AdminWine, "type">;
 // details är null tills provningen är avslöjad. Vintypen skickas redan före
 // avslöjandet, eftersom den styr vilka smakklockor deltagaren fyller i.
 // Det är ett medvetet undantag från blindheten: färgen syns ändå i glaset.
+// isOpen betyder öppet för betyg: admin har öppnat vinet och provningen
+// pågår. Ett vin som var öppet när provningen avslöjades räknas som stängt.
 export type ParticipantWine = Pick<
   AdminWine,
   "id" | "blindNumber" | "isOpen" | "type"
@@ -209,6 +212,8 @@ export async function listWinesForParticipant(
       .from(tastings)
       .where(eq(tastings.id, tastingId));
     if (!tasting) return [];
+    // Avslöjandet stänger inte vinerna i databasen, så statusen avgör också.
+    const isRatable = canRateWines(tasting.status);
 
     if (!canRevealWineDetails(tasting.status)) {
       const rows = await db
@@ -216,7 +221,11 @@ export async function listWinesForParticipant(
         .from(wines)
         .where(eq(wines.tastingId, tastingId))
         .orderBy(asc(wines.blindNumber));
-      return rows.map((row) => ({ ...row, details: null }));
+      return rows.map((row) => ({
+        ...row,
+        isOpen: row.isOpen && isRatable,
+        details: null,
+      }));
     }
 
     const rows = await db
@@ -227,7 +236,7 @@ export async function listWinesForParticipant(
     return rows.map(({ id, blindNumber, isOpen, type, ...details }) => ({
       id,
       blindNumber,
-      isOpen,
+      isOpen: isOpen && isRatable,
       type,
       details,
     }));

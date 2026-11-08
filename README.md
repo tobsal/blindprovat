@@ -2,12 +2,43 @@
 
 Webbapp för att arrangera blindprovningar av vin i grupp. Vad appen gör, teknikval, kommandon och regler för koden står i [CLAUDE.md](CLAUDE.md).
 
+## Förutsättningar
+
+- **Node.js 24** (samma version som i CI). npm följer med Node.
+- **PostgreSQL**, antingen lokalt eller på Neon:
+  - Lokalt: installera PostgreSQL 17 eller kör det i Docker och skapa databasen `blindprovat`. Med Docker:
+    ```bash
+    docker run -d --name blindprovat-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=blindprovat -p 5432:5432 postgres:17
+    ```
+    Anslutningssträngen blir då `postgres://postgres:postgres@localhost:5432/blindprovat`.
+  - Neon: skapa ett projekt (gärna en egen branch för utveckling) och använd den poolade anslutningssträngen.
+- **En OAuth-app på GitHub** för admininloggningen. Hur du skapar den står i `.env.example`.
+
 ## Kom igång
 
 1. Installera beroenden med `npm install`.
 2. Kopiera `.env.example` till `.env.local` och fyll i värdena. Kommentarerna i `.env.example` beskriver varje variabel.
 3. Kör migrationerna med `npm run db:migrate`.
-4. Starta appen med `npm run dev`.
+4. Starta appen med `npm run dev` och öppna http://localhost:3000.
+
+## Tester och kontroller
+
+| Kommando               | Vad det gör                                         |
+| ---------------------- | --------------------------------------------------- |
+| `npm test`             | Enhetstester (Vitest), ingen databas behövs         |
+| `npm run test:db`      | Tester mot en migrerad databas (se nedan)           |
+| `npm run test:e2e`     | E2E-tester i webbläsaren (Playwright)               |
+| `npm run typecheck`    | Typkontroll                                         |
+| `npm run lint`         | ESLint                                              |
+| `npm run format:check` | Kontrollerar formateringen (`npm run format` fixar) |
+
+Innan du öppnar en PR, kör `npm run format && npm run typecheck && npm run lint && npm test`. CI kör dessutom databas- och e2e-testerna.
+
+E2E-testerna kräver `DATABASE_URL` och `AUTH_SECRET` i `.env.local` och en migrerad databas. Första gången behöver du också installera webbläsaren:
+
+```bash
+npx playwright install chromium
+```
 
 ## Anslutningssträng till databasen i PowerShell
 

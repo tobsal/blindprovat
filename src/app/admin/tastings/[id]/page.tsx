@@ -11,6 +11,7 @@ import {
 import { canAddWines, canOpenWines } from "@/domain/tasting";
 import { tastingStatusLabels } from "../../tasting-status";
 import { AddWineForm } from "./add-wine-form";
+import { DeleteTastingButton } from "./delete-tasting-button";
 import { TastingStatusControl } from "./tasting-status-control";
 import { WineOpenToggle } from "./wine-open-toggle";
 
@@ -90,6 +91,17 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
             Viner kan bara läggas till innan provningen startar.
           </p>
         )}
+      </section>
+
+      <section
+        aria-labelledby="delete-heading"
+        className="mt-8 flex flex-col gap-2"
+      >
+        <h2 id="delete-heading" className="text-lg font-semibold">
+          Ta bort
+        </h2>
+        <p>Tar bort provningen med alla viner, deltagare och betyg.</p>
+        <DeleteTastingButton tastingId={tasting.id} status={tasting.status} />
       </section>
     </>
   );

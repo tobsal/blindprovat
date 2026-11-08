@@ -139,3 +139,35 @@ Databastesterna skapar provningar och tar bort dem efteråt, i den databas som `
 - Kör helst mot en lokal databas eller en egen Neon-branch, inte mot en databas som andra använder.
 - Databasen måste vara migrerad. Kör `npm run db:migrate` mot samma databas först.
 - Kör aldrig destruktiva kommandon (drop, truncate, reset) mot något annat än en lokal databas.
+
+## Drift
+
+Appen körs på Vercel med databasen på Neon. Vercel deployar automatiskt från GitHub.
+
+| Miljö      | När                          | Databas                                                  |
+| ---------- | ---------------------------- | -------------------------------------------------------- |
+| Production | push till `main`             | Neons huvudbranch                                        |
+| Preview    | varje push till en PR-branch | en egen Neon-branch per preview, skapad av integrationen |
+
+### Miljövariabler på Vercel
+
+Sätts under Project > Settings > Environment Variables, separat för Production och Preview. Använd aldrig värdena från `.env.local`.
+
+- `DATABASE_URL` och `DATABASE_URL_UNPOOLED` sätts av Neon-integrationen.
+- `AUTH_SECRET` har ett eget värde per miljö.
+- `AUTH_GITHUB_ID` och `AUTH_GITHUB_SECRET` sätts bara för Production, från en egen OAuth-app med callback-URL `https://<domän>/api/auth/callback/github`. Previews saknar därför admininloggning.
+- `AUTH_TRUST_HOST` och `AUTH_URL` sätts inte, Vercel sköter det.
+
+Variablerna läses vid bygget. Gör en redeploy efter att du ändrat dem.
+
+### Migrationer vid deploy
+
+Byggkommandot i `vercel.json` kör `npm run db:migrate` före `npm run build`, mot databasen för miljön som byggs. Migrationen går mot `DATABASE_URL_UNPOOLED` eftersom Neons pooler inte klarar alla DDL- och låsoperationer.
+
+- Previews migrerar sin egen Neon-branch. Om Neon-integrationen inte skapar en branch per preview pekar previewns `DATABASE_URL` mot produktionen, och då migreras produktionen redan när en PR pushas.
+- Misslyckas migrationen stoppas bygget och den tidigare deployen ligger kvar.
+- Migrationerna måste vara bakåtkompatibla, se CLAUDE.md.
+
+### Återställa en deploy
+
+Välj en tidigare deploy i Vercel och använd Instant Rollback (eller Promote to Production). Det byter bara kod. Schemat i databasen ligger kvar, och därför måste den äldre koden fungera mot det nya schemat.

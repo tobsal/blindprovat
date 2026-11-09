@@ -58,10 +58,12 @@ export type WineInput = z.infer<typeof wineInputSchema>;
 
 // Formulär skickar tal som text. Tomt fält betyder inget värde, och text
 // som inte är ett tal blir NaN så att talregeln ger sitt felmeddelande.
+// Alla blanktecken tas bort så att svenska tusentalsavgränsare ("1 200",
+// även med hårt eller smalt hårt mellanslag) godtas.
 function numberFromForm(value: unknown): unknown {
   if (typeof value !== "string") return value;
-  const trimmed = value.trim();
-  return trimmed === "" ? null : Number(trimmed);
+  const digits = value.replace(/\s/g, "");
+  return digits === "" ? null : Number(digits);
 }
 
 export const wineFormSchema = wineInputSchema.extend({

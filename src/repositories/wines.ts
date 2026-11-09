@@ -176,6 +176,8 @@ export async function setWineOpen(
         .set({ isOpen })
         .where(eq(wines.id, wineId))
         .returning();
+      // Vinet kan ha tagits bort medan vi väntade på låset.
+      if (!wine) return { ok: false, error: "not_found" };
       return { ok: true, wine };
     }),
   );

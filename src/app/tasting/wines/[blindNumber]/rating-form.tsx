@@ -385,19 +385,37 @@ export function RatingForm({ blindNumber, isOpen, type, initial }: Props) {
           defaultValue={state.values?.note ?? initial?.note ?? undefined}
           error={state.fieldErrors?.note?.[0]}
         />
-
-        <button
-          type="submit"
-          disabled={isPending}
-          className="btn-primary disabled:opacity-70"
-        >
-          {isPending ? "Sparar …" : "Spara betyg"}
-        </button>
       </fieldset>
 
-      <p role="status" className="min-h-6 text-sm">
-        {state.message}
-      </p>
+      {/* Klistrad längst ner så att knappen nås med en hand utan att skrolla
+          förbi klockor och taggar. Klassen ger sidan scroll-padding-bottom i
+          globals.css, så att raden inte skymmer fokuserade fält (WCAG 2.4.11). */}
+      <div className="sticky-actions sticky bottom-0 -mx-4 flex flex-col gap-1 border-t border-outline-variant bg-surface px-4 pt-3 pb-2">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm">
+            {score === null ? (
+              "Inget betyg valt"
+            ) : (
+              <>
+                Ditt betyg:{" "}
+                <strong>
+                  {score} av {SCORE_MAX}
+                </strong>
+              </>
+            )}
+          </p>
+          <button
+            type="submit"
+            disabled={!isOpen || isPending}
+            className="btn-primary shrink-0 disabled:opacity-70"
+          >
+            {isPending ? "Sparar …" : "Spara betyg"}
+          </button>
+        </div>
+        <p role="status" className="min-h-6 text-sm">
+          {state.message}
+        </p>
+      </div>
     </form>
   );
 }

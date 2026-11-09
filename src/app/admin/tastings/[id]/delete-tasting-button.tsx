@@ -68,7 +68,7 @@ export function DeleteTastingButton({
             <button
               type="submit"
               disabled={isDeleting}
-              className="btn-primary disabled:opacity-70"
+              className="btn-danger disabled:opacity-70"
             >
               {isDeleting ? "Tar bort …" : "Ja, ta bort"}
             </button>

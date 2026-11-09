@@ -25,16 +25,14 @@ function statusText(wine: ParticipantWineView): string {
 }
 
 async function TastingOverview() {
-  const { displayName, tastingName, status, wines, results } =
-    await getParticipantView();
+  const { tastingName, status, wines, results } = await getParticipantView();
   const wineToRate = wines.find((wine) => wine.state === "open");
 
   return (
     <>
       <h1 className="text-2xl font-semibold">{tastingName}</h1>
       <p className="mt-1 text-on-surface-variant">
-        {wines.length} {wines.length === 1 ? "vin" : "viner"} · du är med som{" "}
-        {displayName}
+        {wines.length} {wines.length === 1 ? "vin" : "viner"}
       </p>
 
       {/* Regionen finns alltid, så att skärmläsare annonserar när ett vin öppnas. */}

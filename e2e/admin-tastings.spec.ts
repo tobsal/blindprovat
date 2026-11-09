@@ -53,6 +53,11 @@ test("admin skapar en provning och ser den i listan", async ({
 
   await page.getByRole("link", { name: "Till dina provningar" }).click();
   await expect(page.getByRole("link", { name: /E2E-provning/ })).toBeVisible();
+
+  // Sidhuvudet leder tillbaka till adminstarten.
+  await page.getByRole("link", { name: /E2E-provning/ }).click();
+  await page.getByRole("link", { name: "Blindprovat – admin" }).click();
+  await expect(page).toHaveURL(/\/admin$/);
 });
 
 test("tomt namn ger ett fel vid fältet", async ({ context, page }) => {

@@ -22,7 +22,6 @@ export type ParticipantWineView = {
 };
 
 export type ParticipantView = {
-  displayName: string;
   tastingName: string;
   status: TastingStatus;
   wines: ParticipantWineView[];
@@ -60,7 +59,6 @@ export async function getParticipantView(): Promise<ParticipantView> {
         })
       : null;
   return {
-    displayName: participant.displayName,
     tastingName: tasting.name,
     status: tasting.status,
     wines: wines.map((wine) => {

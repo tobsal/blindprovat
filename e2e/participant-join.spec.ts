@@ -23,11 +23,18 @@ test("deltagare går med via kod och landar i provningen", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Betyg", exact: true }),
   ).toBeVisible();
-  await expect(page.getByText("du är med som Lisa")).toBeVisible();
+  await expect(page.getByText("Du är med som Lisa")).toBeVisible();
 
   // Sessionen finns kvar vid omladdning.
   await page.reload();
-  await expect(page.getByText("du är med som Lisa")).toBeVisible();
+  await expect(page.getByText("Du är med som Lisa")).toBeVisible();
+
+  // Sidhuvudet visar namnet på alla deltagarsidor och leder tillbaka till start.
+  await page.getByRole("link", { name: "Betygsätt vin 1" }).click();
+  await expect(page).toHaveURL(/\/tasting\/wines\/1$/);
+  await expect(page.getByText("Du är med som Lisa")).toBeVisible();
+  await page.getByRole("link", { name: "Blindprovat" }).click();
+  await expect(page).toHaveURL(/\/tasting$/);
 });
 
 test("fel kod ger ett fel vid fältet och behåller det som skrivits", async ({

@@ -24,8 +24,15 @@ test("admin ser deltagare och betyg per vin uppdateras utan omladdning", async (
   await logInAsAdmin(context, ownerId);
   await page.goto(`/admin/tastings/${tasting.id}`);
 
-  const firstRow = page.getByRole("listitem").nth(0);
+  const firstRow = page
+    .getByRole("region", { name: "Viner" })
+    .getByRole("listitem")
+    .nth(0);
+  const participantRows = page
+    .getByRole("region", { name: "Deltagare" })
+    .getByRole("listitem");
   await expect(page.getByText("1 deltagare har gått med.")).toBeVisible();
+  await expect(participantRows).toHaveText([/Kim\s*0 av 2 viner betygsatta/]);
   await expect(firstRow).toContainText("0 av 1 har betygsatt");
 
   await saveRating(participant, openWineId, {
@@ -38,6 +45,7 @@ test("admin ser deltagare och betyg per vin uppdateras utan omladdning", async (
   await expect(firstRow).toContainText("1 av 1 har betygsatt", {
     timeout: 10_000,
   });
+  await expect(participantRows).toHaveText([/Kim\s*1 av 2 viner betygsatta/]);
 
   unwrap(
     await joinTasting({ code: tasting.code, displayName: "Lisa" }),
@@ -47,6 +55,11 @@ test("admin ser deltagare och betyg per vin uppdateras utan omladdning", async (
     timeout: 10_000,
   });
   await expect(firstRow).toContainText("1 av 2 har betygsatt");
+  // Bokstavsordning, inte den ordning deltagarna gick med.
+  await expect(participantRows).toHaveText([
+    /Kim\s*1 av 2 viner betygsatta/,
+    /Lisa\s*0 av 2 viner betygsatta/,
+  ]);
 });
 
 test("deltagare som går med syns medan provningen förbereds, och inmatningen finns kvar", async ({
@@ -74,6 +87,10 @@ test("deltagare som går med syns medan provningen förbereds, och inmatningen f
   await expect(page.getByText("1 deltagare har gått med.")).toBeVisible({
     timeout: 10_000,
   });
+  // Före start kan inget betygsättas, så bara namnet visas.
+  await expect(
+    page.getByRole("region", { name: "Deltagare" }).getByRole("listitem"),
+  ).toHaveText(["Lisa"]);
   await expect(page.getByLabel("Namn", { exact: true })).toHaveValue(
     "Halvskrivet vin",
   );

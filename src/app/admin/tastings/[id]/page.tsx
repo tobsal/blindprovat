@@ -16,7 +16,7 @@ import { DeleteTastingButton } from "./delete-tasting-button";
 import { DeleteWineButton } from "./delete-wine-button";
 import { EditWine } from "./edit-wine";
 import {
-  ParticipantCount,
+  Participants,
   TastingProgressProvider,
   WineRatingCount,
 } from "./tasting-progress";
@@ -78,7 +78,16 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
         >
           {tasting.code}
         </p>
-        <ParticipantCount />
+      </section>
+
+      <section aria-labelledby="participants-heading" className="mt-6">
+        <h2 id="participants-heading" className="text-lg font-semibold">
+          Deltagare
+        </h2>
+        <Participants
+          wineCount={tasting.wines.length}
+          showRatingCounts={canOpenWines(tasting.status)}
+        />
       </section>
 
       <WinesSection>

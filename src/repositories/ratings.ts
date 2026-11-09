@@ -1,4 +1,4 @@
-import { and, count, eq } from "drizzle-orm";
+import { and, asc, count, eq } from "drizzle-orm";
 import type { ClockRating, ScoredRating } from "@/domain/results";
 import { canRateWines, canShowResults } from "@/domain/tasting";
 import { db } from "./db";
@@ -124,8 +124,11 @@ export async function listScoredRatingsForOwner(
 
 // Hur långt provningen har kommit, för admin medan den pågår. Bara antal,
 // inga betyg eller namn.
+export type ParticipantProgress = ParticipantName & { ratingCount: number };
+
 export type TastingProgress = {
-  participantCount: number;
+  // Sorterade på namn.
+  participants: ParticipantProgress[];
   // Viner utan betyg saknas i listan.
   ratingCounts: { wineId: string; ratingCount: number }[];
 };
@@ -142,11 +145,18 @@ export async function countProgressForOwner(
       .where(tastingOwnedBy(ownerId, tastingId));
     if (!tasting) return null;
 
-    const [[{ participantCount }], ratingCounts] = await Promise.all([
+    const [participantRows, ratingCounts] = await Promise.all([
       db
-        .select({ participantCount: count() })
+        .select({
+          id: participants.id,
+          displayName: participants.displayName,
+          ratingCount: count(ratings.id),
+        })
         .from(participants)
-        .where(eq(participants.tastingId, tastingId)),
+        .leftJoin(ratings, eq(ratings.participantId, participants.id))
+        .where(eq(participants.tastingId, tastingId))
+        .groupBy(participants.id)
+        .orderBy(asc(participants.displayName)),
       db
         .select({ wineId: ratings.wineId, ratingCount: count() })
         .from(ratings)
@@ -154,7 +164,7 @@ export async function countProgressForOwner(
         .where(eq(wines.tastingId, tastingId))
         .groupBy(ratings.wineId),
     ]);
-    return { participantCount, ratingCounts };
+    return { participants: participantRows, ratingCounts };
   });
 }
 

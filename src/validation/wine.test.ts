@@ -121,6 +121,13 @@ describe("wineFormSchema", () => {
     expect(result.price).toBe(450);
   });
 
+  it.each(["1 200", "1\u00a0200", "1\u202f200", " 1 200 "])(
+    "godtar tusentalsmellanslag i %j",
+    (price) => {
+      expect(wineFormSchema.parse({ ...valid, price }).price).toBe(1200);
+    },
+  );
+
   it("gör tomma talfält och saknade fält till null", () => {
     const result = wineFormSchema.parse({ ...valid, vintage: "", price: "  " });
     expect(result.vintage).toBeNull();

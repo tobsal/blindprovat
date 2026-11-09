@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Roboto } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const roboto = Roboto({
+// Typsnitten (OFL) ligger i repot så att bygget inte hämtar något från nätet.
+const roboto = localFont({
+  src: "./fonts/Roboto-latin.woff2",
   variable: "--font-roboto",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
+  weight: "100 900",
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: "./fonts/GeistMono-latin.woff2",
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: "100 900",
 });
 
 export const metadata: Metadata = {

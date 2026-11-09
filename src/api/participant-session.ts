@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { SESSION_MAX_AGE_SECONDS } from "@/domain/participant";
@@ -24,13 +25,17 @@ export async function setParticipantSession(
   });
 }
 
-// Cookien kommer utifrån och valideras innan den slås upp.
-export async function getParticipant(): Promise<SessionParticipant | null> {
-  const value = (await cookies()).get(SESSION_COOKIE)?.value;
-  const sessionToken = sessionTokenSchema.safeParse(value);
-  if (!sessionToken.success) return null;
-  return findParticipantBySessionToken(sessionToken.data);
-}
+// Cookien kommer utifrån och valideras innan den slås upp. Både layoutens
+// vakt och sidan läser sessionen, så den slås upp en gång per rendering med
+// React cache.
+export const getParticipant = cache(
+  async (): Promise<SessionParticipant | null> => {
+    const value = (await cookies()).get(SESSION_COOKIE)?.value;
+    const sessionToken = sessionTokenSchema.safeParse(value);
+    if (!sessionToken.success) return null;
+    return findParticipantBySessionToken(sessionToken.data);
+  },
+);
 
 // Varje anrop som läser eller skriver deltagarens data ska börja här. En
 // layout skyddar inte server actions.

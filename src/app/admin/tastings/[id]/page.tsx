@@ -101,12 +101,13 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
                   />
                 )}
                 {canEditWines(tasting.status) && (
-                  <div className="mt-2 flex flex-col gap-2">
-                    <EditWine wine={wine} />
-                    <DeleteWineButton
-                      wineId={wine.id}
-                      blindNumber={wine.blindNumber}
-                    />
+                  <div className="mt-2">
+                    <EditWine wine={wine}>
+                      <DeleteWineButton
+                        wineId={wine.id}
+                        blindNumber={wine.blindNumber}
+                      />
+                    </EditWine>
                   </div>
                 )}
               </li>

@@ -1,6 +1,12 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import {
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { FormError } from "@/app/_components/form-error";
 import { keepInputOnFailure } from "@/app/_components/keep-input-on-failure";
 import { updateWineAction, type WineField } from "@/api/admin-tasting-actions";
@@ -30,8 +36,18 @@ function formValuesFor(wine: AdminWine): Partial<Record<WineField, string>> {
 
 // Knappen fäller ut ett ifyllt formulär. Formuläret monteras bara när det
 // är öppet, så att det alltid börjar från vinets sparade uppgifter. Kvittot
-// visas utanför formuläret och finns kvar när det fälls ihop.
-export function EditWine({ wine }: { wine: AdminWine }) {
+// visas utanför formuläret och finns kvar när det fälls ihop. Övriga
+// knappar för vinet (children) ligger på samma rad som Ändra, så att
+// formuläret fälls ut under hela raden. De döljs medan formuläret är öppet,
+// så att vinet inte kan tas bort mitt i en ändring och fokus går direkt
+// från Ändra till formuläret.
+export function EditWine({
+  wine,
+  children,
+}: {
+  wine: AdminWine;
+  children?: ReactNode;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState("");
   const toggle = useRef<HTMLButtonElement>(null);
@@ -45,19 +61,22 @@ export function EditWine({ wine }: { wine: AdminWine }) {
 
   return (
     <div className="flex flex-col gap-2">
-      <button
-        ref={toggle}
-        type="button"
-        aria-expanded={isOpen}
-        aria-controls={isOpen ? formId : undefined}
-        onClick={() => {
-          setMessage("");
-          setIsOpen(!isOpen);
-        }}
-        className="btn-secondary self-start"
-      >
-        Ändra Vin {wine.blindNumber}
-      </button>
+      <div className="flex flex-row flex-wrap gap-2">
+        <button
+          ref={toggle}
+          type="button"
+          aria-expanded={isOpen}
+          aria-controls={isOpen ? formId : undefined}
+          onClick={() => {
+            setMessage("");
+            setIsOpen(!isOpen);
+          }}
+          className="btn-secondary"
+        >
+          Ändra Vin {wine.blindNumber}
+        </button>
+        {!isOpen && children}
+      </div>
       {isOpen && <EditWineForm id={formId} wine={wine} onClose={close} />}
       <p role="status">{message}</p>
     </div>

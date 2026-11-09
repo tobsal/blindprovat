@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { getWineOpenAction } from "@/api/participant-actions";
 import { POLL_INTERVAL_MS } from "@/domain/tasting";
 import { useIsOnline } from "../../poll-refresh";
+import { WineStateIcon } from "../../wine-state-icon";
 import { RatingForm } from "./rating-form";
 
 type Props = Omit<React.ComponentProps<typeof RatingForm>, "isOpen"> & {
@@ -84,9 +85,18 @@ export function LiveWineRating({ initialIsOpen, ...formProps }: Props) {
           </svg>
         </Link>
         <h1 className="flex-1 text-2xl font-semibold">Vin {blindNumber}</h1>
-        <span className="rounded-lg bg-surface-high px-3 py-1 text-sm font-medium">
-          {isOpen ? "Öppet för betyg" : "Stängt"}
-        </span>
+        {/* Öppet läge har både fyllnadsfärg och pennikonen från översikten,
+            så att skillnaden syns även utan färg (princip 13). */}
+        {isOpen ? (
+          <span className="flex items-center gap-1.5 rounded-lg bg-primary py-1 pr-3 pl-2 text-sm font-medium text-on-primary">
+            <WineStateIcon state="open" />
+            Öppet för betyg
+          </span>
+        ) : (
+          <span className="rounded-lg bg-surface-high px-3 py-1 text-sm font-medium">
+            Stängt
+          </span>
+        )}
       </div>
 
       <p role="status" className="mt-2 text-sm text-on-surface-variant">

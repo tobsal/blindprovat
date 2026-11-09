@@ -4,9 +4,7 @@ import { unstable_rethrow } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 import { getTastingProgressAction } from "@/api/admin-tasting-actions";
 import type { TastingProgress } from "@/api/admin-tastings";
-
-// Samma takt som deltagarsidorna (princip 8).
-const POLL_INTERVAL_MS = 4000;
+import { POLL_INTERVAL_MS } from "@/domain/tasting";
 
 type Problem = "offline" | "server" | null;
 

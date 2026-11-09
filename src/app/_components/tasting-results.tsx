@@ -69,7 +69,7 @@ function ParticipantRow({ participant }: { participant: ResultsParticipant }) {
       <p className="text-base font-medium">{name}</p>
       <p className="text-sm">
         {participant.meanDeviation !== null
-          ? `I snitt ${numberFormat.format(participant.meanDeviation)} poäng från gruppen (${participant.comparedWineCount} viner)`
+          ? `I snitt ${numberFormat.format(participant.meanDeviation)} poäng från gruppen (${participant.comparedWineCount} ${participant.comparedWineCount === 1 ? "vin" : "viner"})`
           : "För få betyg för att jämföras"}
       </p>
     </li>

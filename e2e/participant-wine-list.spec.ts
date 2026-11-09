@@ -43,6 +43,7 @@ test("deltagaren ser blindnummer och status men aldrig vininformation", async ({
   await joinWithCookie(context, tasting.code, "Lisa");
   await page.goto("/tasting");
 
+  await expect(page.getByText("2 viner · du är med som Lisa")).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Vin 1 är öppet för betyg" }),
   ).toBeVisible();

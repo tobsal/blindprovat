@@ -33,7 +33,8 @@ async function TastingOverview() {
     <>
       <h1 className="text-2xl font-semibold">{tastingName}</h1>
       <p className="mt-1 text-on-surface-variant">
-        {wines.length} viner · du är med som {displayName}
+        {wines.length} {wines.length === 1 ? "vin" : "viner"} · du är med som{" "}
+        {displayName}
       </p>
 
       {/* Regionen finns alltid, så att skärmläsare annonserar när ett vin öppnas. */}

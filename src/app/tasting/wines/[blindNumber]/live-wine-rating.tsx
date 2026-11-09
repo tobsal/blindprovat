@@ -4,7 +4,8 @@ import Link from "next/link";
 import { unstable_rethrow } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getWineOpenAction } from "@/api/participant-actions";
-import { POLL_INTERVAL_MS, useIsOnline } from "../../poll-refresh";
+import { POLL_INTERVAL_MS } from "@/domain/tasting";
+import { useIsOnline } from "../../poll-refresh";
 import { RatingForm } from "./rating-form";
 
 type Props = Omit<React.ComponentProps<typeof RatingForm>, "isOpen"> & {

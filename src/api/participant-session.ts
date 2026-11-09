@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { SESSION_MAX_AGE_SECONDS } from "@/domain/participant";
 import {
   findParticipantBySessionToken,
   type SessionParticipant,
@@ -7,7 +8,6 @@ import {
 import { sessionTokenSchema } from "@/validation/participant";
 
 const SESSION_COOKIE = "participant_session";
-const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
 // All sessionsläsning för deltagare går hit, på samma sätt som
 // admin-session gör för admin. Cookien innehåller den råa tokenen och

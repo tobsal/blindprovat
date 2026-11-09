@@ -2,8 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useSyncExternalStore } from "react";
-
-export const POLL_INTERVAL_MS = 4000;
+import { POLL_INTERVAL_MS } from "@/domain/tasting";
 
 function subscribeToConnection(onChange: () => void) {
   window.addEventListener("online", onChange);

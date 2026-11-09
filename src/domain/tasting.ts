@@ -1,5 +1,8 @@
 export const TASTING_NAME_MAX = 80;
 
+// Hur ofta admin och deltagare hämtar provningens läge (princip 8).
+export const POLL_INTERVAL_MS = 4000;
+
 // Statusen går bara framåt, i den här ordningen.
 export const TASTING_STATUSES = ["draft", "live", "revealed"] as const;
 

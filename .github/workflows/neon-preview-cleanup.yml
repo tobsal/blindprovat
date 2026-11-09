@@ -1,0 +1,26 @@
+name: Rensa Neon-previewbranch
+
+# Vercels Neon-integration skapar en databasbranch per preview-deploy men tar
+# bara bort den när deployen raderas, vilket kan dröja månader. Gratisplanen
+# har ett tak för antal brancher, så vi tar bort branchen när PR:en stängs.
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions: {}
+
+jobs:
+  delete-branch:
+    name: Ta bort Neon-branch
+    # PR:er från forkar får varken preview-databas eller tillgång till hemligheter.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Låst till commit eftersom actionen får API-nyckeln. Motsvarar v3.2.1.
+      - uses: neondatabase/delete-branch-action@4468d825d5a88ef4012f1705a82f02ec3072f776
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch: preview/${{ github.head_ref }}
+          api_key: ${{ secrets.NEON_API_KEY }}

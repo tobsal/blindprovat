@@ -93,6 +93,8 @@ test("deltagaren ser resultatet med smeknamn och eget betyg när provningen avsl
   await expect(results).toContainText("Barolo Castiglione");
   await expect(results).toContainText("Ditt betyg: 6 av 10");
   await expect(results).toContainText("Lisa (du)");
+  // Bara ett vin har betyg, så jämförelsen gäller ett vin.
+  await expect(results).toContainText("poäng från gruppen (1 vin)");
   await expect(results).toContainText("Kim");
   // Andras enskilda poäng visas inte, bara gruppens sammanställning.
   await expect(results).not.toContainText("Ditt betyg: 8");

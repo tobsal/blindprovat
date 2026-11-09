@@ -159,6 +159,16 @@ test("admin ändrar och tar bort viner innan provningen startar", async ({
     await expect(page.getByRole("listitem").getByText(name)).toBeVisible();
   }
 
+  // Knapparna för ett vin ligger på en rad, även i mobilbredd.
+  await page.setViewportSize({ width: 375, height: 800 });
+  const editBox = await page
+    .getByRole("button", { name: "Ändra Vin 2" })
+    .boundingBox();
+  const deleteBox = await page
+    .getByRole("button", { name: "Ta bort Vin 2" })
+    .boundingBox();
+  expect(deleteBox?.y).toBe(editBox?.y);
+
   const edit = page.getByRole("button", { name: "Ändra Vin 2" });
   await edit.click();
   await expect(edit).toHaveAttribute("aria-expanded", "true");

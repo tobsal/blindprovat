@@ -17,8 +17,9 @@ import type { AdminWine } from "./tastings";
 // ett vin är öppet: lås provningsraden först, i en egen fråga, och läs sedan
 // det som ska avgöra saken. Skrivare som ändrar statusen eller stänger ett
 // vin tar exklusivt lås (FOR UPDATE eller UPDATE). Betygsparare och den som
-// går med i provningen tar delat lås (FOR SHARE). Lås aldrig bara vinraden. Då tas locken alltid i samma
-// ordning och ingen kan läsa ett gammalt värde efter att ha väntat på låset.
+// går med i provningen tar delat lås (FOR SHARE). Lås aldrig bara vinraden.
+// Då tas låsen alltid i samma ordning och ingen kan läsa ett gammalt värde
+// efter att ha väntat på låset.
 
 export type WineDetails = Pick<
   AdminWine,

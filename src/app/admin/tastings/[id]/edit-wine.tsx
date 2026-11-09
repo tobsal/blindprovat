@@ -38,7 +38,9 @@ function formValuesFor(wine: AdminWine): Partial<Record<WineField, string>> {
 // är öppet, så att det alltid börjar från vinets sparade uppgifter. Kvittot
 // visas utanför formuläret och finns kvar när det fälls ihop. Övriga
 // knappar för vinet (children) ligger på samma rad som Ändra, så att
-// formuläret fälls ut under hela raden.
+// formuläret fälls ut under hela raden. De döljs medan formuläret är öppet,
+// så att vinet inte kan tas bort mitt i en ändring och fokus går direkt
+// från Ändra till formuläret.
 export function EditWine({
   wine,
   children,
@@ -73,7 +75,7 @@ export function EditWine({
         >
           Ändra Vin {wine.blindNumber}
         </button>
-        {children}
+        {!isOpen && children}
       </div>
       {isOpen && <EditWineForm id={formId} wine={wine} onClose={close} />}
       <p role="status">{message}</p>

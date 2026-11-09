@@ -172,6 +172,9 @@ test("admin ändrar och tar bort viner innan provningen startar", async ({
   const edit = page.getByRole("button", { name: "Ändra Vin 2" });
   await edit.click();
   await expect(edit).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByRole("button", { name: "Ta bort Vin 2" })).toHaveCount(
+    0,
+  );
   const editForm = page.getByRole("form", { name: "Ändra Vin 2" });
   const nameField = editForm.getByLabel("Namn", { exact: true });
   await expect(nameField).toBeFocused();
@@ -188,6 +191,9 @@ test("admin ändrar och tar bort viner innan provningen startar", async ({
   await editForm.getByRole("button", { name: "Spara" }).click();
   await expect(editForm).toHaveCount(0);
   await expect(edit).toBeFocused();
+  await expect(
+    page.getByRole("button", { name: "Ta bort Vin 2" }),
+  ).toBeVisible();
   await expect(
     page.getByRole("listitem").nth(1).getByRole("status"),
   ).toHaveText("Vin 2 är ändrat.");

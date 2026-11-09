@@ -10,6 +10,12 @@
   --primary-hover och --primary-pressed är tillståndslager på fyllda knappar
   (mörkare i ljust läge, ljusare i mörkt) och håller minst 4,5:1 mot
   --on-primary. --surface-highest är trycktillståndet för knappar på ytan.
+
+  --danger är fyllnadsfärgen för oåterkalleliga handlingar (till exempel
+  "Ja, ta bort") med --on-danger som text. Den kompletterar bara texten, som
+  bär budskapet. Fyllnaden och tillstånden håller minst 4,5:1 mot --on-danger
+  och 3:1 mot ytan. I mörkt läge är fyllnaden ljus med mörk text, eftersom ett
+  rött med vit text inte når 3:1 mot den mörka ytan.
 */
 :root {
   --surface: #faf8f6;
@@ -26,6 +32,10 @@
   --on-primary: #ffffff;
   --accent: #7d2e46;
   --error: #b3261e;
+  --danger: #b3261e;
+  --danger-hover: #9c1f18;
+  --danger-pressed: #861a14;
+  --on-danger: #ffffff;
 }
 
 @theme inline {
@@ -43,6 +53,10 @@
   --color-on-primary: var(--on-primary);
   --color-accent: var(--accent);
   --color-error: var(--error);
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-danger-pressed: var(--danger-pressed);
+  --color-on-danger: var(--on-danger);
   --font-sans: var(--font-roboto);
   --font-mono: var(--font-geist-mono);
 }
@@ -63,6 +77,10 @@
     --on-primary: #ffffff;
     --accent: #d4939f;
     --error: #ffb4a8;
+    --danger: #ffb4a8;
+    --danger-hover: #ffa293;
+    --danger-pressed: #ff8f7e;
+    --on-danger: #690005;
   }
 }
 
@@ -93,6 +111,10 @@
 */
 @utility btn-primary {
   @apply inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-6 font-medium text-on-primary transition-colors hover:not-disabled:bg-primary-hover active:not-disabled:bg-primary-pressed motion-reduce:transition-none;
+}
+
+@utility btn-danger {
+  @apply inline-flex min-h-12 items-center justify-center rounded-full bg-danger px-6 font-medium text-on-danger transition-colors hover:not-disabled:bg-danger-hover active:not-disabled:bg-danger-pressed motion-reduce:transition-none;
 }
 
 @utility btn-secondary {

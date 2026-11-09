@@ -47,6 +47,9 @@ export async function getParticipantView(): Promise<ParticipantView> {
   const winesWithDetails = wines.flatMap(({ id, blindNumber, details }) =>
     details ? [{ id, blindNumber, details }] : [],
   );
+  // Vinerna och resultatet läses i separata frågor. Avslöjas provningen emellan
+  // kan det ena svaret vara avslöjat och det andra inte. Resultatet visas därför
+  // bara om alla vinerna har uppgifter, annars väntar vi till nästa polling.
   const results =
     resultInputs && winesWithDetails.length === wines.length
       ? buildResultsView({

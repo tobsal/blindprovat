@@ -103,6 +103,15 @@
   @apply inline-flex min-h-11 items-center font-medium text-accent underline underline-offset-4 hover:decoration-2 active:text-on-surface;
 }
 
+/*
+  En klistrad rad längst ner (till exempel sparknappen för betyg) får inte
+  skymma det fält som får fokus (WCAG 2.4.11). Avståndet är radens höjd med
+  lite marginal.
+*/
+html:has(.sticky-actions) {
+  scroll-padding-bottom: 8rem;
+}
+
 body {
   background: var(--surface);
   color: var(--on-surface);

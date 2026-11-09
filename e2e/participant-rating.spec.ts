@@ -109,6 +109,36 @@ test("deltagaren betygsätter ett öppet vin och ser betyget i listan", async ({
   ]);
 });
 
+test("sparknappen nås utan att skrolla och skymmer inte fokuserade fält", async ({
+  context,
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  const { tasting } = await createLiveTasting(owners);
+  await joinWithCookie(context, tasting.code, "Lisa");
+  await page.goto("/tasting/wines/1");
+
+  const save = page.getByRole("button", { name: "Spara betyg" });
+  await expect(save).toBeInViewport();
+  await expect(page.getByText("Inget betyg valt")).toBeVisible();
+  await page.getByRole("button", { name: "7 av 10" }).click();
+  await expect(page.getByText("Ditt betyg: 7 av 10")).toBeVisible();
+
+  // Skrolla så att gissningen syns men ligger bakom den klistrade raden. När
+  // den får fokus ska sidan skrolla så att den hamnar ovanför raden.
+  const guess = page.getByLabel("Gissning (valfritt)");
+  await guess.evaluate((element) => {
+    const { bottom } = element.getBoundingClientRect();
+    window.scrollBy(0, bottom - (window.innerHeight - 20));
+  });
+  await guess.focus();
+  await expect(save).toBeInViewport();
+  const guessBox = await guess.boundingBox();
+  const saveBox = await save.boundingBox();
+  expect(guessBox && saveBox).toBeTruthy();
+  expect(guessBox!.y + guessBox!.height).toBeLessThanOrEqual(saveBox!.y);
+});
+
 test("betyg utan poäng ger ett fel vid poängen och behåller texten", async ({
   context,
   page,

@@ -1,5 +1,6 @@
 import { logOut } from "@/api/admin-auth-actions";
 import { getAdminSession } from "@/api/admin-session";
+import { PendingSubmitButton } from "@/app/_components/pending-submit-button";
 
 export async function UserMenu() {
   const session = await getAdminSession();
@@ -9,9 +10,12 @@ export async function UserMenu() {
     <div className="flex items-center gap-3">
       <p>Inloggad som {session.name ?? "okänd användare"}</p>
       <form action={logOut}>
-        <button type="submit" className="btn-secondary">
+        <PendingSubmitButton
+          pendingLabel="Loggar ut …"
+          className="btn-secondary"
+        >
           Logga ut
-        </button>
+        </PendingSubmitButton>
       </form>
     </div>
   );

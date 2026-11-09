@@ -5,6 +5,7 @@ import { logIn } from "@/api/admin-auth-actions";
 import { getAdminSession } from "@/api/admin-session";
 import { FormError } from "@/app/_components/form-error";
 import { LoadingStatus } from "@/app/_components/loading-status";
+import { PendingSubmitButton } from "@/app/_components/pending-submit-button";
 import { parseLoginError } from "@/validation/login-error";
 
 const errorMessages = {
@@ -27,9 +28,9 @@ async function LoginContent({
     <>
       {error && <FormError>{errorMessages[error]}</FormError>}
       <form action={logIn}>
-        <button type="submit" className="btn-primary">
+        <PendingSubmitButton pendingLabel="Loggar in …" className="btn-primary">
           Logga in med GitHub
-        </button>
+        </PendingSubmitButton>
       </form>
     </>
   );

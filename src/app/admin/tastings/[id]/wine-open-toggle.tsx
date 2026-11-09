@@ -10,6 +10,15 @@ import {
 
 const initialState: StatusFormState = {};
 
+function buttonLabel(isOpen: boolean, isPending: boolean, blindNumber: number) {
+  if (isPending) {
+    return isOpen
+      ? `Stänger Vin ${blindNumber} …`
+      : `Öppnar Vin ${blindNumber} …`;
+  }
+  return isOpen ? `Stäng Vin ${blindNumber}` : `Öppna Vin ${blindNumber}`;
+}
+
 // Knappen ligger kvar efter bytet och behåller därför fokus. Bara texten
 // ändras, och kvittot annonseras i statusraden.
 export function WineOpenToggle({
@@ -40,7 +49,7 @@ export function WineOpenToggle({
         aria-busy={isPending}
         className={`${isOpen ? "btn-secondary" : "btn-primary"} self-start`}
       >
-        {isOpen ? `Stäng Vin ${blindNumber}` : `Öppna Vin ${blindNumber}`}
+        {buttonLabel(isOpen, isPending, blindNumber)}
       </button>
       <p role="status">{state.message}</p>
     </form>

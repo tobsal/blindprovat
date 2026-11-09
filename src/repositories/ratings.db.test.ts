@@ -157,17 +157,20 @@ describe("betyg", () => {
 });
 
 describe("förlopp för admin", () => {
-  it("räknar deltagare och betyg per vin", async () => {
+  it("listar deltagare i bokstavsordning med antal betyg, och betyg per vin", async () => {
     const { ownerId, tasting, participant, openWineId } =
       await createLiveTasting(owners);
     const second = await joinTasting({
       code: tasting.code,
-      displayName: "Lisa",
+      displayName: "Anna",
     });
     if (!second.ok) throw new Error("Kunde inte gå med");
 
     expect(await countProgressForOwner(ownerId, tasting.id)).toEqual({
-      participantCount: 2,
+      participants: [
+        { id: second.participant.id, displayName: "Anna", ratingCount: 0 },
+        { id: participant.id, displayName: "Kim", ratingCount: 0 },
+      ],
       ratingCounts: [],
     });
 
@@ -177,7 +180,10 @@ describe("förlopp för admin", () => {
     await saveRating(participant, openWineId, { ...values, score: 3 });
 
     expect(await countProgressForOwner(ownerId, tasting.id)).toEqual({
-      participantCount: 2,
+      participants: [
+        { id: second.participant.id, displayName: "Anna", ratingCount: 1 },
+        { id: participant.id, displayName: "Kim", ratingCount: 1 },
+      ],
       ratingCounts: [{ wineId: openWineId, ratingCount: 2 }],
     });
   });

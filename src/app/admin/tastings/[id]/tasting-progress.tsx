@@ -11,9 +11,9 @@ type Problem = "offline" | "server" | null;
 const ProgressContext = createContext<{
   progress: TastingProgress;
   problem: Problem;
-}>({ progress: { participantCount: 0, ratingCounts: [] }, problem: null });
+}>({ progress: { participants: [], ratingCounts: [] }, problem: null });
 
-// Pollar bara antalet deltagare och betyg, i stället för att rendera om sidan
+// Pollar bara deltagarna och antalet betyg, i stället för att rendera om sidan
 // med router.refresh(). Ett fel vid pollingen kan då inte ladda om sidan och
 // ta bort det som skrivits i vinformulären. Det senast kända värdet gäller
 // tills nästa lyckade läsning.
@@ -68,18 +68,42 @@ const problemMessages: Record<Exclude<Problem, null>, string> = {
   server: "Kunde inte uppdatera antalen. Försöker igen …",
 };
 
-// Antalet annonseras inte vid varje ändring, det skulle bli för pratigt.
-// Bara problem med uppdateringen annonseras.
-export function ParticipantCount() {
+// Ändringar i listan annonseras inte, det skulle bli för pratigt. Bara
+// problem med uppdateringen annonseras. Antalet betygsatta viner visas bara när
+// viner kan betygsättas.
+export function Participants({
+  wineCount,
+  showRatingCounts,
+}: {
+  wineCount: number;
+  showRatingCounts: boolean;
+}) {
   const { progress, problem } = useContext(ProgressContext);
-  const { participantCount } = progress;
+  const { participants } = progress;
   return (
     <>
       <p className="mt-2">
-        {participantCount === 0
+        {participants.length === 0
           ? "Ingen deltagare har gått med än."
-          : `${participantCount} deltagare har gått med.`}
+          : `${participants.length} deltagare har gått med.`}
       </p>
+      {participants.length > 0 && (
+        <ul className="mt-2 divide-y divide-outline-variant overflow-hidden rounded-2xl bg-surface-low">
+          {participants.map((participant) => (
+            <li
+              key={participant.id}
+              className="flex flex-wrap justify-between gap-x-4 px-4 py-3"
+            >
+              <span className="font-medium">{participant.displayName}</span>
+              {showRatingCounts && (
+                <span className="text-sm">
+                  {participant.ratingCount} av {wineCount} viner betygsatta
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
       <p role="status" className="text-sm text-on-surface-variant">
         {problem && problemMessages[problem]}
       </p>
@@ -89,13 +113,14 @@ export function ParticipantCount() {
 
 export function WineRatingCount({ wineId }: { wineId: string }) {
   const { progress } = useContext(ProgressContext);
-  if (progress.participantCount === 0) return null;
+  const participantCount = progress.participants.length;
+  if (participantCount === 0) return null;
   const ratingCount =
     progress.ratingCounts.find((row) => row.wineId === wineId)?.ratingCount ??
     0;
   return (
     <p className="mt-1 text-sm">
-      {ratingCount} av {progress.participantCount} har betygsatt
+      {ratingCount} av {participantCount} har betygsatt
     </p>
   );
 }

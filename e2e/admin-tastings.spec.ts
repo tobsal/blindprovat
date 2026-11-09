@@ -309,7 +309,10 @@ test("admin öppnar och stänger viner och deltagaren ser det utan omladdning", 
   const firstWine = participant.getByRole("listitem").nth(0);
   await expect(firstWine).toContainText("Inte öppet");
 
-  const firstRow = page.getByRole("listitem").nth(0);
+  const wineRows = page
+    .getByRole("region", { name: "Viner" })
+    .getByRole("listitem");
+  const firstRow = wineRows.nth(0);
   await expect(firstRow).toContainText("Stängt");
   const open = page.getByRole("button", { name: "Öppna Vin 1" });
   await open.click();
@@ -317,7 +320,7 @@ test("admin öppnar och stänger viner och deltagaren ser det utan omladdning", 
     "Vin 1 är öppet för betyg.",
   );
   await expect(firstRow).toContainText("Öppet för betyg");
-  await expect(page.getByRole("listitem").nth(1)).toContainText("Stängt");
+  await expect(wineRows.nth(1)).toContainText("Stängt");
   const close = page.getByRole("button", { name: "Stäng Vin 1" });
   await expect(close).toBeFocused();
 

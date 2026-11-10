@@ -4,7 +4,7 @@ Webbapp för att arrangera blindprovningar av vin i grupp.
 
 ## Vad appen gör
 
-Vinprovningar sköts ofta med papper, Excel eller gruppchattar. Då är det svårt att hålla provningen blind, samla in allas betyg och räkna ut resultatet. Blindprovat driver hela provningstillfället:
+Vinprovningar sköts ofta med papper, Excel eller gruppchattar. Då är det svårt att hålla provningen blind, samla in allas betyg och räkna ut resultatet. Committa och skapa PRBlindprovat driver hela provningstillfället:
 
 - **Den som håller i provningen (admin)** loggar in med GitHub, skapar en provning, lägger in vinerna och delar en kod. Under provningen öppnar och stänger admin varje vin för betygsättning. Till sist avslöjar admin vilka vinerna var och hur gruppen röstade.
 - **Deltagarna** går med från mobilen med koden, utan konto. De ser bara blindnummer (Vin 1, Vin 2 …), sätter poäng och skriver anteckningar per vin. De kan ändra sitt betyg så länge vinet är öppet.
@@ -66,6 +66,9 @@ De fullständiga reglerna för koden, och för agenter som arbetar i repot, stå
 2. Kopiera `.env.example` till `.env.local` och fyll i värdena. Kommentarerna i `.env.example` beskriver varje variabel.
 3. Kör migrationerna med `npm run db:migrate`.
 4. Starta appen med `npm run dev` och öppna http://localhost:3000.
+
+## Utvecklat med
+Claude Code (agentdriven utveckling) som del av kursen Next-Generation Software Development with AI.
 
 ### Köra produktionsbygget lokalt
 

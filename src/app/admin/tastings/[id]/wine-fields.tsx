@@ -36,6 +36,12 @@ const detailFields: TextFieldSpec[] = [
     inputMode: "numeric",
   },
   { field: "price", label: "Pris i kronor (valfritt)", inputMode: "numeric" },
+  {
+    field: "articleNumber",
+    label: "Artikelnummer på Systembolaget (valfritt)",
+    hint: "Med förpackning, till exempel 262708. Visas som länk till Systembolaget.",
+    inputMode: "numeric",
+  },
 ];
 
 export const wineFieldOrder: WineField[] = [

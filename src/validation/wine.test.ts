@@ -15,6 +15,7 @@ describe("wineInputSchema", () => {
       country: null,
       vintage: null,
       price: null,
+      articleNumber: null,
     });
   });
 
@@ -108,6 +109,23 @@ describe("wineInputSchema", () => {
       ]);
     });
   });
+
+  describe("artikelnummer", () => {
+    it.each(["262", "262708", "7424701"])("godtar %s", (articleNumber) => {
+      expect(
+        wineInputSchema.parse({ ...valid, articleNumber }).articleNumber,
+      ).toBe(articleNumber);
+    });
+
+    it.each(["26", "74247011", "2627-08", "abc", 262708])(
+      "avvisar %j",
+      (articleNumber) => {
+        expect(
+          messagesFor(wineInputSchema, { ...valid, articleNumber }),
+        ).toEqual(["Ange artikelnumret med 3–7 siffror, till exempel 262708"]);
+      },
+    );
+  });
 });
 
 describe("wineFormSchema", () => {
@@ -147,6 +165,21 @@ describe("wineFormSchema", () => {
     expect(messagesFor(wineFormSchema, { ...valid, price: "12,50" })).toEqual([
       "Ange ett pris i hela kronor, mellan 0 och 100000",
     ]);
+  });
+
+  it.each([" 262708 ", "2627 08", "2627 08"])(
+    "tar bort blanktecken i artikelnumret %j",
+    (articleNumber) => {
+      expect(
+        wineFormSchema.parse({ ...valid, articleNumber }).articleNumber,
+      ).toBe("262708");
+    },
+  );
+
+  it("gör tomt artikelnummer till null", () => {
+    expect(
+      wineFormSchema.parse({ ...valid, articleNumber: "  " }).articleNumber,
+    ).toBeNull();
   });
 
   it("trimmar och kräver namn som vanligt", () => {

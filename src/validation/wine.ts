@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  ARTICLE_NUMBER_PATTERN,
   PRICE_MAX,
   PRICE_MIN,
   VINTAGE_MIN,
@@ -14,6 +15,8 @@ const priceMessage = `Ange ett pris i hela kronor, mellan ${PRICE_MIN} och ${PRI
 const nameRequiredMessage = "Ange vinets namn";
 const vintageMessage = "Ange ett årtal eller lämna tomt";
 const typeMessage = "Välj vintyp";
+const articleNumberMessage =
+  "Ange artikelnumret med 3–7 siffror, till exempel 262708";
 
 function optionalDetail(label: string) {
   return optionalText(
@@ -52,6 +55,11 @@ export const wineInputSchema = z.object({
     .max(PRICE_MAX, priceMessage)
     .nullish()
     .transform((value) => value ?? null),
+  articleNumber: z
+    .string({ error: articleNumberMessage })
+    .regex(ARTICLE_NUMBER_PATTERN, articleNumberMessage)
+    .nullish()
+    .transform((value) => value ?? null),
 });
 
 export type WineInput = z.infer<typeof wineInputSchema>;
@@ -66,9 +74,21 @@ function numberFromForm(value: unknown): unknown {
   return digits === "" ? null : Number(digits);
 }
 
+// Artikelnumret skrivs ibland med mellanslag ("2627 08"). Blanktecken tas
+// bort och tomt fält betyder inget nummer.
+function articleNumberFromForm(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  const digits = value.replace(/\s/g, "");
+  return digits === "" ? null : digits;
+}
+
 export const wineFormSchema = wineInputSchema.extend({
   vintage: z.preprocess(numberFromForm, wineInputSchema.shape.vintage),
   price: z.preprocess(numberFromForm, wineInputSchema.shape.price),
+  articleNumber: z.preprocess(
+    articleNumberFromForm,
+    wineInputSchema.shape.articleNumber,
+  ),
 });
 
 // Blindnumret kommer från sökvägen eller formuläret. Ett ogiltigt nummer ska

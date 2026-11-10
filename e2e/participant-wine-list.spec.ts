@@ -56,6 +56,7 @@ test("deltagaren ser blindnummer och status men aldrig vininformation", async ({
 
   await expect(page.locator("body")).not.toContainText("Barolo");
   await expect(page.locator("body")).not.toContainText("Vietti");
+  await expect(page.locator("body")).not.toContainText("262708");
 });
 
 test("ett betygsatt vin visar det egna betyget", async ({ context, page }) => {

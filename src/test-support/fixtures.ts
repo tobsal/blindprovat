@@ -18,6 +18,7 @@ export const sampleWine: NewWine = {
   country: "Italien",
   vintage: 2019,
   price: 450,
+  articleNumber: "262708",
 };
 
 // Ett betyg utan smakklockor.

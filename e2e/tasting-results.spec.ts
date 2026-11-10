@@ -83,6 +83,7 @@ test("deltagaren ser resultatet med smeknamn och eget betyg när provningen avsl
   await page.goto("/tasting");
   // Före avslöjandet syns varken vinnamn eller resultat.
   await expect(page.getByText("Barolo Castiglione")).toHaveCount(0);
+  await expect(page.locator("body")).not.toContainText("262708");
   await expect(page.getByRole("heading", { name: "Resultat" })).toHaveCount(0);
 
   await advanceTastingStatus(ownerId, tasting.id, "live");
@@ -92,6 +93,15 @@ test("deltagaren ser resultatet med smeknamn och eget betyg när provningen avsl
   await expect(results).toBeVisible({ timeout: 10_000 });
   await expect(results).toContainText("Barolo Castiglione");
   await expect(results).toContainText("Ditt betyg: 6 av 10");
+  await expect(results).toContainText("Artikelnummer 262708");
+  const systembolagetLink = results.getByRole("link", {
+    name: "Hitta vinet på Systembolaget (öppnas i ny flik)",
+  });
+  await expect(systembolagetLink.first()).toHaveAttribute(
+    "href",
+    "https://www.systembolaget.se/sortiment/?q=262708",
+  );
+  await expect(systembolagetLink.first()).toHaveAttribute("target", "_blank");
   await expect(results).toContainText("Lisa (du)");
   // Bara ett vin har betyg, så jämförelsen gäller ett vin.
   await expect(results).toContainText("poäng från gruppen (1 vin)");

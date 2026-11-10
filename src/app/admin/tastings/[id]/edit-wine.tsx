@@ -32,6 +32,7 @@ function formValuesFor(wine: AdminWine): Partial<Record<WineField, string>> {
     country: wine.country ?? "",
     vintage: wine.vintage?.toString() ?? "",
     price: wine.price?.toString() ?? "",
+    articleNumber: wine.articleNumber ?? "",
   };
 }
 

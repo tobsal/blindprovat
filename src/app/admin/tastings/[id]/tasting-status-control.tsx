@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { FormError } from "@/app/_components/form-error";
 import { keepInputOnFailure } from "@/app/_components/keep-input-on-failure";
+import { useToast } from "@/app/_components/toast";
 import {
   revealTastingAction,
   startTastingAction,
@@ -32,17 +33,22 @@ export function TastingStatusControl({
   const [isConfirming, setIsConfirming] = useState(false);
   const revealButton = useRef<HTMLButtonElement>(null);
   const confirmText = useRef<HTMLParagraphElement>(null);
-  const message = useRef<HTMLParagraphElement>(null);
+  const showToast = useToast();
 
   // Efter start försvinner startknappen, så fokus flyttas till nästa steg.
   useEffect(() => {
-    if (startState.message) revealButton.current?.focus();
-  }, [startState]);
+    if (!startState.message) return;
+    showToast(startState.message);
+    revealButton.current?.focus();
+  }, [startState, showToast]);
 
-  // Efter avslut försvinner knapparna, så fokus flyttas till kvittot.
+  // Efter avslut försvinner knapparna, så fokus flyttas till resultatet
+  // (results-heading i page.tsx), som renderas i samma uppdatering.
   useEffect(() => {
-    if (revealState.message) message.current?.focus();
-  }, [revealState]);
+    if (!revealState.message) return;
+    showToast(revealState.message);
+    document.getElementById("results-heading")?.focus();
+  }, [revealState, showToast]);
 
   useEffect(() => {
     if (isConfirming) confirmText.current?.focus();
@@ -117,10 +123,6 @@ export function TastingStatusControl({
           </div>
         </form>
       )}
-
-      <p role="status" ref={message} tabIndex={-1}>
-        {revealState.message ?? startState.message}
-      </p>
     </div>
   );
 }

@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { FormError } from "@/app/_components/form-error";
 import { keepInputOnFailure } from "@/app/_components/keep-input-on-failure";
+import { useToast } from "@/app/_components/toast";
 import {
   setWineOpenAction,
   type StatusFormState,
@@ -20,7 +21,7 @@ function buttonLabel(isOpen: boolean, isPending: boolean, blindNumber: number) {
 }
 
 // Knappen ligger kvar efter bytet och behåller därför fokus. Bara texten
-// ändras, och kvittot annonseras i statusraden.
+// ändras, och kvittot visas som en toast.
 export function WineOpenToggle({
   wineId,
   blindNumber,
@@ -34,6 +35,11 @@ export function WineOpenToggle({
     keepInputOnFailure(() => setWineOpenAction(wineId, !isOpen), []),
     initialState,
   );
+  const showToast = useToast();
+
+  useEffect(() => {
+    if (state.message) showToast(state.message);
+  }, [state, showToast]);
 
   return (
     <form action={formAction} className="mt-2 flex flex-col gap-2">
@@ -51,7 +57,6 @@ export function WineOpenToggle({
       >
         {buttonLabel(isOpen, isPending, blindNumber)}
       </button>
-      <p role="status">{state.message}</p>
     </form>
   );
 }

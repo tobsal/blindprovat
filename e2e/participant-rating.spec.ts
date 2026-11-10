@@ -139,6 +139,41 @@ test("sparknappen nås utan att skrolla och skymmer inte fokuserade fält", asyn
   expect(guessBox!.y + guessBox!.height).toBeLessThanOrEqual(saveBox!.y);
 });
 
+test("en sparning bekräftas med en toast överst som går att stänga", async ({
+  context,
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  const { tasting } = await createLiveTasting(owners);
+  await joinWithCookie(context, tasting.code, "Lisa");
+  await page.goto("/tasting/wines/1");
+
+  const save = page.getByRole("button", { name: "Spara betyg" });
+  const toasts = page.getByRole("status").getByText("Betyget är sparat.");
+  await page.getByRole("button", { name: "7 av 10" }).click();
+  await save.click();
+  await expect(toasts).toHaveCount(1);
+
+  // Toasten tar inte fokus och skymmer inte sparknappen.
+  const close = page.getByRole("button", { name: "Stäng meddelandet" });
+  await expect(close).not.toBeFocused();
+  const toastBox = await toasts.boundingBox();
+  const saveBox = await save.boundingBox();
+  expect(toastBox && saveBox).toBeTruthy();
+  expect(toastBox!.y + toastBox!.height).toBeLessThanOrEqual(saveBox!.y);
+
+  // En andra sparning bekräftas igen, även med samma text.
+  await save.click();
+  await expect(toasts).toHaveCount(2);
+
+  await close.first().click();
+  await expect(toasts).toHaveCount(1);
+
+  // Den som är kvar försvinner av sig själv.
+  await page.mouse.move(0, 400);
+  await expect(toasts).toHaveCount(0, { timeout: 10_000 });
+});
+
 test("betyg utan poäng ger ett fel vid poängen och behåller texten", async ({
   context,
   page,

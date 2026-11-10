@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LoadingStatus } from "@/app/_components/loading-status";
+import { SystembolagetLink } from "@/app/_components/systembolaget-link";
 import { TastingResults } from "@/app/_components/tasting-results";
 import {
   getMyTasting,
@@ -99,6 +100,11 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
               <li key={wine.id} className="px-4 py-3">
                 <span className="font-medium">Vin {wine.blindNumber}</span> –{" "}
                 {describeWine(wine)}
+                {wine.articleNumber && (
+                  <div>
+                    <SystembolagetLink articleNumber={wine.articleNumber} />
+                  </div>
+                )}
                 {canOpenWines(tasting.status) && (
                   <WineRatingCount wineId={wine.id} />
                 )}

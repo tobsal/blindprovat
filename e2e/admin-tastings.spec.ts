@@ -32,6 +32,9 @@ test("admin skapar en provning och ser den i listan", async ({
   await page.getByLabel("Namn", { exact: true }).fill("Barolo");
   await page.getByLabel("Producent (valfritt)").fill("Vietti");
   await page.getByLabel("Årgång (valfritt)").fill("2019");
+  await page
+    .getByLabel("Artikelnummer på Systembolaget (valfritt)")
+    .fill("2627 08");
   await page.getByLabel("Rött", { exact: true }).check();
   await page.getByRole("button", { name: "Lägg till vin" }).click();
   await expect(
@@ -40,6 +43,9 @@ test("admin skapar en provning och ser den i listan", async ({
   await expect(page.getByRole("listitem")).toContainText(
     "Vin 1 – Barolo, Vietti, 2019",
   );
+  await expect(
+    page.getByRole("link", { name: "Hitta vinet på Systembolaget" }),
+  ).toHaveAttribute("href", "https://www.systembolaget.se/sortiment/?q=262708");
   await expect(page.getByLabel("Namn", { exact: true })).toBeFocused();
   await expect(page.getByLabel("Namn", { exact: true })).toHaveValue("");
 
@@ -50,6 +56,16 @@ test("admin skapar en provning och ser den i listan", async ({
     "Vin 1 – Barolo, Vietti, 2019",
     "Vin 2 – Chianti, Årgångslöst",
   ]);
+  // Ett vin utan artikelnummer får varken nummer eller länk.
+  await expect(page.getByRole("listitem").nth(0)).toContainText(
+    "Artikelnummer 262708 · Hitta vinet på Systembolaget",
+  );
+  await expect(page.getByRole("listitem").nth(1)).not.toContainText(
+    "Artikelnummer",
+  );
+  await expect(
+    page.getByRole("link", { name: "Hitta vinet på Systembolaget" }),
+  ).toHaveCount(1);
 
   await page.getByRole("link", { name: "Till dina provningar" }).click();
   await expect(page.getByRole("link", { name: /E2E-provning/ })).toBeVisible();

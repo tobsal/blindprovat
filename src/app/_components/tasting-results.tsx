@@ -4,6 +4,7 @@ import type {
   ResultsWine,
 } from "@/api/tasting-results";
 import { SCORE_MAX, TASTE_CLOCK_MAX, TASTE_CLOCKS } from "@/domain/rating";
+import { SystembolagetLink } from "./systembolaget-link";
 import { tasteClockLabels } from "./taste-clock-labels";
 
 const numberFormat = new Intl.NumberFormat("sv-SE", {
@@ -40,6 +41,11 @@ function WineRow({ wine }: { wine: ResultsWine }) {
       </p>
       <p className="text-base font-medium">{wine.details.name}</p>
       <p className="text-sm text-on-surface-variant">{describeWine(wine)}</p>
+      {wine.details.articleNumber && (
+        <p className="text-sm">
+          <SystembolagetLink articleNumber={wine.details.articleNumber} />
+        </p>
+      )}
       <p className="mt-1 text-sm">
         {rating
           ? `Snitt ${numberFormat.format(rating.average)} av ${SCORE_MAX} · lägst ${rating.lowest} · högst ${rating.highest} · ${rating.count} betyg`

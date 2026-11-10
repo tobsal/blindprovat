@@ -69,7 +69,7 @@ De fullständiga reglerna för koden, och för agenter som arbetar i repot, stå
 
 ## Utvecklat med
 
-Claude Code (agentdriven utveckling) som del av kursen Next-Generation Software Development with AI.
+Claude Code (agentdriven utveckling) som del av kursen "AI för utvecklare".
 
 ### Köra produktionsbygget lokalt
 

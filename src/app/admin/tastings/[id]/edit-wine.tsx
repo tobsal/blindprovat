@@ -9,6 +9,7 @@ import {
 } from "react";
 import { FormError } from "@/app/_components/form-error";
 import { keepInputOnFailure } from "@/app/_components/keep-input-on-failure";
+import { useToast } from "@/app/_components/toast";
 import { updateWineAction, type WineField } from "@/api/admin-tasting-actions";
 import type { AdminWine } from "@/api/admin-tastings";
 import type { FormState } from "@/api/form-state";
@@ -36,7 +37,7 @@ function formValuesFor(wine: AdminWine): Partial<Record<WineField, string>> {
 
 // Knappen fäller ut ett ifyllt formulär. Formuläret monteras bara när det
 // är öppet, så att det alltid börjar från vinets sparade uppgifter. Kvittot
-// visas utanför formuläret och finns kvar när det fälls ihop. Övriga
+// visas som en toast och finns kvar när formuläret fälls ihop. Övriga
 // knappar för vinet (children) ligger på samma rad som Ändra, så att
 // formuläret fälls ut under hela raden. De döljs medan formuläret är öppet,
 // så att vinet inte kan tas bort mitt i en ändring och fokus går direkt
@@ -49,13 +50,11 @@ export function EditWine({
   children?: ReactNode;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [message, setMessage] = useState("");
   const toggle = useRef<HTMLButtonElement>(null);
   const formId = `edit-wine-${wine.id}`;
 
-  function close(savedMessage?: string) {
+  function close() {
     setIsOpen(false);
-    if (savedMessage) setMessage(savedMessage);
     toggle.current?.focus();
   }
 
@@ -67,10 +66,7 @@ export function EditWine({
           type="button"
           aria-expanded={isOpen}
           aria-controls={isOpen ? formId : undefined}
-          onClick={() => {
-            setMessage("");
-            setIsOpen(!isOpen);
-          }}
+          onClick={() => setIsOpen(!isOpen)}
           className="btn-secondary"
         >
           Ändra Vin {wine.blindNumber}
@@ -78,7 +74,6 @@ export function EditWine({
         {!isOpen && children}
       </div>
       {isOpen && <EditWineForm id={formId} wine={wine} onClose={close} />}
-      <p role="status">{message}</p>
     </div>
   );
 }
@@ -90,12 +85,16 @@ function EditWineForm({
 }: {
   id: string;
   wine: AdminWine;
-  onClose: (savedMessage?: string) => void;
+  onClose: () => void;
 }) {
+  const showToast = useToast();
   const [state, formAction, isPending] = useActionState(
     keepInputOnFailure(async (previous, formData) => {
       const result = await updateWineAction(wine.id, previous, formData);
-      if (result.message) onClose(result.message);
+      if (result.message) {
+        showToast(result.message);
+        onClose();
+      }
       return result;
     }, wineFieldOrder),
     initialState,

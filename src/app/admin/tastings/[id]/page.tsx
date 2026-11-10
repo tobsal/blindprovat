@@ -22,7 +22,6 @@ import {
 } from "./tasting-progress";
 import { TastingStatusControl } from "./tasting-status-control";
 import { WineOpenToggle } from "./wine-open-toggle";
-import { WinesSection } from "./wines-section";
 
 function describeWine(wine: AdminWine): string {
   return [wine.name, wine.producer, wine.vintage ?? "Årgångslöst"]
@@ -58,7 +57,12 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
 
       {results && (
         <section aria-labelledby="results-heading" className="mt-6">
-          <h2 id="results-heading" className="text-lg font-semibold">
+          {/* Får fokus efter avslöjandet (tasting-status-control.tsx). */}
+          <h2
+            id="results-heading"
+            tabIndex={-1}
+            className="text-lg font-semibold"
+          >
             Resultat
           </h2>
           <div className="mt-2">
@@ -90,7 +94,11 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
         />
       </section>
 
-      <WinesSection>
+      <section aria-labelledby="wines-heading" className="mt-8">
+        {/* Får fokus när ett vin tagits bort (delete-wine-button.tsx). */}
+        <h2 id="wines-heading" tabIndex={-1} className="text-lg font-semibold">
+          Viner
+        </h2>
         {tasting.wines.length === 0 ? (
           <p className="mt-2">Inga viner tillagda än.</p>
         ) : (
@@ -131,7 +139,7 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
             startar.
           </p>
         )}
-      </WinesSection>
+      </section>
 
       <section
         aria-labelledby="delete-heading"

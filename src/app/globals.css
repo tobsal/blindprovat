@@ -16,6 +16,11 @@
   bär budskapet. Fyllnaden och tillstånden håller minst 4,5:1 mot --on-danger
   och 3:1 mot ytan. I mörkt läge är fyllnaden ljus med mörk text, eftersom ett
   rött med vit text inte når 3:1 mot den mörka ytan.
+
+  --inverse-surface är bakgrunden för bekräftelser (toasts) som ska skilja
+  sig från sidan, med --on-inverse-surface som text, ikon och fokusmarkering.
+  Texten håller minst 10:1 mot fyllnaden och fyllnaden minst 10:1 mot ytan,
+  i både ljust och mörkt läge.
 */
 :root {
   --surface: #faf8f6;
@@ -36,6 +41,8 @@
   --danger-hover: #9c1f18;
   --danger-pressed: #861a14;
   --on-danger: #ffffff;
+  --inverse-surface: #352f2c;
+  --on-inverse-surface: #f8eeea;
 }
 
 @theme inline {
@@ -57,6 +64,8 @@
   --color-danger-hover: var(--danger-hover);
   --color-danger-pressed: var(--danger-pressed);
   --color-on-danger: var(--on-danger);
+  --color-inverse-surface: var(--inverse-surface);
+  --color-on-inverse-surface: var(--on-inverse-surface);
   --font-sans: var(--font-roboto);
   --font-mono: var(--font-geist-mono);
 }
@@ -81,6 +90,20 @@
     --danger-hover: #ffa293;
     --danger-pressed: #ff8f7e;
     --on-danger: #690005;
+    --inverse-surface: #ece0dc;
+    --on-inverse-surface: #362f2b;
+  }
+}
+
+/* Bekräftelser glider in uppifrån. Används bara med motion-safe:. */
+@theme {
+  --animate-toast-in: toast-in 150ms ease-out;
+
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(-0.5rem);
+    }
   }
 }
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { ToastProvider } from "@/app/_components/toast";
 import "./globals.css";
 
 // Typsnitten (OFL) ligger i repot så att bygget inte hämtar något från nätet.
@@ -30,7 +31,9 @@ export default function RootLayout({
       lang="sv"
       className={`${roboto.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <ToastProvider>{children}</ToastProvider>
+      </body>
     </html>
   );
 }

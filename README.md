@@ -1,5 +1,7 @@
 # Blindprovat
 
+[![CI](https://github.com/tobsal/blindprovat/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tobsal/blindprovat/actions/workflows/ci.yml)
+
 Webbapp för att arrangera blindprovningar av vin i grupp.
 
 ## Vad appen gör

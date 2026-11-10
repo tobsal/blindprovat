@@ -1,9 +1,14 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { createTestOwners } from "@/test-support/fixtures";
 import { logInAsAdmin } from "./auth";
 
 const owners = createTestOwners();
 test.afterAll(() => owners.cleanUp());
+
+// Bekräftelser visas som toasts i live-regionen överst på sidan.
+function toast(page: Page, text: string | RegExp) {
+  return page.getByRole("status").getByText(text);
+}
 
 test("utloggad besökare skickas till inloggningen", async ({ page }) => {
   await page.goto("/admin");
@@ -34,9 +39,7 @@ test("admin skapar en provning och ser den i listan", async ({
   await page.getByLabel("Årgång (valfritt)").fill("2019");
   await page.getByLabel("Rött", { exact: true }).check();
   await page.getByRole("button", { name: "Lägg till vin" }).click();
-  await expect(
-    page.getByRole("form", { name: "Lägg till vin" }).getByRole("status"),
-  ).toHaveText("Vin 1 är tillagt.");
+  await expect(toast(page, "Vin 1 är tillagt.")).toBeVisible();
   await expect(page.getByRole("listitem")).toContainText(
     "Vin 1 – Barolo, Vietti, 2019",
   );
@@ -138,9 +141,7 @@ test("utan uppkoppling finns inmatningen kvar och går att skicka igen", async (
   await expect(page.getByLabel("Rött", { exact: true })).toBeChecked();
   await context.setOffline(false);
   await page.getByRole("button", { name: "Lägg till vin" }).click();
-  await expect(
-    page.getByRole("form", { name: "Lägg till vin" }).getByRole("status"),
-  ).toHaveText("Vin 1 är tillagt.");
+  await expect(toast(page, "Vin 1 är tillagt.")).toBeVisible();
 });
 
 test("admin ändrar och tar bort viner innan provningen startar", async ({
@@ -194,9 +195,7 @@ test("admin ändrar och tar bort viner innan provningen startar", async ({
   await expect(
     page.getByRole("button", { name: "Ta bort Vin 2" }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("listitem").nth(1).getByRole("status"),
-  ).toHaveText("Vin 2 är ändrat.");
+  await expect(toast(page, "Vin 2 är ändrat.")).toBeVisible();
   await expect(page.getByRole("listitem").nth(1)).toContainText(
     "Vin 2 – Chianti Classico, 2020",
   );
@@ -274,9 +273,8 @@ test("admin startar och avslutar provningen", async ({ context, page }) => {
   await expect(page.getByText(/Deltagarna får se vinerna/)).toBeFocused();
   await page.getByRole("button", { name: "Ja, avsluta" }).click();
   await expect(page.getByText("Status: Avslöjad")).toBeVisible();
-  await expect(
-    page.getByRole("status").filter({ hasText: "vinerna är avslöjade" }),
-  ).toBeFocused();
+  await expect(toast(page, /vinerna är avslöjade/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Resultat" })).toBeFocused();
   await expect(
     page.getByRole("button", { name: /Starta|Avsluta/ }),
   ).toHaveCount(0);
@@ -316,9 +314,7 @@ test("admin öppnar och stänger viner och deltagaren ser det utan omladdning", 
   await expect(firstRow).toContainText("Stängt");
   const open = page.getByRole("button", { name: "Öppna Vin 1" });
   await open.click();
-  await expect(firstRow.getByRole("status")).toHaveText(
-    "Vin 1 är öppet för betyg.",
-  );
+  await expect(toast(page, "Vin 1 är öppet för betyg.")).toBeVisible();
   await expect(firstRow).toContainText("Öppet för betyg");
   await expect(wineRows.nth(1)).toContainText("Stängt");
   const close = page.getByRole("button", { name: "Stäng Vin 1" });
@@ -329,9 +325,7 @@ test("admin öppnar och stänger viner och deltagaren ser det utan omladdning", 
   });
 
   await close.click();
-  await expect(firstRow.getByRole("status")).toHaveText(
-    "Vin 1 är stängt för betyg.",
-  );
+  await expect(toast(page, "Vin 1 är stängt för betyg.")).toBeVisible();
   await expect(firstRow).toContainText("Stängt");
   await expect(firstWine).toContainText("Inte öppet", { timeout: 10_000 });
 

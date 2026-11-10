@@ -7,12 +7,14 @@ import {
   deleteWineAction,
   type StatusFormState,
 } from "@/api/admin-tasting-actions";
-import { useAnnounceWineDeleted } from "./wines-section";
+import { useToast } from "@/app/_components/toast";
 
 const initialState: StatusFormState = {};
 
 // Samma inbyggda modala dialog som när provningen tas bort. Lyckas det
-// försvinner raden, så kvittot lämnas till WinesSection.
+// försvinner raden med knappen, så kvittot visas som en toast och fokus
+// flyttas till rubriken "Viner" (wines-heading i page.tsx), så att det inte
+// hamnar på sidans början.
 export function DeleteWineButton({
   wineId,
   blindNumber,
@@ -20,7 +22,7 @@ export function DeleteWineButton({
   wineId: string;
   blindNumber: number;
 }) {
-  const announceDeleted = useAnnounceWineDeleted();
+  const showToast = useToast();
   const dialog = useRef<HTMLDialogElement>(null);
   const cancelButton = useRef<HTMLButtonElement>(null);
   const dialogId = `delete-wine-${wineId}`;
@@ -31,11 +33,13 @@ export function DeleteWineButton({
       const result = await deleteWineAction(wineId);
       if (result.message) {
         // Dialogen stängs innan fokus flyttas till rubriken, annars hindrar
-        // den modala dialogen fokusflytten. Den slås upp via id, eftersom en
-        // ref inte får läsas i en funktion som skapas under renderingen.
+        // den modala dialogen fokusflytten. Elementen slås upp via id,
+        // eftersom en ref inte får läsas i en funktion som skapas under
+        // renderingen.
         const element = document.getElementById(dialogId);
         if (element instanceof HTMLDialogElement) element.close();
-        announceDeleted(result.message);
+        document.getElementById("wines-heading")?.focus();
+        showToast(result.message);
       }
       return result;
     }, []),

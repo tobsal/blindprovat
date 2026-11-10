@@ -1,0 +1,1 @@
+ALTER TABLE "wines" ADD COLUMN "article_number" varchar(7);

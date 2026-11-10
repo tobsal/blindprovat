@@ -23,7 +23,14 @@ import type { AdminWine } from "./tastings";
 
 export type WineDetails = Pick<
   AdminWine,
-  "name" | "producer" | "grape" | "region" | "country" | "vintage" | "price"
+  | "name"
+  | "producer"
+  | "grape"
+  | "region"
+  | "country"
+  | "vintage"
+  | "price"
+  | "articleNumber"
 >;
 
 export type NewWine = WineDetails & Pick<AdminWine, "type">;
@@ -199,6 +206,7 @@ const detailColumns = {
   country: wines.country,
   vintage: wines.vintage,
   price: wines.price,
+  articleNumber: wines.articleNumber,
 };
 
 // Vininformationen hämtas inte ens från databasen före avslöjandet.

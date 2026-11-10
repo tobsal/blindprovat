@@ -25,7 +25,12 @@ import {
   type RatingTag,
 } from "@/domain/rating";
 import { TASTING_NAME_MAX, TASTING_STATUSES } from "@/domain/tasting";
-import { WINE_DETAIL_MAX, WINE_NAME_MAX, WINE_TYPES } from "@/domain/wine";
+import {
+  ARTICLE_NUMBER_MAX,
+  WINE_DETAIL_MAX,
+  WINE_NAME_MAX,
+  WINE_TYPES,
+} from "@/domain/wine";
 
 export const tastingStatus = pgEnum("tasting_status", TASTING_STATUSES);
 export const wineType = pgEnum("wine_type", WINE_TYPES);
@@ -74,6 +79,8 @@ export const wines = pgTable(
     vintage: integer(),
     // Pris i hela kronor.
     price: integer(),
+    // Systembolagets artikelnummer med förpackningssuffix. Avslöjar vinet.
+    articleNumber: varchar({ length: ARTICLE_NUMBER_MAX }),
     isOpen: boolean().notNull().default(false),
   },
   (table) => [unique().on(table.tastingId, table.blindNumber)],

@@ -9,6 +9,7 @@ const details = {
   country: null,
   vintage: 2019,
   price: null,
+  articleNumber: null,
 };
 const wines = [
   { id: "w1", blindNumber: 1, details: { ...details, name: "Ett" } },

@@ -69,6 +69,10 @@ De fullständiga reglerna för koden, och för agenter som arbetar i repot, stå
 3. Kör migrationerna med `npm run db:migrate`.
 4. Starta appen med `npm run dev` och öppna http://localhost:3000.
 
+## Utvecklat med
+
+Claude Code (agentdriven utveckling) som del av kursen "AI för utvecklare".
+
 ### Köra produktionsbygget lokalt
 
 ```powershell
@@ -173,3 +177,14 @@ Byggkommandot i `vercel.json` kör `npm run db:migrate` före `npm run build`, m
 ### Återställa en deploy
 
 Välj en tidigare deploy i Vercel och använd Instant Rollback (eller Promote to Production). Det byter bara kod. Schemat i databasen ligger kvar, och därför måste den äldre koden fungera mot det nya schemat.
+
+## Begränsningar
+
+- **Alla med ett GitHub-konto kan bli admin.** Det finns ingen lista över tillåtna konton, se [Vem som kan logga in som admin](#vem-som-kan-logga-in-som-admin).
+- **Ingen hastighetsbegränsning.** Varken admininloggning eller anslutning med kod är skyddade mot upprepade försök. Provningskoden är 10 slumpade tecken (ca 50 bitar) och går inte att gissa fram i praktiken, men massförsök stoppas inte.
+- **Viner kan bara läggas till, ändras och tas bort medan provningen förbereds.** När provningen är igång går det inte att rätta ett vin, så kontrollera uppgifterna före start.
+- **Statusen går bara framåt.** En startad provning kan inte återgå till förberedelse och en avslöjad provning kan inte öppnas igen. Det går inte heller att gå med i en avslöjad provning.
+- **Deltagare har inget konto.** Sessionen gäller i 7 dagar och bara för en provning. Rensar deltagaren cookies eller byter enhet kommer hen inte åt sina betyg igen.
+- **Uppdateringar sker med polling var 4:e sekund.** Att ett vin öppnas eller stängs syns därför med några sekunders fördröjning, och en deltagare kan hinna skicka ett betyg precis när vinet stängs.
+- **Betygsskalan är fast.** Poäng 1–10, anteckning högst 500 tecken, gissning högst 100 tecken och högst 5 smaktaggar. Taggar och smakklockor går inte att anpassa per provning.
+- **Previews saknar admininloggning**, eftersom GitHub-appen bara är kopplad till Production (se [Miljövariabler på Vercel](#miljövariabler-på-vercel)).

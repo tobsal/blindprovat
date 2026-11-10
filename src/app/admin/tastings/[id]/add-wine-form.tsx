@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 import { FormError } from "@/app/_components/form-error";
 import { keepInputOnFailure } from "@/app/_components/keep-input-on-failure";
+import { useToast } from "@/app/_components/toast";
 import { addWineAction, type WineField } from "@/api/admin-tasting-actions";
 import type { FormState } from "@/api/form-state";
 import {
@@ -21,6 +22,11 @@ export function AddWineForm({ tastingId }: { tastingId: string }) {
   );
   const inputs = useRef<WineInputs>({});
   const hasFieldErrors = Object.keys(state.fieldErrors ?? {}).length > 0;
+  const showToast = useToast();
+
+  useEffect(() => {
+    if (state.message) showToast(state.message);
+  }, [state, showToast]);
 
   // Vid fel hamnar fokus på första felaktiga fältet, efter ett tillagt vin
   // på namnfältet så att nästa vin kan skrivas in direkt.
@@ -60,7 +66,6 @@ export function AddWineForm({ tastingId }: { tastingId: string }) {
       >
         {isPending ? "Lägger till …" : "Lägg till vin"}
       </button>
-      <p role="status">{state.message}</p>
     </form>
   );
 }

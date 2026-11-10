@@ -8,6 +8,7 @@ import { keepInputOnFailure } from "@/app/_components/keep-input-on-failure";
 import { tasteClockLabels } from "@/app/_components/taste-clock-labels";
 import { TextArea } from "@/app/_components/text-area";
 import { TextField } from "@/app/_components/text-field";
+import { useToast } from "@/app/_components/toast";
 import {
   MAX_TAGS,
   NOTE_MAX,
@@ -182,6 +183,13 @@ export function RatingForm({ blindNumber, isOpen, type, initial }: Props) {
     [blindNumber],
   );
   const [state, formAction, isPending] = useActionState(action, initialState);
+  const showToast = useToast();
+
+  // Varje sparning ger ett nytt state, så en andra sparning bekräftas igen
+  // även om texten är densamma.
+  useEffect(() => {
+    if (state.message) showToast(state.message);
+  }, [state, showToast]);
 
   const firstScoreButton = useRef<HTMLButtonElement>(null);
   const firstClockButtons = useRef<
@@ -390,31 +398,26 @@ export function RatingForm({ blindNumber, isOpen, type, initial }: Props) {
       {/* Klistrad längst ner så att knappen nås med en hand utan att skrolla
           förbi klockor och taggar. Klassen ger sidan scroll-padding-bottom i
           globals.css, så att raden inte skymmer fokuserade fält (WCAG 2.4.11). */}
-      <div className="sticky-actions sticky bottom-0 -mx-4 flex flex-col gap-1 border-t border-outline-variant bg-surface px-4 pt-3 pb-2">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm">
-            {score === null ? (
-              "Inget betyg valt"
-            ) : (
-              <>
-                Ditt betyg:{" "}
-                <strong>
-                  {score} av {SCORE_MAX}
-                </strong>
-              </>
-            )}
-          </p>
-          <button
-            type="submit"
-            disabled={!isOpen || isPending}
-            className="btn-primary shrink-0 disabled:opacity-70"
-          >
-            {isPending ? "Sparar …" : "Spara betyg"}
-          </button>
-        </div>
-        <p role="status" className="min-h-6 text-sm">
-          {state.message}
+      <div className="sticky-actions sticky bottom-0 -mx-4 flex items-center justify-between gap-3 border-t border-outline-variant bg-surface px-4 py-3">
+        <p className="text-sm">
+          {score === null ? (
+            "Inget betyg valt"
+          ) : (
+            <>
+              Ditt betyg:{" "}
+              <strong>
+                {score} av {SCORE_MAX}
+              </strong>
+            </>
+          )}
         </p>
+        <button
+          type="submit"
+          disabled={!isOpen || isPending}
+          className="btn-primary shrink-0 disabled:opacity-70"
+        >
+          {isPending ? "Sparar …" : "Spara betyg"}
+        </button>
       </div>
     </form>
   );

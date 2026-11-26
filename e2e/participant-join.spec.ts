@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { advanceTastingStatus } from "@/repositories/tastings";
+import { advanceTastingStatus, createTasting } from "@/repositories/tastings";
 import { createLiveTasting, createTestOwners } from "@/test-support/fixtures";
 
 const owners = createTestOwners();
@@ -35,6 +35,41 @@ test("deltagare går med via kod och landar i provningen", async ({ page }) => {
   await expect(page.getByText("Du är med som Lisa")).toBeVisible();
   await page.getByRole("link", { name: "Blindprovat" }).click();
   await expect(page).toHaveURL(/\/tasting$/);
+});
+
+test("deltagare med session kan fortsätta från startsidan", async ({
+  page,
+}) => {
+  // Mobilbredd och ett långt ord, som inte får ge sidledsrullning.
+  await page.setViewportSize({ width: 375, height: 667 });
+  const name = `Höstprovning ${"x".repeat(60)}`;
+  const tasting = await createTasting(owners.createOwnerId(), { name });
+  const continueLink = page.getByRole("link", { name: /^Fortsätt till/ });
+
+  await page.goto("/");
+  await expect(page.getByLabel("Provningskod")).toBeVisible();
+  await expect(continueLink).toHaveCount(0);
+
+  await page.getByLabel("Provningskod").fill(tasting.code);
+  await page.getByLabel("Ditt namn").fill("Lisa");
+  await page.getByRole("button", { name: "Gå med" }).click();
+  await expect(page).toHaveURL(/\/tasting$/);
+
+  await page.goto("/");
+  await expect(continueLink).toHaveText(`Fortsätt till ${name}`);
+  await expect(
+    page.getByText(`Går du med i en annan provning lämnar du ${name}.`),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(375);
+
+  // Länken är det första som går att nå med tangentbordet.
+  await page.keyboard.press("Tab");
+  await expect(continueLink).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\/tasting$/);
+  await expect(page.getByText("Du är med som Lisa")).toBeVisible();
 });
 
 test("fel kod ger ett fel vid fältet och behåller det som skrivits", async ({

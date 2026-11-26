@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import Link from "next/link";
+import { ActiveSession } from "./active-session";
 import { JoinForm } from "./join-form";
 
 export default function Home() {
@@ -10,6 +12,10 @@ export default function Home() {
           Gå med i en blindprovning av vin med koden du fått.
         </p>
       </div>
+      {/* Med cacheComponents får sessionen (cookies) bara läsas inom Suspense. */}
+      <Suspense fallback={null}>
+        <ActiveSession />
+      </Suspense>
       <JoinForm />
       <Link href="/login" className="link-action">
         För dig som håller i en provning: logga in

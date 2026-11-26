@@ -384,3 +384,59 @@ test("utan uppkoppling finns det som skrivits kvar på vinsidan", async ({
     page.getByRole("status").filter({ hasText: "Betyget är sparat." }),
   ).toBeVisible();
 });
+
+test("formuläret visar ändringar som inte är sparade", async ({
+  context,
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  const { ownerId, tasting, openWineId } = await createLiveTasting(owners);
+  await joinWithCookie(context, tasting.code, "Lisa");
+  await page.goto("/tasting/wines/1");
+
+  const unsaved = page
+    .getByRole("status")
+    .filter({ hasText: "Ändringar inte sparade" });
+  const warningText =
+    "Spara betyget innan du byter vin, annars kan ändringarna försvinna.";
+  const warning = page.getByText(warningText);
+  const save = page.getByRole("button", { name: "Spara betyg" });
+  const note = page.getByLabel("Anteckning (valfritt)");
+  await expect(save).toBeVisible();
+  await expect(unsaved).toHaveCount(0);
+  await expect(warning).toHaveCount(0);
+
+  await page.getByRole("button", { name: "7 av 10" }).click();
+  await expect(unsaved).toBeVisible();
+  await note.fill("Första raden\nAndra raden  ");
+  await save.click();
+  await expect(unsaved).toHaveCount(0);
+  await expect(warning).toHaveCount(0);
+
+  // Det sparade betyget räknas som sparat även efter en omladdning.
+  await page.reload();
+  await expect(note).toHaveValue("Första raden\nAndra raden");
+  await expect(unsaved).toHaveCount(0);
+
+  // En ändring efter sparning markeras, och markeringen försvinner när värdet
+  // ändras tillbaka.
+  const tag = page.getByRole("button", { name: "Ekfat" });
+  await tag.click();
+  await expect(unsaved).toBeVisible();
+  await tag.click();
+  await expect(unsaved).toHaveCount(0);
+  await page.getByLabel("Gissning (valfritt)").fill("Pinot noir");
+  await expect(unsaved).toBeVisible();
+  await expect(warning).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Nästa vin" }),
+  ).toHaveAccessibleDescription(warningText);
+
+  // Pollingen nollställer inte markeringen, inte ens när vinet stängs.
+  unwrap(await setWineOpen(ownerId, openWineId, false), "Kunde inte stänga");
+  await expect(
+    page.getByText("Vinet har stängts för betyg.").first(),
+  ).toBeVisible({ timeout: 15_000 });
+  await expect(unsaved).toBeVisible();
+  await expect(warning).toBeVisible();
+});

@@ -10,6 +10,8 @@ import { TextArea } from "@/app/_components/text-area";
 import { TextField } from "@/app/_components/text-field";
 import { useToast } from "@/app/_components/toast";
 import {
+  hasUnsavedRatingChanges,
+  keepTasteClocksForWineType,
   MAX_TAGS,
   NOTE_MAX,
   RATING_TAGS,
@@ -17,13 +19,16 @@ import {
   SCORE_MIN,
   TASTE_CLOCK_MAX,
   TASTE_CLOCK_MIN,
+  TASTE_CLOCKS,
   tasteClocksForWineType,
+  type RatingDraft,
   type RatingTag,
   type TasteClock,
   type TasteClockValues,
 } from "@/domain/rating";
 import type { WineType } from "@/domain/wine";
 import { ratingTagLabels } from "../../rating-tag-labels";
+import { WineNavigation } from "./wine-navigation";
 
 const initialState: FormState<RatingField> = {};
 const scores = Array.from(
@@ -40,6 +45,30 @@ const noClocks: TasteClockValues = {
   astringency: null,
   acidity: null,
 };
+const emptyDraft: RatingDraft = {
+  ...noClocks,
+  score: null,
+  note: null,
+  tags: [],
+  guess: null,
+};
+
+// Det som skickades vid en sparning, som det nya sparade betyget.
+function draftFromFormData(formData: FormData): RatingDraft {
+  const text = (field: string) => String(formData.get(field) ?? "");
+  const number = (field: string) =>
+    text(field) === "" ? null : Number(text(field));
+  const clocks = { ...noClocks };
+  for (const clock of TASTE_CLOCKS) clocks[clock] = number(clock);
+  return {
+    ...clocks,
+    score: number("score"),
+    note: text("note"),
+    // Fälten fylls av formuläret självt med giltiga taggar.
+    tags: formData.getAll("tags") as RatingTag[],
+    guess: text("guess"),
+  };
+}
 
 type Props = {
   blindNumber: number;
@@ -53,6 +82,8 @@ type Props = {
         guess: string | null;
       } & TasteClockValues)
     | null;
+  previousBlindNumber: number | null;
+  nextBlindNumber: number | null;
 };
 
 function CheckIcon() {
@@ -152,7 +183,14 @@ function TasteClockScale({
   );
 }
 
-export function RatingForm({ blindNumber, isOpen, type, initial }: Props) {
+export function RatingForm({
+  blindNumber,
+  isOpen,
+  type,
+  initial,
+  previousBlindNumber,
+  nextBlindNumber,
+}: Props) {
   const [score, setScore] = useState<number | null>(initial?.score ?? null);
   const [clocks, setClocks] = useState<TasteClockValues>(() =>
     initial
@@ -165,7 +203,21 @@ export function RatingForm({ blindNumber, isOpen, type, initial }: Props) {
       : noClocks,
   );
   const [tags, setTags] = useState<RatingTag[]>(initial?.tags ?? []);
+  const [guess, setGuess] = useState(initial?.guess ?? "");
+  const [note, setNote] = useState(initial?.note ?? "");
+  const [saved, setSaved] = useState<RatingDraft>(initial ?? emptyDraft);
   const visibleClocks = tasteClocksForWineType(type);
+  // Klockor som inte visas sparas inte och räknas därför inte som ändringar.
+  const hasUnsavedChanges = hasUnsavedRatingChanges(
+    { ...saved, ...keepTasteClocksForWineType(saved, type) },
+    {
+      ...keepTasteClocksForWineType(clocks, type),
+      score,
+      note,
+      tags,
+      guess,
+    },
+  );
   // Har vinet varit öppet medan formuläret visats ska det ligga kvar, låst, när
   // vinet stängs. Annars skulle det som skrivits försvinna.
   const [seenOpen, setSeenOpen] = useState(isOpen);
@@ -174,14 +226,19 @@ export function RatingForm({ blindNumber, isOpen, type, initial }: Props) {
   // extra rendering efteråt.
   if (isOpen && !seenOpen) setSeenOpen(true);
 
-  const action = useMemo(
-    () =>
-      keepInputOnFailure(saveRatingAction.bind(null, String(blindNumber)), [
-        "note",
-        "guess",
-      ]),
-    [blindNumber],
-  );
+  const action = useMemo(() => {
+    const save = keepInputOnFailure(
+      saveRatingAction.bind(null, String(blindNumber)),
+      ["note", "guess"],
+    );
+    return async (...[previous, formData]: Parameters<typeof save>) => {
+      const result = await save(previous, formData);
+      // Bara en lyckad sparning har ett meddelande. Det som ändrats medan
+      // sparningen pågick räknas fortfarande som osparat.
+      if (result.message) setSaved(draftFromFormData(formData));
+      return result;
+    };
+  }, [blindNumber]);
   const [state, formAction, isPending] = useActionState(action, initialState);
   const showToast = useToast();
 
@@ -218,12 +275,23 @@ export function RatingForm({ blindNumber, isOpen, type, initial }: Props) {
     );
   }
 
+  const navigation = (
+    <WineNavigation
+      previousBlindNumber={previousBlindNumber}
+      nextBlindNumber={nextBlindNumber}
+      hasUnsavedChanges={hasUnsavedChanges}
+    />
+  );
+
   if (!isOpen && !seenOpen && !initial) {
     return (
-      <p>
-        Vin {blindNumber} är inte öppet för betyg ännu. Sidan uppdateras när
-        värden öppnar vinet.
-      </p>
+      <>
+        <p>
+          Vin {blindNumber} är inte öppet för betyg ännu. Sidan uppdateras när
+          värden öppnar vinet.
+        </p>
+        {navigation}
+      </>
     );
   }
 
@@ -232,193 +300,204 @@ export function RatingForm({ blindNumber, isOpen, type, initial }: Props) {
   const tagsError = state.fieldErrors?.tags?.[0];
 
   return (
-    <form action={formAction} noValidate className="flex flex-col gap-6">
-      {/* Annonseras när vinet stängs medan deltagaren skriver. Det som
-          skrivits finns kvar. */}
-      <div aria-live="assertive">
-        {!isOpen && (
-          <FormError>
-            Vinet har stängts för betyg. Det du skrivit finns kvar här men går
-            inte längre att spara.
-          </FormError>
-        )}
-      </div>
-      {state.formError && <FormError>{state.formError}</FormError>}
-
-      <fieldset disabled={!isOpen} className="flex min-w-0 flex-col gap-6">
-        <input type="hidden" name="score" value={score ?? ""} />
-        {visibleClocks.map((clock) => (
-          <input
-            key={clock}
-            type="hidden"
-            name={clock}
-            value={clocks[clock] ?? ""}
-          />
-        ))}
-        {tags.map((tag) => (
-          <input key={tag} type="hidden" name="tags" value={tag} />
-        ))}
-
-        <div
-          role="group"
-          aria-labelledby="score-heading"
-          aria-describedby={scoreError ? "score-error" : undefined}
-          className="flex flex-col gap-2"
-        >
-          <h2 id="score-heading" className="font-medium">
-            Poäng
-          </h2>
-          <div className="grid grid-cols-5 gap-2">
-            {scores.map((value, index) => {
-              const selected = score === value;
-              return (
-                <button
-                  key={value}
-                  ref={index === 0 ? firstScoreButton : undefined}
-                  type="button"
-                  aria-pressed={selected}
-                  aria-label={`${value} av ${SCORE_MAX}`}
-                  onClick={() => setScore(value)}
-                  className={`flex min-h-12 items-center justify-center gap-1 rounded-full border font-medium transition-colors motion-reduce:transition-none ${
-                    selected
-                      ? "border-primary bg-primary text-on-primary hover:not-disabled:bg-primary-hover active:not-disabled:bg-primary-pressed"
-                      : "border-outline text-on-surface hover:not-disabled:bg-surface-high active:not-disabled:bg-surface-highest"
-                  }`}
-                >
-                  {selected && <CheckIcon />}
-                  {value}
-                </button>
-              );
-            })}
-          </div>
-          <p className="text-sm text-on-surface-variant">
-            {score === null
-              ? "Välj ett betyg."
-              : `Du har valt ${score} av ${SCORE_MAX}.`}
-          </p>
-          {scoreError && (
-            <p id="score-error" className="text-error">
-              <strong>Fel:</strong> {scoreError}
-            </p>
+    <>
+      <form action={formAction} noValidate className="flex flex-col gap-6">
+        {/* Annonseras när vinet stängs medan deltagaren skriver. Det som
+            skrivits finns kvar. */}
+        <div aria-live="assertive">
+          {!isOpen && (
+            <FormError>
+              Vinet har stängts för betyg. Det du skrivit finns kvar här men går
+              inte längre att spara.
+            </FormError>
           )}
         </div>
+        {state.formError && <FormError>{state.formError}</FormError>}
 
-        <section
-          aria-labelledby="clocks-heading"
-          className="flex flex-col gap-4"
-        >
-          <div className="flex flex-col gap-1">
-            <h2 id="clocks-heading" className="font-medium">
-              Smakklockor (valfritt)
-            </h2>
-            <p className="text-sm text-on-surface-variant">
-              Som på Systembolaget. Tryck på det valda värdet igen för att ta
-              bort det.
-            </p>
-          </div>
+        <fieldset disabled={!isOpen} className="flex min-w-0 flex-col gap-6">
+          <input type="hidden" name="score" value={score ?? ""} />
           {visibleClocks.map((clock) => (
-            <TasteClockScale
+            <input
               key={clock}
-              clock={clock}
-              value={clocks[clock]}
-              onChange={(value) =>
-                setClocks((current) => ({ ...current, [clock]: value }))
-              }
-              error={state.fieldErrors?.[clock]?.[0]}
-              firstButtonRef={(button) => {
-                firstClockButtons.current[clock] = button;
-              }}
+              type="hidden"
+              name={clock}
+              value={clocks[clock] ?? ""}
             />
           ))}
-        </section>
+          {tags.map((tag) => (
+            <input key={tag} type="hidden" name="tags" value={tag} />
+          ))}
 
-        <div
-          role="group"
-          aria-labelledby="tags-heading"
-          aria-describedby="tags-hint"
-          className="flex flex-col gap-2"
-        >
-          <h2 id="tags-heading" className="font-medium">
-            Smak och doft
-          </h2>
-          <p id="tags-hint" className="text-sm text-on-surface-variant">
-            Välj högst {MAX_TAGS}.
-            {tagLimitReached && " Du har valt så många du kan."}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {RATING_TAGS.map((tag) => {
-              const selected = tags.includes(tag);
-              return (
-                <button
-                  key={tag}
-                  type="button"
-                  aria-pressed={selected}
-                  disabled={!selected && tagLimitReached}
-                  onClick={() => toggleTag(tag)}
-                  className={`flex min-h-11 items-center gap-2 rounded-lg border px-4 font-medium transition-colors disabled:opacity-50 motion-reduce:transition-none ${
-                    selected
-                      ? "border-primary bg-primary text-on-primary hover:not-disabled:bg-primary-hover active:not-disabled:bg-primary-pressed"
-                      : "border-outline text-on-surface-variant hover:not-disabled:bg-surface-high active:not-disabled:bg-surface-highest"
-                  }`}
-                >
-                  {selected && <CheckIcon />}
-                  {ratingTagLabels[tag]}
-                </button>
-              );
-            })}
-          </div>
-          {tagsError && (
-            <p className="text-error">
-              <strong>Fel:</strong> {tagsError}
+          <div
+            role="group"
+            aria-labelledby="score-heading"
+            aria-describedby={scoreError ? "score-error" : undefined}
+            className="flex flex-col gap-2"
+          >
+            <h2 id="score-heading" className="font-medium">
+              Poäng
+            </h2>
+            <div className="grid grid-cols-5 gap-2">
+              {scores.map((value, index) => {
+                const selected = score === value;
+                return (
+                  <button
+                    key={value}
+                    ref={index === 0 ? firstScoreButton : undefined}
+                    type="button"
+                    aria-pressed={selected}
+                    aria-label={`${value} av ${SCORE_MAX}`}
+                    onClick={() => setScore(value)}
+                    className={`flex min-h-12 items-center justify-center gap-1 rounded-full border font-medium transition-colors motion-reduce:transition-none ${
+                      selected
+                        ? "border-primary bg-primary text-on-primary hover:not-disabled:bg-primary-hover active:not-disabled:bg-primary-pressed"
+                        : "border-outline text-on-surface hover:not-disabled:bg-surface-high active:not-disabled:bg-surface-highest"
+                    }`}
+                  >
+                    {selected && <CheckIcon />}
+                    {value}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-sm text-on-surface-variant">
+              {score === null
+                ? "Välj ett betyg."
+                : `Du har valt ${score} av ${SCORE_MAX}.`}
             </p>
-          )}
+            {scoreError && (
+              <p id="score-error" className="text-error">
+                <strong>Fel:</strong> {scoreError}
+              </p>
+            )}
+          </div>
+
+          <section
+            aria-labelledby="clocks-heading"
+            className="flex flex-col gap-4"
+          >
+            <div className="flex flex-col gap-1">
+              <h2 id="clocks-heading" className="font-medium">
+                Smakklockor (valfritt)
+              </h2>
+              <p className="text-sm text-on-surface-variant">
+                Som på Systembolaget. Tryck på det valda värdet igen för att ta
+                bort det.
+              </p>
+            </div>
+            {visibleClocks.map((clock) => (
+              <TasteClockScale
+                key={clock}
+                clock={clock}
+                value={clocks[clock]}
+                onChange={(value) =>
+                  setClocks((current) => ({ ...current, [clock]: value }))
+                }
+                error={state.fieldErrors?.[clock]?.[0]}
+                firstButtonRef={(button) => {
+                  firstClockButtons.current[clock] = button;
+                }}
+              />
+            ))}
+          </section>
+
+          <div
+            role="group"
+            aria-labelledby="tags-heading"
+            aria-describedby="tags-hint"
+            className="flex flex-col gap-2"
+          >
+            <h2 id="tags-heading" className="font-medium">
+              Smak och doft
+            </h2>
+            <p id="tags-hint" className="text-sm text-on-surface-variant">
+              Välj högst {MAX_TAGS}.
+              {tagLimitReached && " Du har valt så många du kan."}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {RATING_TAGS.map((tag) => {
+                const selected = tags.includes(tag);
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    aria-pressed={selected}
+                    disabled={!selected && tagLimitReached}
+                    onClick={() => toggleTag(tag)}
+                    className={`flex min-h-11 items-center gap-2 rounded-lg border px-4 font-medium transition-colors disabled:opacity-50 motion-reduce:transition-none ${
+                      selected
+                        ? "border-primary bg-primary text-on-primary hover:not-disabled:bg-primary-hover active:not-disabled:bg-primary-pressed"
+                        : "border-outline text-on-surface-variant hover:not-disabled:bg-surface-high active:not-disabled:bg-surface-highest"
+                    }`}
+                  >
+                    {selected && <CheckIcon />}
+                    {ratingTagLabels[tag]}
+                  </button>
+                );
+              })}
+            </div>
+            {tagsError && (
+              <p className="text-error">
+                <strong>Fel:</strong> {tagsError}
+              </p>
+            )}
+          </div>
+
+          <TextField
+            ref={guessInput}
+            id="rating-guess"
+            name="guess"
+            label="Gissning (valfritt)"
+            hint="Druva, land eller årgång."
+            value={guess}
+            onChange={setGuess}
+            error={state.fieldErrors?.guess?.[0]}
+          />
+          <TextArea
+            ref={noteInput}
+            id="rating-note"
+            name="note"
+            label="Anteckning (valfritt)"
+            hint={`Högst ${NOTE_MAX} tecken.`}
+            maxLength={NOTE_MAX}
+            value={note}
+            onChange={setNote}
+            error={state.fieldErrors?.note?.[0]}
+          />
+        </fieldset>
+
+        {/* Klistrad längst ner så att knappen nås med en hand utan att skrolla
+            förbi klockor och taggar. Klassen ger sidan scroll-padding-bottom i
+            globals.css, så att raden inte skymmer fokuserade fält (WCAG 2.4.11). */}
+        <div className="sticky-actions sticky bottom-0 -mx-4 flex items-center justify-between gap-3 border-t border-outline-variant bg-surface px-4 py-3">
+          <div className="text-sm">
+            <p>
+              {score === null ? (
+                "Inget betyg valt"
+              ) : (
+                <>
+                  Ditt betyg:{" "}
+                  <strong>
+                    {score} av {SCORE_MAX}
+                  </strong>
+                </>
+              )}
+            </p>
+            {/* Finns alltid, så att texten annonseras när den dyker upp. */}
+            <p role="status" className="font-medium">
+              {hasUnsavedChanges && "Ändringar inte sparade"}
+            </p>
+          </div>
+          <button
+            type="submit"
+            disabled={!isOpen || isPending}
+            className="btn-primary shrink-0 disabled:opacity-70"
+          >
+            {isPending ? "Sparar …" : "Spara betyg"}
+          </button>
         </div>
-
-        <TextField
-          ref={guessInput}
-          id="rating-guess"
-          name="guess"
-          label="Gissning (valfritt)"
-          hint="Druva, land eller årgång."
-          defaultValue={state.values?.guess ?? initial?.guess ?? undefined}
-          error={state.fieldErrors?.guess?.[0]}
-        />
-        <TextArea
-          ref={noteInput}
-          id="rating-note"
-          name="note"
-          label="Anteckning (valfritt)"
-          hint={`Högst ${NOTE_MAX} tecken.`}
-          maxLength={NOTE_MAX}
-          defaultValue={state.values?.note ?? initial?.note ?? undefined}
-          error={state.fieldErrors?.note?.[0]}
-        />
-      </fieldset>
-
-      {/* Klistrad längst ner så att knappen nås med en hand utan att skrolla
-          förbi klockor och taggar. Klassen ger sidan scroll-padding-bottom i
-          globals.css, så att raden inte skymmer fokuserade fält (WCAG 2.4.11). */}
-      <div className="sticky-actions sticky bottom-0 -mx-4 flex items-center justify-between gap-3 border-t border-outline-variant bg-surface px-4 py-3">
-        <p className="text-sm">
-          {score === null ? (
-            "Inget betyg valt"
-          ) : (
-            <>
-              Ditt betyg:{" "}
-              <strong>
-                {score} av {SCORE_MAX}
-              </strong>
-            </>
-          )}
-        </p>
-        <button
-          type="submit"
-          disabled={!isOpen || isPending}
-          className="btn-primary shrink-0 disabled:opacity-70"
-        >
-          {isPending ? "Sparar …" : "Spara betyg"}
-        </button>
-      </div>
-    </form>
+      </form>
+      {navigation}
+    </>
   );
 }

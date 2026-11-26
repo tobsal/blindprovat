@@ -65,3 +65,33 @@ export function keepTasteClocksForWineType(
     acidity: clocks.includes("acidity") ? values.acidity : null,
   };
 }
+
+// Det deltagaren kan ändra i ett betyg. Tom text och null betyder inget värde.
+export type RatingDraft = TasteClockValues & {
+  score: number | null;
+  note: string | null;
+  tags: readonly RatingTag[];
+  guess: string | null;
+};
+
+// Jämför texten som den sparas, utan blanksteg runt om. Radbrytningar kan
+// komma tillbaka från servern som CRLF, medan textfält ger LF.
+function comparableText(text: string | null): string {
+  return (text ?? "").replace(/\r\n/g, "\n").trim();
+}
+
+// Om formuläret skiljer sig från det sparade betyget. Taggarnas ordning
+// spelar ingen roll.
+export function hasUnsavedRatingChanges(
+  saved: RatingDraft,
+  draft: RatingDraft,
+): boolean {
+  return (
+    saved.score !== draft.score ||
+    TASTE_CLOCKS.some((clock) => saved[clock] !== draft[clock]) ||
+    saved.tags.length !== draft.tags.length ||
+    saved.tags.some((tag) => !draft.tags.includes(tag)) ||
+    comparableText(saved.note) !== comparableText(draft.note) ||
+    comparableText(saved.guess) !== comparableText(draft.guess)
+  );
+}

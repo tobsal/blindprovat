@@ -10,7 +10,7 @@ import {
 } from "@/repositories/ratings";
 import { findTastingForParticipant } from "@/repositories/tastings";
 import { listWinesForParticipant } from "@/repositories/wines";
-import { requireParticipant } from "./participant-session";
+import { getParticipant, requireParticipant } from "./participant-session";
 import { buildResultsView, type ResultsView } from "./tasting-results";
 
 // Bara det deltagaren får se: blindnumret, tillståndet och det egna betyget.
@@ -29,6 +29,16 @@ export type ParticipantView = {
   // resultat och smeknamnen, men inte vem som gav vilket betyg.
   results: ResultsView | null;
 };
+
+// Namnet på provningen som sessionen gäller, eller null utan session. För
+// startsidan, som också visas för den som inte är med i någon provning och
+// därför inte får skicka vidare.
+export async function getActiveTastingName(): Promise<string | null> {
+  const participant = await getParticipant();
+  if (!participant) return null;
+  const tasting = await findTastingForParticipant(participant);
+  return tasting?.name ?? null;
+}
 
 // Provningen slås upp via sessionen, aldrig via ett id utifrån. Den här
 // läsningen är också det som sidan hämtar på nytt vid polling.

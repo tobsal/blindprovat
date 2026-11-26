@@ -4,6 +4,7 @@ import {
   type ParticipantWineState,
 } from "@/domain/participant-wine";
 import type { TastingStatus } from "@/domain/tasting";
+import { isParticipantTastingCode } from "@/repositories/participants";
 import {
   listOwnRatings,
   listResultInputsForParticipant,
@@ -38,6 +39,13 @@ export async function getActiveTastingName(): Promise<string | null> {
   if (!participant) return null;
   const tasting = await findTastingForParticipant(participant);
   return tasting?.name ?? null;
+}
+
+// Om sessionen redan gäller provningen med koden. Utan session blir svaret
+// nej. För startsidan när den öppnas via en deltagarlänk.
+export async function hasJoinedTasting(code: string): Promise<boolean> {
+  const participant = await getParticipant();
+  return participant ? isParticipantTastingCode(participant, code) : false;
 }
 
 // Provningen slås upp via sessionen, aldrig via ett id utifrån. Den här

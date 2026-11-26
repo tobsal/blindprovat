@@ -11,13 +11,16 @@ const codePattern = new RegExp(
   `^[${TASTING_CODE_ALPHABET}]{${TASTING_CODE_LENGTH}}$`,
 );
 
+// Godtar gemener, mellanslag och bindestreck så att koden kan skrivas som
+// den visas eller läses upp. Används både för formuläret och för koden i en
+// deltagarlänk.
+export const tastingCodeSchema = z
+  .string({ error: codeMessage })
+  .transform((value) => value.replace(/[\s-]/g, "").toUpperCase())
+  .pipe(z.string().regex(codePattern, codeMessage));
+
 export const joinTastingInputSchema = z.object({
-  // Godtar gemener, mellanslag och bindestreck så att koden kan skrivas som
-  // den visas eller läses upp.
-  code: z
-    .string({ error: codeMessage })
-    .transform((value) => value.replace(/[\s-]/g, "").toUpperCase())
-    .pipe(z.string().regex(codePattern, codeMessage)),
+  code: tastingCodeSchema,
   displayName: z
     .string({ error: nameRequiredMessage })
     .trim()

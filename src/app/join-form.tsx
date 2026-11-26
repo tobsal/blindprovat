@@ -10,7 +10,8 @@ import { TextField } from "@/app/_components/text-field";
 const initialState: FormState<JoinField> = {};
 const safeJoin = keepInputOnFailure(joinTastingAction, ["code", "displayName"]);
 
-export function JoinForm() {
+// linkedCode är koden från en deltagarlänk.
+export function JoinForm({ linkedCode }: { linkedCode?: string }) {
   const [state, formAction, isPending] = useActionState(safeJoin, initialState);
   const codeInput = useRef<HTMLInputElement>(null);
   const nameInput = useRef<HTMLInputElement>(null);
@@ -30,11 +31,15 @@ export function JoinForm() {
         id="join-code"
         name="code"
         label="Provningskod"
-        hint="Du får koden av den som håller i provningen."
+        hint={
+          linkedCode
+            ? "Koden är ifylld från länken."
+            : "Du får koden av den som håller i provningen."
+        }
         autoComplete="off"
         autoCapitalize="characters"
         required
-        defaultValue={state.values?.code}
+        defaultValue={state.values?.code ?? linkedCode}
         error={state.fieldErrors?.code?.[0]}
       />
       <TextField

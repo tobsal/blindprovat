@@ -7,6 +7,9 @@ type TextAreaProps = {
   hint?: string;
   error?: string;
   defaultValue?: string;
+  // value och onChange används när formuläret självt håller texten.
+  value?: string;
+  onChange?: (value: string) => void;
   maxLength?: number;
   rows?: number;
 };
@@ -15,7 +18,18 @@ type TextAreaProps = {
 // aria-describedby.
 export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
   function TextArea(
-    { id, name, label, hint, error, defaultValue, maxLength, rows = 4 },
+    {
+      id,
+      name,
+      label,
+      hint,
+      error,
+      defaultValue,
+      value,
+      onChange,
+      maxLength,
+      rows = 4,
+    },
     ref,
   ) {
     const describedBy = [hint && `${id}-hint`, error && `${id}-error`]
@@ -39,6 +53,8 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           rows={rows}
           maxLength={maxLength}
           defaultValue={defaultValue}
+          value={value}
+          onChange={onChange && ((event) => onChange(event.target.value))}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy || undefined}
           className="rounded border border-outline bg-surface px-4 py-3 text-base"

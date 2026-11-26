@@ -5,6 +5,9 @@ type TextFieldProps = {
   hint?: string;
   error?: string;
   defaultValue?: string;
+  // value och onChange används när formuläret självt håller texten.
+  value?: string;
+  onChange?: (value: string) => void;
   inputMode?: "numeric";
   autoComplete?: string;
   autoCapitalize?: "characters";
@@ -22,6 +25,8 @@ export function TextField({
   hint,
   error,
   defaultValue,
+  value,
+  onChange,
   inputMode,
   autoComplete,
   autoCapitalize,
@@ -52,6 +57,8 @@ export function TextField({
         autoCapitalize={autoCapitalize}
         required={required}
         defaultValue={defaultValue}
+        value={value}
+        onChange={onChange && ((event) => onChange(event.target.value))}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy || undefined}
         className="min-h-12 rounded border border-outline bg-surface px-4 text-base"

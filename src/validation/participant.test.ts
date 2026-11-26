@@ -1,7 +1,11 @@
 import { randomBytes } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { messagesFor } from "@/test-support/messages-for";
-import { joinTastingInputSchema, sessionTokenSchema } from "./participant";
+import {
+  joinTastingInputSchema,
+  sessionTokenSchema,
+  tastingCodeSchema,
+} from "./participant";
 
 const validInput = { code: "ABCDE23456", displayName: "Kim" };
 
@@ -53,6 +57,19 @@ describe("joinTastingInputSchema", () => {
         displayName: "a".repeat(31),
       }),
     ).toEqual(["Namnet får vara högst 30 tecken"]);
+  });
+});
+
+describe("tastingCodeSchema", () => {
+  it("godtar koden i en deltagarlänk och normaliserar den", () => {
+    expect(tastingCodeSchema.parse("abcde-23456")).toBe("ABCDE23456");
+  });
+
+  it("nekar saknad, ogiltig och upprepad parameter", () => {
+    const repeated = ["ABCDE23456", "ABCDE23456"];
+    for (const value of [undefined, "", "ABC", repeated]) {
+      expect(tastingCodeSchema.safeParse(value).success).toBe(false);
+    }
   });
 });
 

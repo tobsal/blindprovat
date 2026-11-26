@@ -10,9 +10,15 @@ import {
   getMyTastingResults,
   type AdminWine,
 } from "@/api/admin-tastings";
-import { canEditWines, canOpenWines, canShowResults } from "@/domain/tasting";
+import {
+  canEditWines,
+  canJoinTasting,
+  canOpenWines,
+  canShowResults,
+} from "@/domain/tasting";
 import { tastingStatusLabels } from "../../tasting-status";
 import { AddWineForm } from "./add-wine-form";
+import { CopyJoinLinkButton } from "./copy-join-link-button";
 import { DeleteTastingButton } from "./delete-tasting-button";
 import { DeleteWineButton } from "./delete-wine-button";
 import { EditWine } from "./edit-wine";
@@ -76,13 +82,20 @@ async function TastingDetails({ params }: { params: Promise<{ id: string }> }) {
         <h2 id="code-heading" className="text-lg font-semibold">
           Provningskod
         </h2>
-        <p className="mt-1">Dela koden med deltagarna.</p>
+        <p className="mt-1">
+          {canJoinTasting(tasting.status)
+            ? "Dela länken eller koden med deltagarna."
+            : "Det går inte längre att gå med i provningen."}
+        </p>
         <p
           className="mt-2 font-mono text-3xl tracking-widest"
           data-testid="tasting-code"
         >
           {tasting.code}
         </p>
+        {canJoinTasting(tasting.status) && (
+          <CopyJoinLinkButton code={tasting.code} />
+        )}
       </section>
 
       <section aria-labelledby="participants-heading" className="mt-6">

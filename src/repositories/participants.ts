@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { SESSION_TOKEN_BYTES } from "@/domain/participant";
 import { canJoinTasting } from "@/domain/tasting";
 import { db } from "./db";
@@ -79,6 +79,22 @@ export async function findParticipantBySessionToken(
       .from(participants)
       .where(eq(participants.sessionTokenHash, hashSessionToken(sessionToken)));
     return participant ?? null;
+  });
+}
+
+// Om koden gäller den provning som deltagaren redan är med i.
+export async function isParticipantTastingCode(
+  participant: SessionParticipant,
+  code: string,
+): Promise<boolean> {
+  return withSafeErrors("isParticipantTastingCode", async () => {
+    const [tasting] = await db
+      .select({ id: tastings.id })
+      .from(tastings)
+      .where(
+        and(eq(tastings.id, participant.tastingId), eq(tastings.code, code)),
+      );
+    return tasting !== undefined;
   });
 }
 

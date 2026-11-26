@@ -8,8 +8,8 @@ Webbapp för att arrangera blindprovningar av vin i grupp.
 
 Vinprovningar sköts ofta med papper, Excel eller gruppchattar. Då är det svårt att hålla provningen blind, samla in allas betyg och räkna ut resultatet. Blindprovat driver hela provningstillfället:
 
-- **Den som håller i provningen (admin)** loggar in med GitHub, skapar en provning, lägger in vinerna och delar en kod. Under provningen öppnar och stänger admin varje vin för betygsättning. Till sist avslöjar admin vilka vinerna var och hur gruppen röstade.
-- **Deltagarna** går med från mobilen med koden, utan konto. De ser bara blindnummer (Vin 1, Vin 2 …), sätter poäng och skriver anteckningar per vin. De kan ändra sitt betyg så länge vinet är öppet.
+- **Den som håller i provningen (admin)** loggar in med GitHub, skapar en provning, lägger in vinerna och delar en länk eller kod. Under provningen öppnar och stänger admin varje vin för betygsättning. Till sist avslöjar admin vilka vinerna var och hur gruppen röstade.
+- **Deltagarna** går med från mobilen via länken eller med koden, utan konto. De ser bara blindnummer (Vin 1, Vin 2 …), sätter poäng och skriver anteckningar per vin. De kan ändra sitt betyg så länge vinet är öppet.
 
 En provning går igenom tre steg, alltid i den här ordningen: **förbereds** (`draft`), **pågår** (`live`) och **avslöjad** (`revealed`).
 

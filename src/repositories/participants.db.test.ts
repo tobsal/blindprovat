@@ -5,6 +5,7 @@ import { unwrap } from "@/test-support/unwrap";
 import { db } from "./db";
 import {
   findParticipantBySessionToken,
+  isParticipantTastingCode,
   joinTasting,
   listParticipantNamesForOwner,
 } from "./participants";
@@ -33,6 +34,22 @@ describe("deltagare", () => {
     });
     expect(await findParticipantBySessionToken(joined.sessionToken)).toEqual(
       joined.participant,
+    );
+  });
+
+  it("känner bara igen koden till deltagarens egen provning", async () => {
+    const tasting = await createTestTasting();
+    const otherTasting = await createTestTasting();
+    const { participant } = unwrap(
+      await joinTasting({ code: tasting.code, displayName: "Kim" }),
+      "Kunde inte gå med",
+    );
+
+    expect(await isParticipantTastingCode(participant, tasting.code)).toBe(
+      true,
+    );
+    expect(await isParticipantTastingCode(participant, otherTasting.code)).toBe(
+      false,
     );
   });
 

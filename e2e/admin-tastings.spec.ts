@@ -36,6 +36,8 @@ test("admin skapar en provning och ser den i listan", async ({
 
   await page.getByLabel("Namn", { exact: true }).fill("Barolo");
   await page.getByLabel("Producent (valfritt)").fill("Vietti");
+  await page.getByLabel("Region (valfritt)").fill("Piemonte");
+  await page.getByLabel("Land (valfritt)").fill("Italien");
   await page.getByLabel("Årgång (valfritt)").fill("2019");
   await page
     .getByLabel("Artikelnummer på Systembolaget (valfritt)")
@@ -44,7 +46,7 @@ test("admin skapar en provning och ser den i listan", async ({
   await page.getByRole("button", { name: "Lägg till vin" }).click();
   await expect(toast(page, "Vin 1 är tillagt.")).toBeVisible();
   await expect(page.getByRole("listitem")).toContainText(
-    "Vin 1 – Barolo, Vietti, 2019",
+    "Vin 1 – Barolo, Piemonte, Italien, 2019",
   );
   await expect(
     page.getByRole("link", { name: "Hitta vinet på Systembolaget" }),
@@ -56,7 +58,7 @@ test("admin skapar en provning och ser den i listan", async ({
   await page.getByLabel("Rött", { exact: true }).check();
   await page.getByRole("button", { name: "Lägg till vin" }).click();
   await expect(page.getByRole("listitem")).toContainText([
-    "Vin 1 – Barolo, Vietti, 2019",
+    "Vin 1 – Barolo, Piemonte, Italien, 2019",
     "Vin 2 – Chianti, Årgångslöst",
   ]);
   // Ett vin utan artikelnummer får varken nummer eller länk.

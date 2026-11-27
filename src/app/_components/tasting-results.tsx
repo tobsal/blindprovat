@@ -12,7 +12,7 @@ const numberFormat = new Intl.NumberFormat("sv-SE", {
 });
 
 function describeWine({ details }: ResultsWine): string {
-  return [details.producer, details.vintage ?? "Årgångslöst"]
+  return [details.region, details.country, details.vintage ?? "Årgångslöst"]
     .filter(Boolean)
     .join(", ");
 }

@@ -31,7 +31,7 @@ import { TastingStatusControl } from "./tasting-status-control";
 import { WineOpenToggle } from "./wine-open-toggle";
 
 function describeWine(wine: AdminWine): string {
-  return [wine.name, wine.producer, wine.vintage ?? "Årgångslöst"]
+  return [wine.name, wine.region, wine.country, wine.vintage ?? "Årgångslöst"]
     .filter(Boolean)
     .join(", ");
 }
